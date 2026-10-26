@@ -1,4 +1,5 @@
 node_modules
 dist
-public/figures/*.html
+# public/figures/*.html is committed: the deployed site (GitHub Pages) is built without flexitac-anatomy/figures,
+# so the synced copies made by `npm run sync-figures` are the published figures. Re-sync and commit after a figure change.
 .vercel
