@@ -1,0 +1,319 @@
+/* How deep, how hard (src/widgets/sim-springs.ts). The shared art and card chrome are sim-points.css (.sim): the
+   finger's orange TPU, the caps' amber (the pad at each point), the rubber ball. Here: the imagined springs (steel
+   wire, a front and a back stroke), the dampers (light grey bodies, a dark rod), the ball's cut face (rubber, hatched
+   as a section), the rest line, the force arrows (the lesson colour, a face-coloured halo so they read on the rubber),
+   the number rows, the readout and the two maps. */
+.ss {
+  --ss-wire: #5b6268;
+  --ss-wire-back: #a5abb0;
+  --ss-cut: color-mix(in oklab, var(--ft-rubber-top) 82%, #ffffff);
+  --ss-hatch: rgba(255, 255, 255, 0.16);
+}
+:root[data-theme="dark"] .ss {
+  --ss-wire: #d0d4d7;
+  --ss-wire-back: #6c737a;
+  --ss-cut: color-mix(in oklab, var(--ft-rubber-top) 88%, #ffffff);
+  --ss-hatch: rgba(255, 255, 255, 0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ss {
+    --ss-wire: #d0d4d7;
+    --ss-wire-back: #6c737a;
+    --ss-cut: color-mix(in oklab, var(--ft-rubber-top) 88%, #ffffff);
+    --ss-hatch: rgba(255, 255, 255, 0.12);
+  }
+}
+.ss-key {
+  flex: none;
+  width: 10px;
+  height: 11px;
+  background: linear-gradient(var(--accent), var(--accent)) center top / 2px 4px no-repeat,
+    repeating-linear-gradient(180deg, var(--muted) 0 1.4px, transparent 1.4px 2.8px) center 5px / 8px 6px no-repeat;
+}
+.ss-svg {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  cursor: ns-resize;
+}
+/* the ball's cut face: a section, hatched */
+.ss-cut {
+  fill: var(--ss-cut);
+  stroke: none;
+}
+.ss-cut-hatch {
+  stroke: none;
+}
+.ss-hatch {
+  stroke: var(--ss-hatch);
+  stroke-width: 2;
+}
+.ss-cut-rim {
+  fill: none;
+  stroke: var(--ft-rubber-edge);
+  stroke-width: 1.2;
+}
+.ss-rest {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.ss-coil {
+  fill: none;
+  stroke: var(--ss-wire);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.ss-coil-back {
+  fill: none;
+  stroke: var(--ss-wire-back);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+.ss-body {
+  fill: var(--sp-alu-left);
+  stroke: var(--sp-alu-edge);
+  stroke-width: 0.9;
+}
+.ss-body-top {
+  fill: var(--sp-alu-top);
+  stroke: var(--sp-alu-edge);
+  stroke-width: 0.9;
+}
+.ss-body-hole {
+  fill: var(--sp-alu-edge);
+  stroke: none;
+}
+.ss-rod {
+  fill: none;
+  stroke: var(--ss-wire);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.ss-dot {
+  fill: var(--sp-dot);
+  stroke: none;
+}
+.ss-dot.is-touched {
+  fill: var(--ft-hotspot);
+  stroke: var(--face);
+  stroke-width: 0.8;
+}
+.ss-mid {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.3;
+  stroke-dasharray: 2 1.6;
+}
+.ss-arrow {
+  fill: var(--accent);
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ss-arrow-halo {
+  fill: var(--face);
+  stroke: var(--face);
+  stroke-width: 3.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-opacity: 0.8;
+}
+.ss-val {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  fill: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.ss-val.is-on {
+  fill: var(--ink);
+  font-weight: 700;
+}
+.ss-val-f.is-on {
+  fill: var(--accent);
+}
+.ss-val.is-mid {
+  text-decoration: underline;
+}
+.ss-lab {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  fill: var(--muted);
+}
+.ss-lab-row {
+  font-weight: 700;
+  fill: var(--ink);
+}
+.ss-lab-ball {
+  fill: var(--muted);
+}
+.ss-leader {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+}
+.ss-lead-end {
+  fill: var(--ink);
+  stroke: var(--face);
+  stroke-width: 1.1;
+}
+.ss[data-form="medium"] .ss-val {
+  font-size: 9.5px;
+}
+
+/* ---- the readout: the formula, its numbers, the bar and the total */
+.ss-read {
+  display: grid;
+  gap: 3px;
+}
+.ss-f,
+.ss-num,
+.ss-tot {
+  margin: 0;
+}
+.ss-f {
+  font-size: 13px;
+  color: var(--text);
+}
+.ss-f b {
+  color: var(--ink);
+}
+.ss-who {
+  margin-right: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.ss-num {
+  font-size: 12.5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.ss-num b {
+  color: var(--accent);
+}
+.ss-clip {
+  color: var(--muted);
+  font-size: 11px;
+}
+.ss-key-units {
+  margin: 0;
+  font-size: 10.5px;
+  color: var(--faint);
+}
+.ss:not([data-form="large"]) .ss-key-units {
+  display: none;
+}
+.ss-slow {
+  display: none;
+  color: var(--accent);
+  font-weight: 700;
+}
+.ss[data-mode="tap"] .ss-slow {
+  display: inline;
+}
+.ss-barrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.ss-bar {
+  position: relative;
+  display: flex;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+.ss-bar-s {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.ss-bar-d {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(-45deg, var(--accent) 0 2px, color-mix(in oklab, var(--accent) 35%, var(--face)) 2px 4px);
+}
+.ss-bar-d.is-neg {
+  background: repeating-linear-gradient(-45deg, var(--muted) 0 2px, transparent 2px 4px);
+}
+.ss-parts {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ss-ps {
+  color: var(--ink);
+}
+.ss-tot {
+  font-size: 12.5px;
+  color: var(--text);
+}
+.ss-tot b {
+  color: var(--ink);
+}
+
+/* ---- the two maps */
+.ss-maps {
+  display: grid;
+  grid-template-columns: repeat(2, var(--ss-mapw, 200px));
+  justify-content: space-between;
+  gap: 14px;
+}
+.ss-map {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+}
+.ss-map figcaption {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text);
+}
+.ss-map figcaption b {
+  color: var(--ink);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+}
+.ss-unit {
+  margin-left: auto;
+  color: var(--faint);
+}
+.ss-ramp {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+}
+.ss-keys {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--faint);
+}
+.ss[data-form="mini"] .ss-keys,
+.ss[data-form="mini"] .sp-btn-t,
+.ss[data-form="mini"] .ss-parts {
+  display: none;
+}
+.ss[data-form="medium"] .ss-parts {
+  font-size: 10.5px;
+}
+/* reduced motion: no tour to play; the two chips show still moments (a held press, the quick tap at its fastest) */
+.ss.is-reduced .ss-play,
+.ss.is-reduced .ss-slow {
+  display: none;
+}
+.ss:not([data-form="large"])[data-mode="tap"] .ss-keys-drag {
+  display: none;
+}

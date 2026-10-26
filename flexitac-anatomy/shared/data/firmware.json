@@ -1,0 +1,397 @@
+{
+ "id": "firmware",
+ "default": "pyflexitac12",
+ "variants": {
+  "pyflexitac12": {
+   "rows": 12,
+   "cols": 32,
+   "muxOffset": 4,
+   "baud": 2000000,
+   "header": [
+    170,
+    85
+   ],
+   "frameBytes": 386,
+   "src": "refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4)"
+  },
+  "repo16": {
+   "rows": 16,
+   "cols": 32,
+   "muxOffset": 0,
+   "baud": 2000000,
+   "header": [
+    170,
+    85
+   ],
+   "frameBytes": 514,
+   "src": "refs/fw/32_16_fast.ino (github.com/FlexiTac/FlexiTac_Hardware_Repo)"
+  }
+ },
+ "pins": {
+  "SER": 2,
+  "CLK": 3,
+  "S0": 4,
+  "S1": 5,
+  "S2": 6,
+  "S3": 7,
+  "E0": 8,
+  "E1_unused": 9,
+  "ADC": "A0"
+ },
+ "rowsPerMux": 16,
+ "muxCount": 1,
+ "adc": {
+  "bits": 10,
+  "prescaler": 16,
+  "clockHz": 1000000.0,
+  "sentAs": "raw >> 2 (8 bit)"
+ },
+ "naming": "firmware \"row\" = mux channel = sense line (Top FPC); firmware \"column\" = shift-register output = drive line (Bottom FPC)",
+ "host": {
+  "initFrames": 30,
+  "threshold": 15.0,
+  "noiseScale": 60.0,
+  "clip": [
+   0,
+   100
+  ],
+  "alpha": 0.2,
+  "colormap": "cv2.COLORMAP_VIRIDIS",
+  "cellPx": 30,
+  "src": "refs/fw/fast_32_16.py (github.com/FlexiTac/FlexiTac_Hardware_Repo)",
+  "pyflexitac": {
+   "threshold": 25.0,
+   "noiseScale": 30.0,
+   "clip01": true,
+   "src": "refs/fw/pyflexitac/sensor.py (github.com/WT-MM/PyFlexiTac @e006b17)"
+  }
+ },
+ "taxelMap": {
+  "inferred": true,
+  "note": "Frame row r is read on mux channel r+4 = net SR(r+5) = FPC1 pin r+5 (firmware + schematic, certain). Which Top-FPC finger lands on which FPC1 pin depends on the FFC cable/extender orientation, which the materials do not document; assumed straight-through: Top finger NETk -> FPC1 pin k+4, Bottom finger NETk -> FPC2 pin k. Mirror the axes if hardware shows otherwise.",
+  "rows": [
+   {
+    "row": 0,
+    "muxCh": 4,
+    "sr": "SR5",
+    "fpc1Pin": 5,
+    "topNet": "NET1",
+    "x": 11.0
+   },
+   {
+    "row": 1,
+    "muxCh": 5,
+    "sr": "SR6",
+    "fpc1Pin": 6,
+    "topNet": "NET2",
+    "x": 9.0
+   },
+   {
+    "row": 2,
+    "muxCh": 6,
+    "sr": "SR7",
+    "fpc1Pin": 7,
+    "topNet": "NET3",
+    "x": 7.0
+   },
+   {
+    "row": 3,
+    "muxCh": 7,
+    "sr": "SR8",
+    "fpc1Pin": 8,
+    "topNet": "NET4",
+    "x": 5.0
+   },
+   {
+    "row": 4,
+    "muxCh": 8,
+    "sr": "SR9",
+    "fpc1Pin": 9,
+    "topNet": "NET5",
+    "x": 3.0
+   },
+   {
+    "row": 5,
+    "muxCh": 9,
+    "sr": "SR10",
+    "fpc1Pin": 10,
+    "topNet": "NET6",
+    "x": 1.0
+   },
+   {
+    "row": 6,
+    "muxCh": 10,
+    "sr": "SR11",
+    "fpc1Pin": 11,
+    "topNet": "NET7",
+    "x": -1.0
+   },
+   {
+    "row": 7,
+    "muxCh": 11,
+    "sr": "SR12",
+    "fpc1Pin": 12,
+    "topNet": "NET8",
+    "x": -3.0
+   },
+   {
+    "row": 8,
+    "muxCh": 12,
+    "sr": "SR13",
+    "fpc1Pin": 13,
+    "topNet": "NET9",
+    "x": -5.0
+   },
+   {
+    "row": 9,
+    "muxCh": 13,
+    "sr": "SR14",
+    "fpc1Pin": 14,
+    "topNet": "NET10",
+    "x": -7.0
+   },
+   {
+    "row": 10,
+    "muxCh": 14,
+    "sr": "SR15",
+    "fpc1Pin": 15,
+    "topNet": "NET11",
+    "x": -9.0
+   },
+   {
+    "row": 11,
+    "muxCh": 15,
+    "sr": "SR16",
+    "fpc1Pin": 16,
+    "topNet": "NET12",
+    "x": -11.0
+   }
+  ],
+  "cols": [
+   {
+    "col": 0,
+    "sc": "SC1",
+    "fpc2Pin": 1,
+    "botNet": "NET1",
+    "y": -31.0
+   },
+   {
+    "col": 1,
+    "sc": "SC2",
+    "fpc2Pin": 2,
+    "botNet": "NET2",
+    "y": -29.0
+   },
+   {
+    "col": 2,
+    "sc": "SC3",
+    "fpc2Pin": 3,
+    "botNet": "NET3",
+    "y": -27.0
+   },
+   {
+    "col": 3,
+    "sc": "SC4",
+    "fpc2Pin": 4,
+    "botNet": "NET4",
+    "y": -25.0
+   },
+   {
+    "col": 4,
+    "sc": "SC5",
+    "fpc2Pin": 5,
+    "botNet": "NET5",
+    "y": -23.0
+   },
+   {
+    "col": 5,
+    "sc": "SC6",
+    "fpc2Pin": 6,
+    "botNet": "NET6",
+    "y": -21.0
+   },
+   {
+    "col": 6,
+    "sc": "SC7",
+    "fpc2Pin": 7,
+    "botNet": "NET7",
+    "y": -19.0
+   },
+   {
+    "col": 7,
+    "sc": "SC8",
+    "fpc2Pin": 8,
+    "botNet": "NET8",
+    "y": -17.0
+   },
+   {
+    "col": 8,
+    "sc": "SC9",
+    "fpc2Pin": 9,
+    "botNet": "NET9",
+    "y": -15.0
+   },
+   {
+    "col": 9,
+    "sc": "SC10",
+    "fpc2Pin": 10,
+    "botNet": "NET10",
+    "y": -13.0
+   },
+   {
+    "col": 10,
+    "sc": "SC11",
+    "fpc2Pin": 11,
+    "botNet": "NET11",
+    "y": -11.0
+   },
+   {
+    "col": 11,
+    "sc": "SC12",
+    "fpc2Pin": 12,
+    "botNet": "NET12",
+    "y": -9.0
+   },
+   {
+    "col": 12,
+    "sc": "SC13",
+    "fpc2Pin": 13,
+    "botNet": "NET13",
+    "y": -7.0
+   },
+   {
+    "col": 13,
+    "sc": "SC14",
+    "fpc2Pin": 14,
+    "botNet": "NET14",
+    "y": -5.0
+   },
+   {
+    "col": 14,
+    "sc": "SC15",
+    "fpc2Pin": 15,
+    "botNet": "NET15",
+    "y": -3.0
+   },
+   {
+    "col": 15,
+    "sc": "SC16",
+    "fpc2Pin": 16,
+    "botNet": "NET16",
+    "y": -1.0
+   },
+   {
+    "col": 16,
+    "sc": "SC17",
+    "fpc2Pin": 17,
+    "botNet": "NET17",
+    "y": 1.0
+   },
+   {
+    "col": 17,
+    "sc": "SC18",
+    "fpc2Pin": 18,
+    "botNet": "NET18",
+    "y": 3.0
+   },
+   {
+    "col": 18,
+    "sc": "SC19",
+    "fpc2Pin": 19,
+    "botNet": "NET19",
+    "y": 5.0
+   },
+   {
+    "col": 19,
+    "sc": "SC20",
+    "fpc2Pin": 20,
+    "botNet": "NET20",
+    "y": 7.0
+   },
+   {
+    "col": 20,
+    "sc": "SC21",
+    "fpc2Pin": 21,
+    "botNet": "NET21",
+    "y": 9.0
+   },
+   {
+    "col": 21,
+    "sc": "SC22",
+    "fpc2Pin": 22,
+    "botNet": "NET22",
+    "y": 11.0
+   },
+   {
+    "col": 22,
+    "sc": "SC23",
+    "fpc2Pin": 23,
+    "botNet": "NET23",
+    "y": 13.0
+   },
+   {
+    "col": 23,
+    "sc": "SC24",
+    "fpc2Pin": 24,
+    "botNet": "NET24",
+    "y": 15.0
+   },
+   {
+    "col": 24,
+    "sc": "SC25",
+    "fpc2Pin": 25,
+    "botNet": "NET25",
+    "y": 17.0
+   },
+   {
+    "col": 25,
+    "sc": "SC26",
+    "fpc2Pin": 26,
+    "botNet": "NET26",
+    "y": 19.0
+   },
+   {
+    "col": 26,
+    "sc": "SC27",
+    "fpc2Pin": 27,
+    "botNet": "NET27",
+    "y": 21.0
+   },
+   {
+    "col": 27,
+    "sc": "SC28",
+    "fpc2Pin": 28,
+    "botNet": "NET28",
+    "y": 23.0
+   },
+   {
+    "col": 28,
+    "sc": "SC29",
+    "fpc2Pin": 29,
+    "botNet": "NET29",
+    "y": 25.0
+   },
+   {
+    "col": 29,
+    "sc": "SC30",
+    "fpc2Pin": 30,
+    "botNet": "NET30",
+    "y": 27.0
+   },
+   {
+    "col": 30,
+    "sc": "SC31",
+    "fpc2Pin": 31,
+    "botNet": "NET31",
+    "y": 29.0
+   },
+   {
+    "col": 31,
+    "sc": "SC32",
+    "fpc2Pin": 32,
+    "botNet": "NET32",
+    "y": 31.0
+   }
+  ]
+ }
+}

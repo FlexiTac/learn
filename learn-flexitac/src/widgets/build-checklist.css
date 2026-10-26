@@ -1,0 +1,301 @@
+/* Build checklist (lesson 6, Build your own). Scoped to .w-build. */
+.w-build {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  overflow: auto;
+  container-type: inline-size;
+}
+.w-build-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.w-build-count {
+  font-size: 12px;
+  color: var(--ink);
+}
+.w-build-bar {
+  flex: 1 1 80px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.w-build-bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.3s var(--ease);
+}
+.w-build-reset {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+.w-build-steps {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.w-build-steps button {
+  position: relative;
+  min-width: 44px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--face);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.w-build-steps button:hover {
+  border-color: var(--line-strong);
+}
+.w-build-steps button[aria-current="step"] {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--card-2);
+}
+.w-build-steps button.is-done {
+  border-color: var(--accent-line);
+}
+.w-build-tick {
+  color: var(--accent);
+  font-weight: 700;
+}
+.w-build-steps button:focus-visible,
+.w-build-thumb:focus-visible,
+.w-build-photo:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.w-build-card {
+  flex: 1 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 16px;
+  align-content: start;
+}
+.w-build-media {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.w-build-view {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+  aspect-ratio: 16 / 9;
+}
+.w-build-view video,
+.w-build-view img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.w-build-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.w-build-cap {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.w-build-thumbs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.w-build-thumb {
+  position: relative;
+  flex: none;
+  width: 72px;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--card-2);
+  cursor: pointer;
+  opacity: 0.75;
+}
+.w-build-thumb[aria-pressed="true"] {
+  opacity: 1;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.w-build-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.w-build-thumb.is-clip span {
+  position: absolute;
+  inset: auto 0 0 0;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 1px 4px;
+}
+.w-build-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.w-build-body h3 {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.w-build-body p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.w-build-checks {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.w-build-checks label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--face);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink);
+  cursor: pointer;
+}
+.w-build-checks input {
+  flex: none;
+  margin: 2px 0 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+.w-build-checks input:checked + span {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--faint);
+}
+.w-build-nav {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+.w-build-nav button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+/* the flash card: the commands to type, in place of the photo (the code card's colours) */
+.w-build-term {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--face);
+  color: var(--ink);
+  font-size: 12.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.w-build-com {
+  color: var(--muted);
+}
+.w-build-prompt {
+  color: var(--accent);
+  user-select: none;
+}
+/* the Fix card: the step's text, then the Troubleshooter at the card's full width */
+.w-build-card.is-doctor {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+.w-build-fixhead p {
+  max-width: 78ch;
+}
+.w-build-doc {
+  min-width: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.w-build-doc > .w-doc {
+  height: auto;
+  padding: 0;
+  overflow: visible;
+}
+.w-build-card.is-doctor > .w-build-nav {
+  margin-top: 0;
+  padding-top: 0;
+}
+.w-build-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+  background: rgba(0, 0, 0, 0.82);
+  cursor: zoom-out;
+}
+.w-build-zoom[hidden] {
+  display: none;
+}
+.w-build-zoom img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+}
+.w-build-zoom-close {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: 12px;
+  font-size: 20px;
+  line-height: 1;
+}
+
+@container (max-width: 640px) {
+  .w-build-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .w-build-thumb {
+    width: 60px;
+  }
+}

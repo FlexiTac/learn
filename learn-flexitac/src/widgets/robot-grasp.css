@@ -1,0 +1,344 @@
+/* Robot grasp (src/widgets/robot-grasp.ts): the reBot + FlexiTac strawberry loop and the two pads' live touch maps.
+   The box is painted the figure stage's colour (the Anatomy card, the video's own background), so the video's edges
+   never show. The maps look like Lesson 1's touch map (Fig 1 feel mode): square cells with a hairline gap, viridis,
+   an untouched spot a quiet neutral (--rg-map-zero, = figures/pad/pad.css --pd-map-zero). Text in the plate-corner
+   mono style; the kicker's name in the lesson's colour. */
+.rg {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: var(--rg-stage);
+  color: var(--text);
+  overflow: hidden;
+  --rg-stage: #fbfbfa;
+  --rg-map-zero: #e3e3de;
+  --rg-btn: rgba(255, 255, 255, 0.86);
+  --rg-btn-ink: #26262a;
+  --rg-btn-ring: rgba(0, 0, 0, 0.12);
+  /* the video's close-up lines (flexitac-anatomy/figures/robot/robot.css --rb-ring, --rb-ring-alpha), for the cover */
+  --rg-ring: #3c3c42;
+  --rg-ring-a: 0.62;
+}
+:root[data-theme="dark"] .rg {
+  --rg-stage: #131313;
+  --rg-map-zero: #2a2b30;
+  --rg-btn: rgba(28, 28, 30, 0.86);
+  --rg-btn-ink: #e6e6e8;
+  --rg-btn-ring: rgba(255, 255, 255, 0.14);
+  --rg-ring: #a2a2a8;
+  --rg-ring-a: 0.7;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .rg {
+    --rg-stage: #131313;
+    --rg-map-zero: #2a2b30;
+    --rg-btn: rgba(28, 28, 30, 0.86);
+    --rg-btn-ink: #e6e6e8;
+    --rg-btn-ring: rgba(255, 255, 255, 0.14);
+  --rg-ring: #a2a2a8;
+  --rg-ring-a: 0.7;
+  }
+}
+
+/* ---- the row: the video, then the maps' block (the caption runs under both) */
+.rg-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rg-gap, 28px);
+  min-height: 0;
+  max-width: 100%;
+}
+
+/* ---- the video */
+.rg-media {
+  position: relative;
+  flex: none;
+  background: var(--rg-stage);
+}
+.rg-media > .rg-poster,
+.rg-media > .rg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.rg-play {
+  position: absolute;
+  z-index: 2;
+  right: 10px;
+  bottom: 10px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--rg-btn);
+  color: var(--rg-btn-ink);
+  box-shadow: 0 0 0 1px var(--rg-btn-ring), 0 2px 6px -2px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  opacity: 0.72;
+  transition: opacity 160ms var(--ease, ease);
+}
+.rg-play:hover,
+.rg-play:focus-visible,
+.rg-play[aria-pressed="true"] {
+  opacity: 1;
+}
+.rg-play:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.rg-play svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+.rg-play[hidden] {
+  display: none;
+}
+
+/* ---- the "FlexiTac pad" tag over the close-up (Fig 1's callout look: a card, a teal leader with a halo, a dot on
+   the part). .rg-tag sits at the pad's x; the card's bottom is just above the close-up's circle (--rg-tag-top), the
+   leader runs straight down to the pad (--rg-tag-y). Shown while the fingers hold still (frames from the json). */
+.rg-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 1; /* above the video (inserted after it) */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 260ms var(--ease, ease);
+  --rg-tag-line: var(--ft-hotspot, #15918f);
+  --rg-tag-halo: var(--rg-stage);
+}
+.rg-tag[data-on] {
+  opacity: 1;
+}
+.rg-tag[hidden] {
+  display: none;
+}
+.rg-tag::before {
+  /* the leader: from the card down to the pad */
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: calc(var(--rg-tag-top) - 6px);
+  height: calc(var(--rg-tag-y) - var(--rg-tag-top) + 6px);
+  width: 2px;
+  background: var(--rg-tag-line);
+  box-shadow: 0 0 0 1.5px var(--rg-tag-halo);
+}
+.rg-tag::after {
+  /* the dot on the pad */
+  content: "";
+  position: absolute;
+  left: -4.5px;
+  top: calc(var(--rg-tag-y) - 4.5px);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--rg-tag-line);
+  box-shadow: 0 0 0 2px var(--rg-tag-halo);
+}
+.rg-tag-card {
+  position: absolute;
+  left: 0;
+  top: calc(var(--rg-tag-top) - 6px);
+  transform: translate(-50%, -100%);
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: var(--face, #fff);
+  color: var(--ink);
+  box-shadow: 0 0 0 1px var(--line, rgba(0, 0, 0, 0.1)), 0 2px 6px -3px rgba(0, 0, 0, 0.2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---- the maps */
+.rg-side {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.rg-kicker {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.rg-name {
+  color: var(--lc, var(--accent));
+  font-weight: 700;
+}
+.rg-sep {
+  margin: 0 0.5em;
+}
+.rg-maps {
+  display: flex;
+  gap: var(--rg-map-gap, 18px);
+  align-items: flex-start;
+}
+.rg-map {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+}
+.rg-map figcaption {
+  width: var(--rg-map-w, auto);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.rg-count {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.rg-map canvas {
+  display: block;
+}
+.rg-tip {
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.rg-tip::before {
+  content: "\2191\00a0";
+}
+.rg-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.rg-ramp {
+  display: block;
+  width: 64px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #440154, #3b528b, #21918c, #5ec962, #fde725);
+}
+.rg-cap {
+  margin: 0;
+  max-width: var(--rg-cap-w, 420px);
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  text-align: center;
+  color: var(--muted);
+}
+.rg-cap > span {
+  white-space: nowrap;
+}
+/* a tight side column: the kicker keeps its name only (the caption says "illustrative") */
+.rg[data-tight] .rg-sep,
+.rg[data-tight] .rg-ill {
+  display: none;
+}
+.rg[data-tight] .rg-map figcaption {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+.rg[data-error] .rg-maps {
+  opacity: 0.4;
+}
+
+/* ---- narrow (a phone, a narrow column): the video on top, the maps under it */
+.rg[data-narrow] {
+  height: auto;
+  gap: 14px;
+  padding: 12px;
+}
+.rg[data-narrow] .rg-row {
+  flex-direction: column;
+  gap: 14px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rg-play,
+  .rg-tag {
+    transition: none;
+  }
+}
+
+/* ---- the cover form (the home page hero, src/views/home.ts): the video and the maps only, the heading and the
+   finger names; no "FlexiTac pad" tag (too busy at this size), counts, fingertip marks, legend, caption or play button
+   (the hero's caption says illustrative) */
+.rg[data-form="cover"] {
+  padding: 10px 12px;
+  gap: 0;
+}
+.rg[data-form="cover"] .rg-cap,
+.rg[data-form="cover"] .rg-tag,
+.rg[data-form="cover"] .rg-legend,
+.rg[data-form="cover"] .rg-count,
+.rg[data-form="cover"] .rg-tip,
+.rg[data-form="cover"] .rg-play,
+.rg[data-form="cover"] .rg-sep,
+.rg[data-form="cover"] .rg-ill {
+  display: none;
+}
+.rg[data-form="cover"] .rg-side {
+  gap: 7px;
+}
+.rg[data-form="cover"] .rg-kicker {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.rg[data-form="cover"] .rg-map {
+  gap: 4px;
+}
+.rg[data-form="cover"] .rg-map figcaption {
+  justify-content: center;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+/* the close-up's circle, the ring on the main view and the line joining them, drawn again over the video with CSS-px
+   strokes (the video's ~1 px lines break into dots at hero size); placed by robot-grasp.ts placeZoom, stroke widths
+   set there. One group, one opacity: no darker spots where the line meets the circles */
+.rg-zoom {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* above the video (inserted after it) */
+  overflow: visible;
+  pointer-events: none;
+}
+.rg-zoom[hidden] {
+  display: none;
+}
+.rg-zoom g {
+  fill: none;
+  stroke: var(--rg-ring);
+  opacity: var(--rg-ring-a);
+}

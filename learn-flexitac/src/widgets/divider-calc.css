@@ -1,0 +1,251 @@
+/* divider-calc widget (lesson 5). Scoped to .w-div; colours only from the theme tokens. */
+.w-div {
+  container-type: inline-size;
+  height: 100%;
+  overflow: auto;
+  --seg-taxel: var(--line-strong);
+  --seg-r1: var(--accent);
+}
+.w-div-in {
+  box-sizing: border-box;
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(min-content, 1fr) auto;
+  gap: 10px;
+  padding: 14px 16px 12px;
+}
+.w-div-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.w-div-sync {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--faint);
+}
+.w-div-main {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 18px;
+  min-height: 0;
+  align-items: stretch;
+}
+
+/* the 5 V split: one bar, two segments, 2px surface gap */
+.w-div-split {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  gap: 4px;
+  min-height: 96px;
+}
+.w-div-rail {
+  font-size: 11px;
+  color: var(--muted);
+}
+.w-div-bar {
+  position: relative;
+  width: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.w-div-seg {
+  flex: 1 1 0;
+  min-height: 2px;
+  transition: flex-grow 0.18s var(--ease);
+}
+.w-div-seg.is-taxel {
+  background: var(--seg-taxel);
+  border-radius: 4px 4px 0 0;
+}
+.w-div-seg.is-r1 {
+  background: var(--seg-r1);
+  border-radius: 0 0 4px 4px;
+}
+.w-div-a0 {
+  position: absolute;
+  left: calc(100% + 4px);
+  transform: translateY(50%);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  transition: bottom 0.18s var(--ease);
+}
+.w-div-a0::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 1.5px;
+  margin-right: 3px;
+  vertical-align: middle;
+  background: var(--ink);
+}
+
+/* readouts */
+.w-div-read {
+  margin: 0;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  font-size: 12.5px;
+  min-width: 0;
+}
+.w-div-read > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--line);
+}
+.w-div-read dt {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.w-div-read dd {
+  margin: 0;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+.w-div-read small {
+  color: var(--faint);
+  font-size: 0.85em;
+  margin-left: 2px;
+}
+.w-div-read .is-key dt,
+.w-div-read .is-key dd {
+  color: var(--ink);
+  font-weight: 650;
+}
+.w-div-read .is-key dd {
+  font-size: 1.12em;
+}
+.w-div-read .sw {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+.w-div-read .sw.is-taxel {
+  background: var(--seg-taxel);
+}
+.w-div-read .sw.is-r1 {
+  background: var(--seg-r1);
+}
+.w-div-read > .w-div-meter {
+  display: block;
+  height: 6px;
+  padding: 0;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--card-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+.w-div-meter-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width 0.18s var(--ease);
+}
+
+/* slider */
+.w-div-slider {
+  display: grid;
+  gap: 2px;
+}
+.w-div-lab {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.w-div-lab span {
+  font-weight: 400;
+  color: var(--faint);
+}
+.w-div-slider input {
+  width: 100%;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.w-div-ends {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--faint);
+  min-height: 1.4em;
+}
+.w-div-ends > span:nth-child(2) {
+  position: absolute;
+  left: var(--r1-at, 60%);
+  transform: translateX(-50%);
+  color: var(--muted);
+}
+.w-div-ends > span:nth-child(2)::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -5px;
+  width: 1px;
+  height: 4px;
+  background: var(--line-strong);
+}
+
+/* wide and short (the desktop split stage): tighter, readouts in two columns */
+@container (min-width: 560px) {
+  .w-div-in {
+    gap: 6px;
+    padding: 10px 16px 8px;
+  }
+  .w-div-split {
+    min-height: 84px;
+  }
+  .w-div-read > div {
+    padding: 1px 0;
+  }
+  .w-div-read {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 28px;
+  }
+  .w-div-read > .w-div-meter {
+    align-self: center;
+    margin-top: 0;
+  }
+}
+
+@container (max-width: 440px) {
+  .w-div-in {
+    padding: 12px;
+  }
+  .w-div-main {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .w-div-read {
+    font-size: 12px;
+  }
+  .w-div-ends .w-div-word {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-div-seg,
+  .w-div-a0,
+  .w-div-meter-fill {
+    transition: none;
+  }
+}

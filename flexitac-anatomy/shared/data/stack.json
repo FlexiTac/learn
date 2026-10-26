@@ -1,0 +1,109 @@
+{
+ "id": "stack",
+ "order": "top -> bottom (as built; the \"top\" is the Top-FPC side)",
+ "units": "mm",
+ "totalThickness": {
+  "value": 1.0,
+  "relation": "<",
+  "unit": "mm",
+  "src": "material/2604.28156v1.pdf Sec 2.1 \"total thickness < 1 mm\"",
+  "inferred": false
+ },
+ "layers": [
+  {
+   "id": "pi_top",
+   "name": "Polyimide tape seal (top)",
+   "material": "polyimide (Kapton-type) adhesive tape",
+   "thickness": null,
+   "coverage": "border strips only (seals the edges)",
+   "note": "thickness not given in the materials",
+   "src": "material/FlexiTac Hardware Guide.docx Step 3 \"Seal Edges with Polyimide\"; BOM item 2"
+  },
+  {
+   "id": "lam_top",
+   "name": "Laminating sheet (top)",
+   "material": "adhesive laminating sheet",
+   "thickness": null,
+   "note": "thickness not given in the materials",
+   "src": "material/FlexiTac Hardware Guide.docx Step 1; BOM item 4; material/2604.28156v1.pdf Fig 3a"
+  },
+  {
+   "id": "fpc_top",
+   "name": "Top FPC (sense lines)",
+   "material": "polyimide flex, 1 oz Cu, ENIG",
+   "thickness": 0.2,
+   "orientation": "mounted face-down: copper electrodes touch the Velostat (inferred)",
+   "inferredOrientation": true,
+   "stiffeners": {
+    "thicknesses": [
+     0.1,
+     0.2
+    ],
+    "side": "non-copper side -> faces outward (up) when mounted face-down",
+    "src": "material/Gerber_Top_FPC_2026-03-02.zip:*.GBSL + jlcpcb.json"
+   },
+   "src": "material/FlexiTac Hardware Guide.docx FPC Manufacturing Guide Step 1 \"0.2mm\"; material/2604.28156v1.pdf (Top FPC 0.2 mm)"
+  },
+  {
+   "id": "velostat",
+   "name": "Velostat / Linqstat (Adafruit 1361)",
+   "material": "carbon-loaded polyolefin film (piezoresistive)",
+   "thickness": 0.1,
+   "volumeResistivity": {
+    "value": 500,
+    "relation": "<",
+    "unit": "ohm*cm"
+   },
+   "surfaceResistivity": {
+    "value": 31000,
+    "relation": "<",
+    "unit": "ohm/sq*cm"
+   },
+   "behaviour": "pressing lowers its resistance (no force characterization in the materials)",
+   "src": "user-confirmed 2026-10-21 (Adafruit 1361: 4 mil); material/FlexiTac Hardware Guide.docx BOM item 3"
+  },
+  {
+   "id": "fpc_bot",
+   "name": "Bottom FPC (drive lines)",
+   "material": "polyimide flex, 1 oz Cu, ENIG",
+   "thickness": 0.2,
+   "orientation": "face-up: copper electrodes touch the Velostat",
+   "inferredOrientation": true,
+   "stiffeners": {
+    "thicknesses": [
+     0.1,
+     0.2
+    ],
+    "side": "non-copper side -> faces outward (down)",
+    "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:*.GBSL + jlcpcb.json"
+   },
+   "src": "material/FlexiTac Hardware Guide.docx FPC Manufacturing Guide Step 1-3 \"0.2mm\""
+  },
+  {
+   "id": "lam_bot",
+   "name": "Laminating sheet (bottom)",
+   "material": "adhesive laminating sheet",
+   "thickness": null,
+   "note": "thickness not given in the materials",
+   "src": "material/FlexiTac Hardware Guide.docx Step 1; material/2604.28156v1.pdf Fig 3a"
+  },
+  {
+   "id": "pi_bot",
+   "name": "Polyimide tape seal (bottom)",
+   "material": "polyimide adhesive tape",
+   "thickness": null,
+   "coverage": "border strips only",
+   "note": "thickness not given in the materials",
+   "src": "material/FlexiTac Hardware Guide.docx Step 3"
+  }
+ ],
+ "fpcBuild": {
+  "dielectric_um": 25,
+  "coverlay": "PI 25 um / adhesive 25 um",
+  "copper": "1 oz",
+  "finish": "ENIG 1 u\"",
+  "goldFingerThickness": 0.3,
+  "src": "material/FlexiTac Hardware Guide.docx JLC order screenshots (image10/11), via refs/dossier.json"
+ },
+ "note": "Display drawings exaggerate thickness; label it (e.g. \"thickness x20\")."
+}

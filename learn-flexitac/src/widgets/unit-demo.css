@@ -1,0 +1,549 @@
+/* One touch spot (src/widgets/unit-demo.ts), the content of Lesson 2 step 1's demo card. Colours only from tokens: the
+   materials (gold, Velostat, rubber, signal pink) are the figures' own (tokens.css copies them from palette.css) and are
+   shaded like the figures (top face lightest, the lit side, the shadow side, a crisp 1 px edge); the touch spot and the
+   kicker's ring wear the figure's ring colour (--ft-hotspot), the voltmeter's bar the lesson colour, every text a text
+   token. The drawing's height comes from its width (built by unit-demo.ts). */
+.ud {
+  container-type: inline-size;
+  display: grid;
+  /* (one column no wider than the card: a nowrap line never widens the drawing past it) */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 11px 14px 13px;
+  --ud-grain: color-mix(in oklab, var(--ft-velostat-top) 40%, #b9bdc9);
+  --ud-path: color-mix(in oklab, var(--ft-signal) 70%, #ffffff);
+  --ud-path-glow: color-mix(in oklab, var(--ft-signal) 50%, transparent);
+  --ud-wire: color-mix(in oklab, var(--ink) 82%, var(--face));
+  --ud-shade: 0.34;
+  /* the glass half's faces (top lightest) and edges */
+  --ud-gh-top: color-mix(in oklab, var(--ft-velostat-top) 14%, transparent);
+  --ud-gh-l: color-mix(in oklab, var(--ft-velostat-left) 22%, transparent);
+  --ud-gh-r: color-mix(in oklab, var(--ft-velostat-right) 30%, transparent);
+  --ud-gh-edge: color-mix(in oklab, var(--ft-velostat-edge) 70%, transparent);
+}
+:root[data-theme="dark"] .ud {
+  --ud-path: var(--ft-signal);
+  --ud-shade: 0.5;
+  --ud-gh-top: color-mix(in oklab, color-mix(in oklab, var(--ft-velostat-top) 55%, #ffffff) 16%, transparent);
+  --ud-gh-l: color-mix(in oklab, color-mix(in oklab, var(--ft-velostat-left) 60%, #ffffff) 11%, transparent);
+  --ud-gh-r: color-mix(in oklab, color-mix(in oklab, var(--ft-velostat-right) 70%, #ffffff) 7%, transparent);
+  --ud-gh-edge: color-mix(in oklab, var(--ft-velostat-edge) 85%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ud {
+    --ud-path: var(--ft-signal);
+    --ud-shade: 0.5;
+    --ud-gh-top: color-mix(in oklab, color-mix(in oklab, var(--ft-velostat-top) 55%, #ffffff) 16%, transparent);
+    --ud-gh-l: color-mix(in oklab, color-mix(in oklab, var(--ft-velostat-left) 60%, #ffffff) 11%, transparent);
+    --ud-gh-r: color-mix(in oklab, color-mix(in oklab, var(--ft-velostat-right) 70%, #ffffff) 7%, transparent);
+    --ud-gh-edge: color-mix(in oklab, var(--ft-velostat-edge) 85%, transparent);
+  }
+}
+.ud-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-height: 18px;
+  /* clear of the card's × (28 px at 6 px from the card's edge: it reaches 20 px into this box), plus 4 px */
+  padding-right: 24px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--muted);
+}
+/* a small ring, the figure's ring: what this card is about */
+.ud-ring {
+  flex: none;
+  width: 11px;
+  height: 7px;
+  border: 2px solid var(--ft-hotspot);
+  border-radius: 50%;
+}
+.ud-name {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.ud-sep {
+  color: var(--faint);
+}
+.ud-ill {
+  cursor: help;
+}
+
+.ud-anim {
+  border-radius: 6px;
+  /* up/down drags on the unit press the tip; sideways still scrolls a scroller */
+  touch-action: pan-x pinch-zoom;
+}
+.ud-anim:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.ud-svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+/* the scrub area over the 3D unit */
+.ud-hit {
+  fill: transparent;
+  pointer-events: all;
+  cursor: ns-resize;
+}
+
+/* ---- the unit: solid faces, top lightest, the lit (front) side, the shadow (right) side, 1 px edges */
+.ud-unit path {
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+.ud-g-top {
+  fill: var(--ft-gold-top);
+  stroke: var(--ft-gold-edge);
+}
+.ud-g-l {
+  fill: var(--ft-gold-left);
+  stroke: var(--ft-gold-edge);
+}
+.ud-g-r {
+  fill: var(--ft-gold-right);
+  stroke: var(--ft-gold-edge);
+}
+.ud-v-top {
+  fill: var(--ft-velostat-top);
+  stroke: var(--ft-velostat-edge);
+}
+.ud-v-l {
+  fill: var(--ft-velostat-left);
+  stroke: var(--ft-velostat-edge);
+}
+.ud-v-r {
+  fill: var(--ft-velostat-right);
+  stroke: var(--ft-velostat-edge);
+}
+/* a layer's shadow on the one under it (light from straight above), and the light caught by the film's top edges */
+.ud-unit .ud-shade {
+  fill: #000000;
+  fill-opacity: var(--ud-shade);
+  stroke: none;
+}
+.ud-unit .ud-rim {
+  fill: none;
+  stroke: color-mix(in oklab, var(--ft-velostat-top) 45%, #ffffff);
+  stroke-opacity: 0.6;
+}
+.ud-grains ellipse,
+.ud-grain {
+  fill: var(--ud-grain);
+}
+/* the Velostat's front half as tinted glass (fills only, top lightest), crisp thin edges, a few faint grains; the section
+   face (the back half's front, with the touch spot and its glowing paths) reads through it */
+.ud-unit .ud-shade-gh {
+  fill-opacity: calc(var(--ud-shade) * 0.4);
+}
+.ud-unit .ud-gh-top {
+  fill: var(--ud-gh-top);
+  stroke: none;
+}
+.ud-unit .ud-gh-l {
+  fill: var(--ud-gh-l);
+  stroke: none;
+}
+.ud-unit .ud-gh-r {
+  fill: var(--ud-gh-r);
+  stroke: none;
+}
+.ud-unit .ud-gh-edge {
+  fill: none;
+  stroke: var(--ud-gh-edge);
+}
+/* (its far side, seen through its top: fainter still, and that side's lower edge) */
+.ud-unit .ud-gh-far {
+  fill: var(--ud-gh-l);
+  fill-opacity: 0.6;
+  stroke: none;
+}
+.ud-unit .ud-gh-far-edge {
+  fill: none;
+  stroke: var(--ud-gh-edge);
+  stroke-opacity: 0.45;
+}
+.ud-gh-grains ellipse {
+  fill: var(--ud-grain);
+  opacity: 0.4;
+}
+.ud-unit .ud-path-glow {
+  fill: none;
+  stroke: var(--ud-path-glow);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.ud-unit .ud-path {
+  fill: none;
+  stroke: var(--ud-path);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.ud-node {
+  fill: var(--ud-path);
+}
+/* the touch spot: the slice of film between the strips, outlined in the ring's teal */
+.ud-unit .ud-spot {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 1.2;
+  stroke-dasharray: 2.5 2;
+}
+.ud-joint {
+  fill: var(--ft-gold-top);
+  stroke: var(--ud-wire);
+  stroke-width: 1.2;
+}
+
+/* ---- the press tip (rubber), shaded across its round side */
+.ud-tip-s0 {
+  stop-color: var(--ft-rubber-left);
+}
+.ud-tip-s1 {
+  stop-color: var(--ft-rubber-top);
+}
+.ud-tip-s2 {
+  stop-color: var(--ft-rubber-right);
+}
+.ud-tip-body {
+  stroke: var(--ft-rubber-edge);
+  stroke-width: 1;
+}
+.ud-tip-hi {
+  fill: none;
+  stroke: #ffffff;
+  stroke-opacity: 0.14;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* ---- the circuit */
+.ud-wire {
+  fill: none;
+  stroke: var(--ud-wire);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* the current: pink dots along the circuit, their speed set by it (unit-demo.ts moves stroke-dashoffset) */
+.ud-dot {
+  fill: none;
+  stroke: var(--ft-signal);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 0.01 7;
+}
+.ud-unit .ud-dot-on-strip {
+  stroke-width: 2.2;
+}
+.ud-node-dot {
+  fill: var(--ud-wire);
+}
+.ud-term {
+  fill: var(--face);
+  stroke: var(--ud-wire);
+  stroke-width: 1.4;
+}
+.ud-vm {
+  fill: var(--face);
+  stroke: var(--ud-wire);
+  stroke-width: 1.4;
+}
+.ud-vm-v {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  fill: var(--ink);
+}
+.ud-screen {
+  fill: var(--card-2);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.ud-read {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  fill: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.ud-track {
+  fill: var(--line);
+}
+.ud-bar {
+  fill: var(--accent);
+}
+
+/* ---- labels */
+.ud-lab {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  fill: var(--muted);
+}
+/* the mini form's short tags ("top", "bottom") */
+.ud-lab-mini {
+  font-size: 9px;
+  letter-spacing: 0;
+}
+.ud-lab-strong {
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--ink);
+}
+.ud-tag,
+.ud-knock-tag {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  fill: var(--ft-hotspot);
+}
+.ud-val,
+.ud-knock-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+/* the tag's leader to the touch spot (seen through the glass), and the tag's lines in the mask that stops the glass's
+   edges short of them (a narrow card: the tag's first letters lie over the glass) */
+.ud-lead {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+mask .ud-knock-tag,
+mask .ud-knock-val {
+  fill: #000000;
+  stroke: #000000;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+/* (c) the formula and the one line */
+.ud-formula {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ud-formula b {
+  color: var(--ink);
+}
+.ud-line {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.ud-arrow {
+  color: var(--muted);
+}
+/* a narrow card: the kicker takes two lines (the name, then "Illustrative" under it, without the dot). On one line it
+   needs ~243 px of this box (ring, name, dot, "Illustrative", gaps and the × clearance, measured in Chrome with the
+   site's mono stack); the breakpoint keeps ~4 px spare for a wider mono font, so cards from ~277 px keep one line */
+@container (max-width: 246px) {
+  .ud-sep {
+    display: none;
+  }
+  .ud-ill {
+    flex-basis: 100%;
+    padding-left: 17px;
+  }
+}
+@container (max-width: 230px) {
+  .ud-line {
+    font-size: 12px;
+  }
+  .ud-formula {
+    font-size: 11px;
+  }
+}
+
+/* the mini form (a phone's band: unit-demo.ts builds the unit over a mini loop, with no strip names and no tag): R and V
+   as two text rows under the drawing, V with its share of the 5 V; no formula (the step text gives it). The kicker
+   drops its ring (the leader from the figure's ring says which spot) and keeps the name clear of the card's × */
+.ud-mini {
+  display: none;
+}
+.ud.is-mini .ud-mini {
+  display: grid;
+  gap: 3px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.ud-mini b {
+  font-weight: 700;
+}
+.ud-mini-r b {
+  color: var(--ft-hotspot);
+}
+.ud-mini-track {
+  display: block;
+  height: 4px;
+  margin-top: 1px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.ud-mini-bar {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.ud.is-mini .ud-formula {
+  display: none;
+}
+.ud.is-mini .ud-kicker {
+  padding-right: 20px;
+  letter-spacing: 0.05em;
+  font-size: 9.5px;
+}
+.ud.is-mini .ud-ring {
+  display: none;
+}
+.ud.is-mini .ud-sep {
+  display: none;
+}
+.ud.is-mini .ud-ill {
+  flex-basis: 100%;
+  padding-left: 0;
+}
+.demo-card[data-narrow] .ud {
+  gap: 6px;
+  padding: 9px 10px 10px;
+}
+/* a short phone band (a 320 px phone: the drawing is ~185 px tall, src/ui/demo.ts "short"): tighter gaps and rows, so
+   the card fits beside the pad */
+.demo-card[data-short][data-narrow] .ud {
+  gap: 4px;
+  padding: 6px 10px 7px;
+}
+.demo-card[data-short][data-narrow] .ud.is-mini .ud-mini {
+  gap: 1px;
+  font-size: 11px;
+}
+
+/* the large form's second formula line (the live numbers in it): only in the large form */
+.ud-sub {
+  display: none;
+}
+
+/* ---- the LARGE form (a card of about half the stage, unit-demo.ts: LARGE_W, LARGE): a second figure beside the pad.
+   The drawing's type is 13-16 px (the sizes unit-demo.ts measures its labels in), its outlines stay 1 px, its wires,
+   dots and paths are a little bolder, and the rows under it scale with the card's width (cqi: the card's inner width
+   less this padding). The drawing fills the height the card is given (unit-demo.ts, budgetOf). */
+.ud.is-large {
+  gap: 10px;
+  padding: 16px 22px 18px;
+}
+.ud.is-large .ud-kicker {
+  min-height: 22px;
+  padding-right: 30px;
+  font-size: 11.5px;
+  gap: 2px 8px;
+}
+.ud.is-large .ud-ring {
+  width: 14px;
+  height: 9px;
+}
+/* (the drawing's text: LARGE's sizes x --ud-k, 1 to 1.2 with the card's width: unit-demo.ts largeK) */
+.ud.is-large .ud-lab {
+  font-size: calc(13px * var(--ud-k, 1));
+}
+.ud.is-large .ud-lab-strong {
+  font-size: calc(14px * var(--ud-k, 1));
+}
+.ud.is-large .ud-tag,
+.ud.is-large .ud-knock-tag {
+  font-size: calc(13px * var(--ud-k, 1));
+}
+.ud.is-large .ud-val,
+.ud.is-large .ud-knock-val {
+  font-size: calc(16px * var(--ud-k, 1));
+}
+.ud.is-large mask .ud-knock-tag,
+.ud.is-large mask .ud-knock-val {
+  stroke-width: 4px;
+}
+.ud.is-large .ud-vm-v {
+  font-size: calc(14px * var(--ud-k, 1));
+}
+.ud.is-large .ud-read {
+  font-size: calc(16px * var(--ud-k, 1));
+}
+.ud.is-large .ud-wire,
+.ud.is-large .ud-term,
+.ud.is-large .ud-vm {
+  stroke-width: 1.6;
+}
+.ud.is-large .ud-joint {
+  stroke-width: 1.4;
+}
+.ud.is-large .ud-dot {
+  stroke-width: 3.2;
+  stroke-dasharray: 0.01 10;
+}
+.ud.is-large .ud-unit .ud-dot-on-strip {
+  stroke-width: 3;
+}
+.ud.is-large .ud-unit .ud-path-glow {
+  stroke-width: 6;
+}
+.ud.is-large .ud-unit .ud-path {
+  stroke-width: 2.2;
+}
+.ud.is-large .ud-unit .ud-spot {
+  stroke-width: 1.6;
+  stroke-dasharray: 4 3;
+}
+.ud.is-large .ud-lead {
+  stroke-width: 1.2;
+}
+.ud.is-large .ud-tip-hi {
+  stroke-width: 5;
+}
+/* the formula and, under it, the same with the live numbers in (its "=" under the formula's) */
+.ud.is-large .ud-formula,
+.ud.is-large .ud-sub {
+  font-size: clamp(12px, 3.6cqi, 15px);
+  line-height: 1.35;
+}
+.ud.is-large .ud-sub {
+  display: block;
+  margin: -6px 0 0;
+  padding-left: 2ch;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* (a card whose height limits the unit: the line goes, the unit grows: unit-demo.ts relayout) */
+.ud.is-large.no-sub .ud-sub {
+  display: none;
+}
+.ud-sub-r {
+  color: var(--ft-hotspot);
+  font-weight: 700;
+}
+.ud-sub-v {
+  color: var(--ink);
+}
+.ud.is-large .ud-line {
+  font-size: clamp(14px, 2.7cqi, 15.5px);
+  line-height: 1.5;
+}

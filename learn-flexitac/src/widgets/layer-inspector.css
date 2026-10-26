@@ -1,0 +1,371 @@
+/* Layer inspector widget (lessons 2 and 3). Scoped to .w-li; colours follow the site theme tokens. */
+.w-li {
+  --li-tape: #e3b26f;
+  --li-film: #d9963f;
+  --li-film-edge: #a8691f;
+  --li-lam: #c7d0d8;
+  --li-lam-edge: #9aa6b1;
+  --li-velo: #2b2b2e;
+  --li-velo-edge: #111113;
+  --li-cu: #b5561c;
+  --li-hatch: rgba(24, 24, 26, 0.32);
+  --li-sel: var(--ink);
+  height: 100%;
+  /* size containment (container-type: size) ignores the content's height, so the widget needs a floor of its own: below
+     it the slot scrolls (lesson.css) instead of the cross-section sliding under the text. 260 px: the stage's widget
+     row is never shorter on a desktop stage tall enough for this form (lesson.css clamps it to 260-380 px) */
+  min-height: 260px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 6px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  overflow: hidden;
+  container-type: size;
+}
+:root[data-theme="dark"] .w-li {
+  --li-tape: #8a6230;
+  --li-film: #a66a24;
+  --li-film-edge: #d39552;
+  --li-lam: #3c4752;
+  --li-lam-edge: #67727d;
+  --li-velo: #222225;
+  --li-velo-edge: #6a6a70;
+  --li-cu: #e2894a;
+  --li-hatch: rgba(255, 255, 255, 0.28);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .w-li {
+    --li-tape: #8a6230;
+    --li-film: #a66a24;
+    --li-film-edge: #d39552;
+    --li-lam: #3c4752;
+    --li-lam-edge: #67727d;
+    --li-velo: #222225;
+    --li-velo-edge: #6a6a70;
+    --li-cu: #e2894a;
+    --li-hatch: rgba(255, 255, 255, 0.28);
+  }
+}
+
+.w-li-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+.w-li-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.w-li-seg {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--card);
+}
+.w-li-seg button {
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.04em;
+  padding: 6px 9px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.w-li-seg button + button {
+  border-left: 1px solid var(--line);
+}
+.w-li-seg button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--bg);
+}
+.w-li-seg button:hover:not([aria-pressed="true"]) {
+  color: var(--ink);
+}
+
+.w-li-body {
+  display: grid;
+  grid-template-columns: minmax(170px, 214px) minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+}
+.w-li-list {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 0;
+  min-height: 0;
+}
+.w-li-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 1px 6px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text);
+  font: 12px/1.3 var(--sans);
+  text-align: left;
+  cursor: pointer;
+}
+.w-li-row:hover {
+  background: var(--card-2);
+  color: var(--ink);
+}
+.w-li-row[aria-pressed="true"] {
+  border-color: var(--li-sel);
+  color: var(--ink);
+  background: var(--card);
+}
+.w-li-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.w-li-t {
+  font-size: 10.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.w-li-t .t-short {
+  display: none;
+}
+.w-li-row.is-guess .w-li-t {
+  font-style: italic;
+}
+.w-li-sw {
+  width: 12px;
+  height: 9px;
+  border-radius: 2px;
+  border: 1px solid var(--line-strong);
+}
+.w-li-sw.k-tape {
+  background: var(--li-tape);
+}
+.w-li-sw.k-lam {
+  background: var(--li-lam);
+}
+.w-li-sw.k-fpc {
+  background: linear-gradient(var(--li-film) 0 70%, var(--li-cu) 70%);
+}
+.w-li-sw.k-velo {
+  background: var(--li-velo);
+}
+
+.w-li-svg {
+  position: relative;
+  min-height: 120px;
+  min-width: 0;
+}
+.w-li-svg svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+/* svg parts */
+.w-li rect {
+  transition: opacity 0.2s var(--ease);
+}
+.w-li .li-tape {
+  fill: var(--li-tape);
+  stroke: var(--li-film-edge);
+  stroke-width: 0.6;
+}
+.w-li .li-lam {
+  fill: var(--li-lam);
+  stroke: var(--li-lam-edge);
+  stroke-width: 0.6;
+}
+.w-li .li-fpc {
+  fill: var(--li-film);
+  stroke: var(--li-film-edge);
+  stroke-width: 0.6;
+}
+.w-li .li-velo {
+  fill: var(--li-velo);
+  stroke: var(--li-velo-edge);
+  stroke-width: 0.6;
+}
+.w-li .li-cu {
+  fill: var(--li-cu);
+  stroke: none;
+}
+.w-li .is-unknown {
+  stroke-dasharray: 3 2;
+}
+.w-li .is-guess {
+  stroke: var(--ink);
+  stroke-dasharray: 4 3;
+  stroke-width: 1;
+}
+.w-li .li-hatch-bg-lam {
+  fill: var(--li-lam);
+}
+.w-li .li-hatch-bg-tape {
+  fill: var(--li-tape);
+}
+.w-li .li-hatch {
+  stroke: var(--li-hatch);
+  stroke-width: 1.4;
+}
+.w-li .li-hair {
+  stroke: var(--muted);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+.w-li .is-dim {
+  opacity: 0.32;
+}
+.w-li .is-sel:not(.li-cu):not(.li-hair) {
+  stroke: var(--li-sel);
+  stroke-width: 1.6;
+}
+.w-li .li-hair.is-sel {
+  stroke: var(--li-sel);
+  stroke-width: 2;
+}
+.w-li .li-lead {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  pointer-events: none;
+}
+.w-li .li-lead.is-sel {
+  stroke: var(--ink);
+  opacity: 1;
+}
+.w-li .is-hover {
+  opacity: 1;
+}
+.w-li .li-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.w-li .li-dim line,
+.w-li .li-scale line {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+.w-li .li-dim line + line {
+  stroke-dasharray: 2 2;
+  opacity: 0.7;
+}
+.w-li .li-dim text,
+.w-li .li-scale text {
+  font: 10.5px var(--mono);
+  fill: var(--muted);
+}
+
+.w-li-info {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text);
+  min-height: 2.9em;
+}
+.w-li-info p {
+  margin: 0;
+}
+.w-li-job {
+  color: var(--muted);
+}
+.w-li-ng {
+  font-style: italic;
+}
+.w-li-chip {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 5px;
+  margin-left: 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.w-li-cut {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px !important;
+}
+
+/* narrow (phones, small split stages): drawing on top, layers as a two-column grid */
+@container (max-width: 560px) {
+  .w-li-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(130px, 1fr) auto;
+  }
+  .w-li-list {
+    order: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 8px;
+  }
+  .w-li-svg {
+    order: 1;
+  }
+  .w-li-t .t-long {
+    display: none;
+  }
+  .w-li-t .t-short {
+    display: inline;
+  }
+}
+
+/* a short widget row (the split stage's widget row under ~250 px tall: 1024 x 768 and shorter desktop windows; the
+   slot is the size container, lesson.css): the layers become one row of chips above the drawing and the detail line
+   keeps its own row, one line without the job (the drawing takes what is left), so the chips never run into the
+   detail line. Below its floor (172 px) the slot scrolls. */
+@container wslot (max-height: 250px) {
+  .w-li {
+    min-height: 172px;
+  }
+  .w-li-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 4px;
+  }
+  .w-li-list {
+    order: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .w-li-row {
+    grid-template-columns: 10px auto;
+    gap: 4px;
+    flex: none;
+    padding: 1px 4px;
+    font-size: 11.5px;
+  }
+  .w-li-t {
+    display: none;
+  }
+  .w-li-svg {
+    order: 1;
+    min-height: 0;
+  }
+  .w-li-info p > .w-li-job,
+  .w-li-info .badge-inferred {
+    display: none;
+  }
+  .w-li-info {
+    min-height: 0;
+  }
+  .w-li-info p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

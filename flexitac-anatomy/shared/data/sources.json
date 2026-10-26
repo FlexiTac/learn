@@ -1,0 +1,688 @@
+{
+ "id": "sources",
+ "generated": "by shared/extract/run_all.sh",
+ "confirmedOn": "2026-10-21",
+ "schema": "{value, unit, src, inferred, note?}",
+ "facts": {
+  "board.R1": {
+   "value": 10000,
+   "unit": "ohm",
+   "src": "user-confirmed 2026-10-21; BOM MPN 1206W4F1002T5E",
+   "inferred": false,
+   "note": "schematic/PnP \"20k\" label is a documentation error"
+  },
+  "sensor.rows": {
+   "value": 12,
+   "unit": "sense lines",
+   "src": "user-confirmed 2026-10-21; PyFlexiTac defaults",
+   "inferred": false,
+   "note": "12 sense lines on the Top FPC -> mux channels 4-15"
+  },
+  "sensor.cols": {
+   "value": 32,
+   "unit": "drive lines",
+   "src": "user-confirmed 2026-10-21",
+   "inferred": false,
+   "note": "32 drive lines on the Bottom FPC <- 4x SN74HC595"
+  },
+  "sensor.taxels": {
+   "value": 384,
+   "unit": "taxels",
+   "src": "user-confirmed 2026-10-21 (12 x 32)",
+   "inferred": false
+  },
+  "sensor.muxChannels": {
+   "value": [
+    4,
+    15
+   ],
+   "unit": "channel range",
+   "src": "user-confirmed 2026-10-21; refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4)",
+   "inferred": false,
+   "note": "channels 0-3 unused on the 12x32 sensor"
+  },
+  "firmware.default": {
+   "value": "PyFlexiTac 12-row (mux offset 4)",
+   "unit": null,
+   "src": "user-confirmed 2026-10-21",
+   "inferred": false
+  },
+  "firmware.frameBytes": {
+   "value": 386,
+   "unit": "bytes",
+   "src": "user-confirmed 2026-10-21; refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4)",
+   "inferred": false,
+   "note": "AA 55 + 384"
+  },
+  "system.frameRate": {
+   "value": 100,
+   "unit": "Hz",
+   "src": "user-confirmed 2026-10-21; material/2604.28156v1.pdf",
+   "inferred": false
+  },
+  "build.time": {
+   "value": 3,
+   "unit": "min",
+   "src": "user-confirmed 2026-10-21; material/FlexiTac Hardware Guide.docx \"< 3 mins\"",
+   "inferred": false,
+   "note": "approximately"
+  },
+  "velostat.thickness": {
+   "value": 0.1,
+   "unit": "mm",
+   "src": "user-confirmed 2026-10-21 (Adafruit 1361, 4 mil)",
+   "inferred": false
+  },
+  "velostat.volumeResistivity": {
+   "value": "<500",
+   "unit": "ohm*cm",
+   "src": "user-confirmed 2026-10-21 (Adafruit 1361)",
+   "inferred": false
+  },
+  "velostat.surfaceResistivity": {
+   "value": "<31000",
+   "unit": "ohm/sq*cm",
+   "src": "user-confirmed 2026-10-21 (Adafruit 1361)",
+   "inferred": false
+  },
+  "velostat.behaviour": {
+   "value": "pressing lowers resistance",
+   "unit": null,
+   "src": "user-confirmed 2026-10-21",
+   "inferred": false
+  },
+  "characterization": {
+   "value": null,
+   "unit": null,
+   "src": "user-confirmed 2026-10-21",
+   "inferred": false,
+   "note": "no force/characterization data exists: any press->resistance curve is ILLUSTRATIVE; never show newtons"
+  },
+  "naming": {
+   "value": "drive lines (32, shift registers, Bottom FPC) / sense lines (12, mux, Top FPC)",
+   "unit": null,
+   "src": "user-confirmed 2026-10-21",
+   "inferred": false,
+   "note": "firmware calls mux channels \"rows\" and shift-register lines \"columns\""
+  },
+  "audience": {
+   "value": "undergraduate STEM and high-school students",
+   "unit": null,
+   "src": "user-confirmed 2026-10-21",
+   "inferred": false
+  },
+  "fpc_top.electrodes.count": {
+   "value": 12,
+   "unit": null,
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_top.electrodes.width": {
+   "value": 0.6,
+   "unit": "mm",
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_top.electrodes.length": {
+   "value": 63.0,
+   "unit": "mm",
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_top.electrodes.pitch": {
+   "value": 2.0,
+   "unit": "mm",
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_top.slots.count": {
+   "value": 22,
+   "unit": null,
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_BoardOutlineLayer.GKO",
+   "inferred": false
+  },
+  "fpc_top.slots.size": {
+   "value": [
+    1.0,
+    31.0
+   ],
+   "unit": "mm",
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_BoardOutlineLayer.GKO",
+   "inferred": false
+  },
+  "fpc_top.fingers.count": {
+   "value": 12,
+   "unit": null,
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_top.fingers.size": {
+   "value": [
+    0.3,
+    3.0
+   ],
+   "unit": "mm",
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_top.fingers.pitch": {
+   "value": 0.5,
+   "unit": "mm",
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_top.outline.bbox": {
+   "value": [
+    81.542,
+    76.015
+   ],
+   "unit": "mm",
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_BoardOutlineLayer.GKO",
+   "inferred": false
+  },
+  "fpc_top.thickness": {
+   "value": 0.2,
+   "unit": "mm",
+   "src": "material/FlexiTac Hardware Guide.docx (JLC \"0.2mm\")",
+   "inferred": false
+  },
+  "fpc_top.stiffeners": {
+   "value": [
+    0.1,
+    0.2
+   ],
+   "unit": "mm",
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_BottomStiffenerLayer_pib_*.GBSL",
+   "inferred": false
+  },
+  "fpc_top.copperSide": {
+   "value": "top layer only",
+   "unit": null,
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:GTL/GBL (GBL empty)",
+   "inferred": false
+  },
+  "fpc_top.traceWidth": {
+   "value": 0.254,
+   "unit": "mm",
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_bot.electrodes.count": {
+   "value": 32,
+   "unit": null,
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_bot.electrodes.width": {
+   "value": 0.6,
+   "unit": "mm",
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_bot.electrodes.length": {
+   "value": 23.0,
+   "unit": "mm",
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_bot.electrodes.pitch": {
+   "value": 2.0,
+   "unit": "mm",
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_bot.slots.count": {
+   "value": 31,
+   "unit": null,
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_BoardOutlineLayer.GKO",
+   "inferred": false
+  },
+  "fpc_bot.slots.size": {
+   "value": [
+    1.0,
+    23.0
+   ],
+   "unit": "mm",
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_BoardOutlineLayer.GKO",
+   "inferred": false
+  },
+  "fpc_bot.fingers.count": {
+   "value": 32,
+   "unit": null,
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_bot.fingers.size": {
+   "value": [
+    0.3,
+    3.0
+   ],
+   "unit": "mm",
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_bot.fingers.pitch": {
+   "value": 0.5,
+   "unit": "mm",
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_bot.outline.bbox": {
+   "value": [
+    82.2,
+    66.004
+   ],
+   "unit": "mm",
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_BoardOutlineLayer.GKO",
+   "inferred": false
+  },
+  "fpc_bot.thickness": {
+   "value": 0.2,
+   "unit": "mm",
+   "src": "material/FlexiTac Hardware Guide.docx (JLC \"0.2mm\")",
+   "inferred": false
+  },
+  "fpc_bot.stiffeners": {
+   "value": [
+    0.1,
+    0.2
+   ],
+   "unit": "mm",
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_BottomStiffenerLayer_pib_*.GBSL",
+   "inferred": false
+  },
+  "fpc_bot.copperSide": {
+   "value": "top layer only",
+   "unit": null,
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:GTL/GBL (GBL empty)",
+   "inferred": false
+  },
+  "fpc_bot.traceWidth": {
+   "value": 0.254,
+   "unit": "mm",
+   "src": "material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_TopLayer.GTL",
+   "inferred": false
+  },
+  "fpc_top.bridge.width": {
+   "value": 0.8716,
+   "unit": "mm",
+   "src": "material/Gerber_Top_FPC_2026-03-02.zip:Gerber_BoardOutlineLayer.GKO",
+   "inferred": false,
+   "note": "supporting beam, material/2604.28156v1.pdf Fig 3b callout B"
+  },
+  "fpc_top.mounting": {
+   "value": "face-down (copper towards the Velostat)",
+   "unit": null,
+   "src": "Gerber copper side + guide image7(b)",
+   "inferred": true
+  },
+  "pad.activeArea": {
+   "value": [
+    24,
+    64
+   ],
+   "unit": "mm",
+   "src": "material/FlexiTac Hardware Guide.docx image7(b) \"24 mm x 64 mm\"; computed from electrode pitch",
+   "inferred": false
+  },
+  "pad.crossing": {
+   "value": [
+    0.6,
+    0.6
+   ],
+   "unit": "mm",
+   "src": "computed from GTL electrode widths",
+   "inferred": true,
+   "note": "copper overlap of one crossing"
+  },
+  "pad.thickness": {
+   "value": "<1",
+   "unit": "mm",
+   "src": "material/2604.28156v1.pdf",
+   "inferred": false
+  },
+  "pad.layers": {
+   "value": [
+    "Polyimide tape seal (top)",
+    "Laminating sheet (top)",
+    "Top FPC (sense lines)",
+    "Velostat / Linqstat (Adafruit 1361)",
+    "Bottom FPC (drive lines)",
+    "Laminating sheet (bottom)",
+    "Polyimide tape seal (bottom)"
+   ],
+   "unit": null,
+   "src": "material/2604.28156v1.pdf Fig 3a; material/FlexiTac Hardware Guide.docx Steps 1-3",
+   "inferred": false
+  },
+  "stack.pi_top.thickness": {
+   "value": null,
+   "unit": "mm",
+   "src": "material/FlexiTac Hardware Guide.docx Step 3 \"Seal Edges with Polyimide\"; BOM item 2",
+   "inferred": false,
+   "note": "not given in the materials"
+  },
+  "stack.lam_top.thickness": {
+   "value": null,
+   "unit": "mm",
+   "src": "material/FlexiTac Hardware Guide.docx Step 1; BOM item 4; material/2604.28156v1.pdf Fig 3a",
+   "inferred": false,
+   "note": "not given in the materials"
+  },
+  "stack.lam_bot.thickness": {
+   "value": null,
+   "unit": "mm",
+   "src": "material/FlexiTac Hardware Guide.docx Step 1; material/2604.28156v1.pdf Fig 3a",
+   "inferred": false,
+   "note": "not given in the materials"
+  },
+  "stack.pi_bot.thickness": {
+   "value": null,
+   "unit": "mm",
+   "src": "material/FlexiTac Hardware Guide.docx Step 3",
+   "inferred": false,
+   "note": "not given in the materials"
+  },
+  "board.size": {
+   "value": [
+    56.754,
+    39.86
+   ],
+   "unit": "mm",
+   "src": "material/Gerber_16_32.zip:Gerber_BoardOutlineLayer.GKO",
+   "inferred": false,
+   "note": "paper: 56.8 x 39.9 mm"
+  },
+  "board.vias": {
+   "value": 39,
+   "unit": null,
+   "src": "material/Gerber_16_32.zip:Drill_PTH_Through_Via.DRL",
+   "inferred": false
+  },
+  "board.viaDrill": {
+   "value": 0.305,
+   "unit": "mm",
+   "src": "material/Gerber_16_32.zip:Drill_PTH_Through_Via.DRL",
+   "inferred": false
+  },
+  "board.headerHoles": {
+   "value": 30,
+   "unit": null,
+   "src": "material/Gerber_16_32.zip:Drill_PTH_Through.DRL",
+   "inferred": false
+  },
+  "board.headerDrill": {
+   "value": 0.901,
+   "unit": "mm",
+   "src": "material/Gerber_16_32.zip:Drill_PTH_Through.DRL",
+   "inferred": false
+  },
+  "board.mountingHoles": {
+   "value": 0,
+   "unit": null,
+   "src": "material/Gerber_16_32.zip drill files",
+   "inferred": false
+  },
+  "board.copperLayers": {
+   "value": 2,
+   "unit": null,
+   "src": "material/Gerber_16_32.zip (GTL + GBL)",
+   "inferred": false
+  },
+  "board.part.FPC1": {
+   "value": {
+    "mpn": "FFC05001-16SBB124W5M",
+    "footprint": "FFC-SMD_FFC05001-16SBB124W5M",
+    "x": 55.5,
+    "y": 131.19,
+    "rotation": 180.0
+   },
+   "unit": "mm/deg",
+   "src": "material/PickAndPlace_PCB_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv + material/BOM_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv",
+   "inferred": false
+  },
+  "board.part.FPC2": {
+   "value": {
+    "mpn": "THD0515-32CL-SN",
+    "footprint": "FFC-SMD_32P-P0.50_THD0515-32CL-SN",
+    "x": 36.7,
+    "y": 131.95,
+    "rotation": 180.0
+   },
+   "unit": "mm/deg",
+   "src": "material/PickAndPlace_PCB_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv + material/BOM_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv",
+   "inferred": false
+  },
+  "board.part.R1": {
+   "value": {
+    "mpn": "1206W4F1002T5E",
+    "footprint": "R1206",
+    "x": 36.7,
+    "y": 99.95,
+    "rotation": 0.0
+   },
+   "unit": "mm/deg",
+   "src": "material/PickAndPlace_PCB_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv + material/BOM_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv",
+   "inferred": false
+  },
+  "board.part.U2": {
+   "value": {
+    "mpn": "SN74HC595NSR",
+    "footprint": "SOP-16_L10.3-W5.4-P1.27-LS7.8-BL",
+    "x": 44.58,
+    "y": 118.62,
+    "rotation": 180.0
+   },
+   "unit": "mm/deg",
+   "src": "material/PickAndPlace_PCB_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv + material/BOM_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv",
+   "inferred": false
+  },
+  "board.part.U3": {
+   "value": {
+    "mpn": "SN74HC595NSR",
+    "footprint": "SOP-16_L10.3-W5.4-P1.27-LS7.8-BL",
+    "x": 32.0,
+    "y": 107.44,
+    "rotation": 180.0
+   },
+   "unit": "mm/deg",
+   "src": "material/PickAndPlace_PCB_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv + material/BOM_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv",
+   "inferred": false
+  },
+  "board.part.U4": {
+   "value": {
+    "mpn": "SN74HC595NSR",
+    "footprint": "SOP-16_L10.3-W5.4-P1.27-LS7.8-BL",
+    "x": 16.26,
+    "y": 102.87,
+    "rotation": 180.0
+   },
+   "unit": "mm/deg",
+   "src": "material/PickAndPlace_PCB_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv + material/BOM_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv",
+   "inferred": false
+  },
+  "board.part.U5": {
+   "value": {
+    "mpn": "SN74HC595NSR",
+    "footprint": "SOP-16_L10.3-W5.4-P1.27-LS7.8-BL",
+    "x": 15.88,
+    "y": 118.62,
+    "rotation": 180.0
+   },
+   "unit": "mm/deg",
+   "src": "material/PickAndPlace_PCB_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv + material/BOM_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv",
+   "inferred": false
+  },
+  "board.part.U6": {
+   "value": {
+    "mpn": "CD74HC4067M96",
+    "footprint": "SOIC-24_L15.4-W7.5-P1.27-LS10.3-BL",
+    "x": 55.75,
+    "y": 105.54,
+    "rotation": 90.0
+   },
+   "unit": "mm/deg",
+   "src": "material/PickAndPlace_PCB_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv + material/BOM_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv",
+   "inferred": false
+  },
+  "board.R_on": {
+   "value": 70,
+   "unit": "ohm",
+   "src": "CD74HC4067 typical on-resistance at 4.5 V (LCSC C496123 description / TI datasheet; external)",
+   "inferred": false,
+   "note": "approximate"
+  },
+  "board.595chain": {
+   "value": "D2 -> U2.SER; U2.QH' -> U3.SER -> U4 -> U5; U5.QH' n.c.",
+   "unit": null,
+   "src": "material/tactile_reading_board_32x16.pdf + Gerber copper trace",
+   "inferred": false
+  },
+  "board.clockTie": {
+   "value": "D3 -> SRCLK + RCLK of all 595s",
+   "unit": null,
+   "src": "material/tactile_reading_board_32x16.pdf + Gerber copper trace",
+   "inferred": false,
+   "note": "tied clocks -> output latch runs one clock behind the shift stage"
+  },
+  "board.OE": {
+   "value": "#OE -> GND (outputs always driven, unselected drive lines held LOW)",
+   "unit": null,
+   "src": "material/tactile_reading_board_32x16.pdf + Gerber copper trace",
+   "inferred": false
+  },
+  "board.muxSelect": {
+   "value": "D4..D7 = S0..S3, D8 = #E",
+   "unit": null,
+   "src": "material/tactile_reading_board_32x16.pdf + Gerber copper trace",
+   "inferred": false
+  },
+  "board.A0": {
+   "value": "A0 = mux COM; R1 from A0 to GND",
+   "unit": null,
+   "src": "material/tactile_reading_board_32x16.pdf + Gerber copper trace",
+   "inferred": false
+  },
+  "board.FPC1": {
+   "value": "SR1..SR16 -> mux I0..I15 (pin k = channel k-1)",
+   "unit": null,
+   "src": "material/tactile_reading_board_32x16.pdf + Gerber copper trace",
+   "inferred": false
+  },
+  "board.FPC2": {
+   "value": "SC1..SC32 <- U2.QA..U5.QH",
+   "unit": null,
+   "src": "material/tactile_reading_board_32x16.pdf + Gerber copper trace",
+   "inferred": false
+  },
+  "board.D9": {
+   "value": "firmware PIN_MUX_INHIBIT_1, not connected on this board",
+   "unit": null,
+   "src": "refs/fw/32_16_fast.ino (github.com/FlexiTac/FlexiTac_Hardware_Repo) + material/tactile_reading_board_32x16.pdf",
+   "inferred": false
+  },
+  "firmware.baud": {
+   "value": 2000000,
+   "unit": "baud",
+   "src": "refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4); refs/fw/32_16_fast.ino (github.com/FlexiTac/FlexiTac_Hardware_Repo)",
+   "inferred": false
+  },
+  "firmware.header": {
+   "value": "AA 55",
+   "unit": "hex",
+   "src": "refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4)",
+   "inferred": false
+  },
+  "firmware.adcPrescaler": {
+   "value": 16,
+   "unit": null,
+   "src": "refs/fw/32_16_fast.ino (github.com/FlexiTac/FlexiTac_Hardware_Repo) (ADPS2=1, ADPS1=0, ADPS0=0)",
+   "inferred": false,
+   "note": "1 MHz ADC clock at 16 MHz"
+  },
+  "firmware.adcToByte": {
+   "value": "raw >> 2",
+   "unit": null,
+   "src": "refs/fw/32_16_fast.ino (github.com/FlexiTac/FlexiTac_Hardware_Repo)",
+   "inferred": false
+  },
+  "firmware.scanStart": {
+   "value": "shiftColumn(true); shiftColumn(false) before the first read of each row",
+   "unit": null,
+   "src": "refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4)",
+   "inferred": false
+  },
+  "firmware.enablePulse": {
+   "value": "setRow(0): E# HIGH then LOW once per frame",
+   "unit": null,
+   "src": "refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4)",
+   "inferred": false
+  },
+  "firmware.repo16.frameBytes": {
+   "value": 514,
+   "unit": "bytes",
+   "src": "refs/fw/32_16_fast.ino (github.com/FlexiTac/FlexiTac_Hardware_Repo)",
+   "inferred": false,
+   "note": "16 x 32 build, not the default"
+  },
+  "host.initFrames": {
+   "value": 30,
+   "unit": "frames",
+   "src": "refs/fw/fast_32_16.py (github.com/FlexiTac/FlexiTac_Hardware_Repo)",
+   "inferred": false
+  },
+  "host.threshold": {
+   "value": 15.0,
+   "unit": "counts",
+   "src": "refs/fw/fast_32_16.py (github.com/FlexiTac/FlexiTac_Hardware_Repo)",
+   "inferred": false
+  },
+  "host.noiseScale": {
+   "value": 60.0,
+   "unit": "counts",
+   "src": "refs/fw/fast_32_16.py (github.com/FlexiTac/FlexiTac_Hardware_Repo)",
+   "inferred": false
+  },
+  "host.alpha": {
+   "value": 0.2,
+   "unit": null,
+   "src": "refs/fw/fast_32_16.py (github.com/FlexiTac/FlexiTac_Hardware_Repo)",
+   "inferred": false
+  },
+  "host.colormap": {
+   "value": "VIRIDIS",
+   "unit": null,
+   "src": "refs/fw/fast_32_16.py (github.com/FlexiTac/FlexiTac_Hardware_Repo)",
+   "inferred": false
+  },
+  "host.restingBytes": {
+   "value": [
+    10,
+    40
+   ],
+   "unit": "byte",
+   "src": "refs/fw/pyflexitac/sensor.py (github.com/WT-MM/PyFlexiTac @e006b17) docstring \"Typical resting ADC values land around 10-40\"",
+   "inferred": false,
+   "note": "used to anchor the illustrative taxel curve"
+  },
+  "cost.unit": {
+   "value": 30,
+   "unit": "USD",
+   "src": "material/2604.28156v1.pdf",
+   "inferred": false,
+   "note": "approximately"
+  },
+  "cost.fpcPair": {
+   "value": 2.5,
+   "unit": "USD",
+   "src": "material/FlexiTac Hardware Guide.docx BOM",
+   "inferred": false
+  },
+  "cost.nano": {
+   "value": 25.1,
+   "unit": "USD",
+   "src": "material/FlexiTac Hardware Guide.docx BOM",
+   "inferred": false
+  }
+ }
+}

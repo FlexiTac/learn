@@ -1,0 +1,142 @@
+/* Demo card (src/ui/demo.ts): a small elevated card a guided step shows beside the figure (GuidedStep.demo). It floats
+   over the stage, beside the pad or in the band the figure keeps free for it on its right, at every window size, and
+   never reflows the stage (there is no place under the figure). Its content is a widget module. */
+.stage-body {
+  position: relative;
+}
+.demo-card {
+  position: absolute;
+  z-index: 5;
+  overflow: hidden;
+  background: var(--face);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.45), 0 10px 18px -12px rgba(0, 0, 0, 0.18), var(--shadow);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s var(--ease), transform 0.24s var(--ease);
+}
+.demo-card.is-on {
+  opacity: 1;
+  transform: none;
+}
+/* waiting for the band the figure eases into after a resize (demo.ts): hidden where it was, then back in its new place */
+.demo-card.is-waiting {
+  opacity: 0;
+  pointer-events: none;
+}
+/* the lesson's colour across the top, like the stage's own band */
+.demo-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: var(--accent);
+  pointer-events: none;
+}
+/* desktop, wide stage: beside the pad, vertically centred (top set by demo.ts) */
+.demo-card[data-place="side"] {
+  right: 16px;
+  width: clamp(260px, 22vw, 340px);
+}
+.demo-card[data-place="side"][data-edge="left"] {
+  right: auto;
+  left: 16px;
+}
+/* desktop, narrower stage: low in the corner, above the figure's bottom corner text */
+.demo-card[data-place="corner"] {
+  right: 14px;
+  bottom: 64px;
+  width: 240px;
+}
+.demo-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.demo-close:hover {
+  color: var(--ink);
+  background: var(--card-2);
+  border-color: var(--line);
+}
+.demo-close .icon {
+  width: 15px;
+  height: 15px;
+}
+/* a phone-narrow card in the band beside the pad (demo.ts): a smaller × in a tighter corner */
+.demo-card[data-narrow] .demo-close {
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+}
+.demo-card[data-narrow] .demo-close .icon {
+  width: 13px;
+  height: 13px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .demo-card {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* "beside": in the band Fig 1 keeps free right of the pad (left, top and width set by demo.ts from ft:focus or ft:band),
+   level with the focus ring (unit) or in the band's free height (velostat), on desktop and stacked stages alike */
+.demo-card[data-place="beside"] {
+  right: auto;
+}
+/* a card too tall for a short stage (demo.ts, spec.compact) drops its extra line; the step text says the same */
+.demo-card[data-compact] .demo-extra {
+  display: none;
+}
+/* its one horizontal leader from the ring to the card, over the iframe and under the card, in the ring's colour */
+.demo-leader {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  overflow: visible;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+}
+.demo-leader.is-on {
+  opacity: 1;
+}
+.demo-leader.is-hidden {
+  visibility: hidden;
+}
+.demo-leader-halo {
+  fill: none;
+  stroke: var(--face);
+  stroke-width: 4;
+  stroke-opacity: 0.8;
+}
+.demo-leader-line {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 1.5;
+}
+.demo-leader-end {
+  fill: var(--ft-hotspot);
+  stroke: var(--face);
+  stroke-width: 1.5;
+}
+@media (prefers-reduced-motion: reduce) {
+  .demo-leader {
+    transition: none;
+  }
+}

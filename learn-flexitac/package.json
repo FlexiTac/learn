@@ -1,0 +1,28 @@
+{
+  "name": "learn-flexitac",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Learn FlexiTac: an interactive course on the FlexiTac piezoresistive tactile sensor and its reading board.",
+  "scripts": {
+    "sync-figures": "node scripts/sync-figures.mjs",
+    "thumbs": "node scripts/thumbs.mjs",
+    "predev": "node scripts/sync-figures.mjs",
+    "dev": "vite",
+    "prestart": "node scripts/sync-figures.mjs",
+    "start": "vite --open",
+    "prebuild": "node scripts/sync-figures.mjs",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "check": "node --experimental-websocket scripts/check.mjs",
+    "cleanup": "bash scripts/cleanup-test-procs.sh"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "7.3.6"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

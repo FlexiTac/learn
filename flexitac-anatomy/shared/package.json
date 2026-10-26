@@ -1,0 +1,16 @@
+{
+  "name": "flexitac-shared",
+  "private": true,
+  "type": "module",
+  "description": "Single source of truth for the FlexiTac anatomy figures, video and Learn FlexiTac site: extracted data + pure models.",
+  "exports": {
+    "./data": "./data/index.mjs",
+    "./constants": "./data/constants.mjs",
+    "./models/*": "./models/*.mjs"
+  },
+  "scripts": {
+    "extract": "bash extract/run_all.sh",
+    "test": "node --test test/*.test.mjs"
+  },
+  "engines": { "node": ">=20.10" }
+}

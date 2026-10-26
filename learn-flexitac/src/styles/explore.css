@@ -1,0 +1,482 @@
+/* Lesson colours + explore mode (the part detail window).
+   Every lesson has a colour token --ft-lesson-<n> (tokens.css). An element with an inline `--lc` (src/ui/lessoncolor.ts)
+   remaps --accent and its tints to that colour, so everything inside it that already uses the accent follows. */
+
+.lesson-view,
+.strip-card,
+.lesson-card,
+.fig-card,
+.outline-list li,
+.pip,
+.det-lesson {
+  --accent: var(--lc, var(--ft-lesson-1));
+  --accent-strong: color-mix(in srgb, var(--accent) 78%, var(--ink));
+  --accent-soft: color-mix(in srgb, var(--accent) 11%, transparent);
+  --accent-line: color-mix(in srgb, var(--accent) 45%, transparent);
+  --accent-ink: var(--on-lc);
+}
+
+/* number chip: a lesson's number on its colour */
+.lesson-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-lc);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1;
+  flex: none;
+}
+
+/* ---------------------------------------------------------------- lesson page */
+.lesson-kicker {
+  color: var(--accent);
+  font-weight: 600;
+}
+.lesson-kicker .lesson-num {
+  margin-right: 2px;
+}
+/* a band of the lesson's colour across the top of the stage */
+.lesson-view .stage::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--accent);
+  z-index: 6;
+  pointer-events: none;
+}
+.lesson-view .feature-icon {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+.lesson-view .step-dot.is-current {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-lc);
+}
+.lesson-view .steps-kicker {
+  color: var(--accent);
+}
+.lesson-view .btn-primary:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-lc);
+}
+.lesson-view .btn-primary:not(:disabled):hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--on-lc);
+}
+.lesson-view .q-n {
+  border-color: var(--accent-line);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.lesson-view .q:focus-within {
+  border-color: var(--accent-line);
+}
+.lesson-view .tab.is-active {
+  border-bottom-color: var(--accent);
+}
+.lesson-view .stage.just-done {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--shadow);
+}
+
+/* strip: left colour bar + number chip */
+.strip-card {
+  padding-left: 12px;
+  overflow: hidden;
+}
+.strip-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent);
+}
+.strip-name {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  -webkit-line-clamp: unset;
+}
+.strip-title-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-top: 2px;
+}
+.strip-card:hover {
+  border-color: var(--accent-line);
+}
+.strip-card.is-current {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  background: linear-gradient(90deg, var(--accent-soft), transparent 70%), var(--card);
+}
+
+/* ---------------------------------------------------------------- shell: progress pips */
+.progress-pips {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 10px;
+  min-width: 132px;
+  border: 0;
+  background: none;
+  overflow: visible;
+  border-radius: 0;
+}
+.pip {
+  flex: 1;
+  min-width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+  transition: background-color 0.4s var(--ease), height 0.2s var(--ease);
+}
+.pip.is-done {
+  background: var(--accent);
+}
+.pip.is-current {
+  height: 10px;
+  background: var(--accent-line);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.pip.is-current.is-done {
+  background: var(--accent);
+}
+
+/* ---------------------------------------------------------------- home + lesson list */
+.outline-list {
+  list-style: none;
+  padding: 0 !important;
+}
+.outline-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.outline-list .lesson-num {
+  margin-top: 1px;
+}
+.outline-list a:hover {
+  color: var(--accent);
+}
+.outline-list .tick {
+  color: var(--accent);
+}
+.outline-col {
+  border-top: 0;
+  background: var(--g, var(--ink)) top left / 100% 3px no-repeat;
+  padding-top: 12px;
+}
+.fig-card {
+  position: relative;
+}
+.fig-card::before,
+.lesson-card::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  background: var(--accent);
+  pointer-events: none;
+}
+.fig-card::before {
+  inset: 0 0 auto;
+  height: 3px;
+}
+.fig-card:hover {
+  border-color: var(--accent-line);
+}
+.fig-card-go .icon {
+  color: var(--accent);
+}
+.fig-card-go {
+  gap: 8px;
+}
+.lesson-card {
+  position: relative;
+  overflow: hidden;
+  padding-left: 14px;
+}
+.lesson-card::before {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+}
+.lesson-card:hover {
+  border-color: var(--accent-line);
+}
+.lesson-card .kicker {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- explore: part detail window
+   src/ui/details.ts. "Details ›" under a part's label in the figure opens it. Desktop: a card floating over the right
+   panel column (where the Overview is), the panel's own left/right edges, top-aligned with it, as tall as its content
+   up to the panel's height (scrolls inside). Absolute inside .panel, so it covers the panel and never reflows it or
+   the stage. Stacked layouts: a bottom sheet (below). */
+.panel {
+  position: relative;
+}
+.details {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  background: var(--face);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 48px -24px rgba(0, 0, 0, 0.45), 0 10px 18px -12px rgba(0, 0, 0, 0.18), var(--shadow);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.18s var(--ease), transform 0.22s var(--ease);
+}
+.details.is-on {
+  opacity: 1;
+  transform: none;
+}
+.details.is-swap .det-head,
+.details.is-swap .det-body {
+  animation: det-swap 0.28s var(--ease);
+}
+@keyframes det-swap {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.det-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 14px 13px 18px;
+  background: var(--face);
+  /* the title rule, in this lesson's colour */
+  border-bottom: 2px solid var(--accent);
+}
+.det-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+}
+.det-icon .icon {
+  width: 22px;
+  height: 22px;
+}
+.det-titles {
+  min-width: 0;
+}
+.det-kicker {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.det-title {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink);
+  line-height: 1.25;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+/* the title takes focus when the window opens (so Tab continues to ×, and a screen reader starts here). It is a
+   heading, not a control: no ring. Opening is driven by a message from the figure, so :focus-visible cannot tell a
+   mouse click on "Details ›" from a key press, and a ring after a click looked like an error box. */
+.det-title:focus,
+.det-title:focus-visible {
+  outline: none;
+}
+.det-close {
+  align-self: start;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  margin: -4px -2px 0 0;
+}
+.det-close:hover {
+  color: var(--ink);
+  background: var(--card-2);
+  border-color: var(--line);
+}
+.det-close .icon {
+  width: 16px;
+  height: 16px;
+}
+.det-body {
+  display: grid;
+  gap: 14px;
+  padding: 14px 18px 18px;
+}
+.det-intro {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.det-facts {
+  margin: 0;
+  display: grid;
+  border-top: 1px solid var(--line);
+}
+.det-fact {
+  display: grid;
+  gap: 3px;
+  padding: 8px 0 9px;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.det-fact dt {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.det-fact dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
+  min-width: 0;
+}
+.det-fact .chip {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+.det-value {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.det-fact .badge {
+  margin-left: 0;
+}
+.det-fact .chips {
+  margin-top: 0;
+}
+.det-lesson {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.det-lesson b {
+  color: var(--accent);
+}
+.det-lesson:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.det-lesson > .icon {
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+  flex: none;
+}
+.det-lesson-n {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-lc);
+  font-size: 11.5px;
+  font-weight: 700;
+  flex: none;
+}
+
+/* ---------------------------------------------------------------- stacked layouts: a bottom sheet */
+@media (max-width: 1023px), (max-height: 639px) {
+  .details {
+    position: fixed;
+    top: auto;
+    bottom: 12px;
+    left: calc(var(--side-w) + 12px);
+    right: 12px;
+    width: auto;
+    max-width: 560px;
+    margin: 0 auto;
+    max-height: min(70svh, 560px);
+    z-index: 30;
+    border-radius: 16px;
+    box-shadow: 0 -12px 40px -14px rgba(0, 0, 0, 0.5), var(--shadow);
+    transform: translateY(20px);
+  }
+  .details .det-head {
+    padding-top: 22px;
+  }
+  /* the sheet's grab bar (decoration: × and Escape close it) */
+  .details .det-head::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    margin-left: -18px;
+    border-radius: 2px;
+    background: var(--line-strong);
+  }
+}
+@media (max-width: 600px) {
+  .details {
+    left: 8px;
+    right: 8px;
+    bottom: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px) + 8px);
+    max-height: 62svh;
+  }
+}

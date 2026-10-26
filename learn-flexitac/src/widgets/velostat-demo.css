@@ -1,0 +1,296 @@
+/* Velostat demo (src/widgets/velostat-demo.ts), the content of Lesson 1 step 3's demo card. Colours only from tokens:
+   the materials (gold, Velostat, rubber, signal) are the figures' own (tokens.css copies them from palette.css), the
+   curve and the dot wear the lesson colour, every text wears a text token. The heights come from the card's width
+   (container units), so the drawings are built at the size they are shown. */
+.vd {
+  container-type: inline-size;
+  display: grid;
+  /* (one column no wider than the card: a nowrap line never widens the drawing past it) */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 11px 14px 13px;
+  /* carbon grains: a lighter grey of the film itself */
+  --vd-grain: color-mix(in oklab, var(--ft-velostat-top) 42%, #b9bdc9);
+  /* lit paths sit on the dark film in both themes, so light mode takes a lighter step of its (darker) signal pink */
+  --vd-path: color-mix(in oklab, var(--ft-signal) 70%, #ffffff);
+  --vd-path-glow: color-mix(in oklab, var(--ft-signal) 50%, transparent);
+}
+:root[data-theme="dark"] .vd {
+  --vd-path: var(--ft-signal);
+}
+.vd-kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
+  padding-right: 30px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--muted);
+}
+.vd-name {
+  color: var(--accent);
+  font-weight: 700;
+}
+.vd-sep {
+  color: var(--faint);
+}
+.vd-ill {
+  cursor: help;
+}
+
+/* (a) the cross-section */
+.vd-anim {
+  height: clamp(76px, 30cqw, 100px);
+  cursor: ns-resize;
+  /* up/down drags press the tip; sideways still scrolls a scroller */
+  touch-action: pan-x pinch-zoom;
+}
+.vd-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.vd-anim .vd-cu {
+  fill: var(--ft-gold-top);
+  stroke: var(--ft-gold-right);
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+.vd-film {
+  fill: var(--ft-velostat-top);
+  stroke: var(--ft-velostat-edge);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+}
+.vd-grains circle,
+.vd-node-base {
+  fill: var(--vd-grain);
+}
+.vd-path-glow {
+  fill: none;
+  stroke: var(--vd-path-glow);
+  stroke-width: 4.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.vd-path {
+  fill: none;
+  stroke: var(--vd-path);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.vd-node {
+  fill: var(--vd-path);
+}
+.vd-tip {
+  fill: var(--ft-rubber-top);
+  stroke: var(--ft-rubber-edge);
+  stroke-width: 1;
+}
+.vd-tip-hi {
+  fill: none;
+  stroke: #ffffff;
+  stroke-opacity: 0.16;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.vd-lab {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  fill: var(--muted);
+}
+
+/* (b) the chart */
+.vd-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+.vd-ytitle {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.vd-faint {
+  font-weight: 400;
+  color: var(--muted);
+}
+.vd-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.vd-read-v {
+  min-width: 10ch;
+  text-align: right;
+}
+.vd-key {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+.vd-chart {
+  height: clamp(104px, 44cqw, 140px);
+  cursor: ew-resize;
+  touch-action: pan-y;
+  border-radius: 6px;
+}
+.vd-chart:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.vd-grid,
+.vd-base {
+  stroke: var(--line);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.vd-base {
+  stroke: var(--line-strong);
+}
+.vd-tick {
+  font-family: var(--mono);
+  font-size: 10px;
+  fill: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.vd-curve {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.vd-guide {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.vd-dot {
+  fill: var(--accent);
+  /* the 2px surface ring keeps the dot legible where it sits on the curve */
+  stroke: var(--face);
+  stroke-width: 2;
+}
+
+/* the 240 px corner card: shorter chart title, smaller layer names */
+@container (max-width: 250px) {
+  .vd-faint {
+    display: none;
+  }
+  .vd-lab {
+    font-size: 9px;
+  }
+}
+
+/* a narrow card (in the band Fig 1 keeps beside the pad on a narrower stage, src/ui/demo.ts): the kicker on two lines,
+   the readout without the chart's title (it says R itself) */
+@container (max-width: 200px) {
+  .vd-kicker {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+  .vd-sep {
+    display: none;
+  }
+  .vd-ill {
+    flex-basis: 100%;
+  }
+  .vd-ytitle {
+    display: none;
+  }
+  .vd-head {
+    justify-content: flex-start;
+  }
+}
+/* a phone's band: a shorter cross-section without the layer names and a shorter chart with smaller ticks (built by
+   velostat-demo.ts at that size); the name keeps clear of the card's × on its own line, "Illustrative" takes the next */
+@container (max-width: 150px) {
+  .vd-kicker {
+    padding-right: 0;
+    letter-spacing: 0.08em;
+  }
+  .vd-name {
+    margin-right: 26px;
+  }
+  .vd-anim {
+    height: 58px;
+  }
+  .vd-chart {
+    height: 90px;
+  }
+  .vd-tick {
+    font-size: 9px;
+  }
+  .vd-read {
+    font-size: 12px;
+  }
+  .vd-read-v {
+    min-width: 0;
+    text-align: left;
+  }
+}
+/* the narrowest phones (360 px windows): shorter still, so the card fits the drawing's height */
+@container (max-width: 100px) {
+  .vd-anim {
+    height: 50px;
+  }
+  .vd-chart {
+    height: 80px;
+  }
+}
+/* a short stage's band (1024 x 640, src/ui/demo.ts "short"): shorter drawings, so the card stays beside the pad */
+.demo-card[data-short] .vd {
+  gap: 6px;
+}
+.demo-card[data-short] .vd-anim {
+  height: 56px;
+}
+.demo-card[data-short] .vd-chart {
+  height: 86px;
+}
+.demo-card[data-narrow] .vd {
+  gap: 6px;
+  padding: 9px 10px 10px;
+}
+/* a short phone band (320-340 px phones: the drawing is ~190 px tall, src/ui/demo.ts "short"): shorter drawings still,
+   and tighter gaps, so the card fits beside the pad (~184 px tall) */
+.demo-card[data-short][data-narrow] .vd {
+  gap: 5px;
+  padding: 6px 10px 7px;
+}
+.demo-card[data-short][data-narrow] .vd-anim {
+  height: 44px;
+}
+.demo-card[data-short][data-narrow] .vd-head {
+  margin-top: 0;
+}
+.demo-card[data-short][data-narrow] .vd-chart {
+  height: 66px;
+}
+
+/* (c) the one line */
+.vd-line {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.vd-arrow {
+  color: var(--muted);
+}

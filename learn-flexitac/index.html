@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" class="is-loading">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Learn FlexiTac · touch, scan, sense</title>
+    <meta name="description" content="An interactive course on FlexiTac, an open-source flexible tactile sensor: how 384 taxels turn a press into numbers, explained with live isometric figures." />
+    <meta name="theme-color" content="#f2f2ef" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <script>
+      // Stamp the theme before first paint (same rule as src/state/theme.ts).
+      try {
+        var s = JSON.parse(localStorage.getItem("learn-flexitac:v1") || "{}");
+        document.documentElement.dataset.theme = s.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#content" onclick="document.getElementById('content').focus();return false">Skip to content</a>
+    <div id="app" class="app">
+      <noscript>
+        <p class="noscript">Learn FlexiTac is an interactive course. Turn on JavaScript to start.</p>
+      </noscript>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

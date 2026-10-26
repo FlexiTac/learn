@@ -1,0 +1,273 @@
+/* Teleop maps (src/widgets/teleop-maps.ts): the gripper's two pads, live, while the learner grasps in Fig 5's teleop
+   mode. Lesson 1's map look (robot-grasp.css): square cells with a hairline gap, viridis, an untouched spot a quiet
+   neutral (--tm-map-zero, = figures/gripper/gripper.css --gr-map-zero); text in the plate-corner mono style, the
+   kicker's name in the lesson's colour; each finger keyed by Fig 5's set colours (red left, violet right: its board's
+   sticker and its cables' bands). The force bar fills in the lesson colour; its "to lift" mark turns it teal once the
+   squeeze is enough. */
+.tm {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px 14px;
+  color: var(--text);
+  overflow: hidden;
+  --tm-map-zero: #e3e3de;
+  --tm-left: #bd4238;
+  --tm-right: #944fb0;
+  --tm-track: rgba(0, 0, 0, 0.07);
+  --tm-ok: var(--ft-hotspot, #15918f);
+}
+:root[data-theme="dark"] .tm {
+  --tm-map-zero: #2a2b30;
+  --tm-left: #d4675b;
+  --tm-right: #ac70c6;
+  --tm-track: rgba(255, 255, 255, 0.08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tm {
+    --tm-map-zero: #2a2b30;
+    --tm-left: #d4675b;
+    --tm-right: #ac70c6;
+    --tm-track: rgba(255, 255, 255, 0.08);
+  }
+}
+.tm-kicker {
+  margin: 0;
+  align-self: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tm-name {
+  color: var(--lc, var(--accent));
+  font-weight: 700;
+}
+.tm-sep {
+  margin: 0 0.5em;
+}
+.tm-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+  min-height: 0;
+}
+.tm-maps {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  flex: none;
+}
+.tm-map {
+  margin: 0;
+  display: grid;
+  gap: 5px;
+}
+.tm-map figcaption {
+  width: var(--tm-map-w, auto);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.tm-fname {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.tm-key {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--tm-left);
+}
+.tm-map[data-finger="right"] .tm-key {
+  background: var(--tm-right);
+}
+.tm-count {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.tm-grid {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tm-grid canvas {
+  display: block;
+}
+/* the fingertip end: left of a lying map, under a standing one */
+.tm-tip {
+  position: absolute;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.tm[data-form="row"] .tm-tip {
+  left: 0;
+  top: 100%;
+  margin-top: 3px;
+}
+.tm[data-form="row"] .tm-tip::before {
+  content: "\2190\00a0";
+}
+.tm[data-form="column"] .tm-tip {
+  left: 50%;
+  top: 100%;
+  margin-top: 3px;
+  transform: translateX(-50%);
+}
+.tm[data-form="column"] .tm-tip::before {
+  content: "\2193\00a0";
+}
+
+/* ---- the force block */
+.tm-side {
+  flex: 1 1 auto;
+  max-width: var(--tm-side-w, 320px);
+  min-width: 170px;
+  display: grid;
+  gap: 9px;
+}
+.tm-flabel {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tm-fval {
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+.tm-bar {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--tm-track);
+  margin: 13px 0 16px;
+}
+.tm-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-radius: 5px;
+  background: var(--lc, var(--accent));
+  transition: width 90ms linear, background-color 200ms var(--ease, ease);
+}
+.tm[data-enough] .tm-fill {
+  background: var(--tm-ok);
+}
+.tm-need {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--ink);
+  opacity: 0.55;
+}
+.tm-need[hidden] {
+  display: none;
+}
+.tm-need span {
+  position: absolute;
+  bottom: 100%;
+  left: 4px;
+  margin-bottom: 0;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.tm-ticks {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 14px;
+}
+.tm-ticks b {
+  position: absolute;
+  top: 3px;
+  transform: translateX(-50%);
+  font: 400 9.5px/1 var(--mono);
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+.tm-ticks b:first-child {
+  transform: none;
+}
+.tm-status {
+  margin: 0;
+  min-height: 2.6em;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.tm-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.tm-ramp {
+  display: block;
+  width: 64px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #440154, #3b528b, #21918c, #5ec962, #fde725);
+}
+
+/* ---- the column form: the maps standing, the force block under them */
+.tm[data-form="column"] .tm-body {
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.tm[data-form="column"] .tm-side {
+  width: 100%;
+  max-width: 300px;
+}
+.tm[data-form="column"] .tm-maps {
+  gap: 22px;
+}
+.tm[data-form="column"] .tm-grid {
+  margin-bottom: 14px;
+}
+/* a narrow map: its count goes under its name */
+.tm[data-tight] .tm-map figcaption {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-fill {
+    transition: none;
+  }
+}

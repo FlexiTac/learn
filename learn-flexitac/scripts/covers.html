@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Covers (scripts/covers.mjs)</title>
+    <!-- The page scripts/covers.mjs photographs for the home page's chapter covers and the lesson thumbnails (Sections 2
+         and 3). Served by this site's own dev server (npx vite), never shipped.
+         ?w=<widget id>  one simulation card (src/widgets/sim-*.ts) in the demo cards' frame, &size=<w>x<h> (its width and
+                         height budget); window.__inst is the mounted card
+         ?w=gripper      Fig 5 alone in a stage-mode box, &size=<w>x<h>; window.__host is its FigureHost
+         ?w=teleop       Fig 5's teleop mode in a lesson-like split stage with the teleop-maps widget under it, &size=<w>x<h>;
+                         window.__host is its FigureHost
+         &theme=light|dark
+         &lang=zh        the Chinese pictures (scripts/covers.mjs --lang zh): the site's language and the figure's
+         (open it in a window at least 1024 x 640: narrower, the site's stacked layout rules apply) -->
+    <script>
+      var q = new URLSearchParams(location.search);
+      document.documentElement.dataset.theme = q.get("theme") || "light";
+    </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        background: var(--bg);
+        font-family: var(--sans);
+      }
+      .demo-card.cv {
+        position: relative;
+        opacity: 1;
+        transform: none;
+        box-shadow: none;
+      }
+      .stage {
+        position: relative;
+        border: 1px solid var(--line);
+        overflow: hidden;
+        background: var(--card);
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+    <script type="module">
+      import "/src/styles/tokens.css";
+      import "/src/styles/base.css";
+      import "/src/styles/explore.css";
+      import "/src/styles/lesson.css";
+      import "/src/styles/demo.css";
+      import "/src/styles/i18n.css";
+      import { initLang, lang, onLang } from "/src/i18n/index.ts";
+      // the site's language from ?lang= (English without it, as before)
+      initLang();
+      const q = new URLSearchParams(location.search);
+      const which = q.get("w") || "sim-points";
+      const theme = q.get("theme") || "light";
+      const [W, H] = (q.get("size") || "640x680").split("x").map(Number);
+      // the lesson's colour, as its lesson view sets it (2.1 = lesson 7 ... 3.6 = lesson 14)
+      const N = { teleop: 8, "sim-loop": 9, "sim-points": 10, "sim-springs": 11, "sim-calibrate": 12, "sim-results": 13, "sim-playground": 14 };
+      document.body.style.setProperty("--lc", `var(--ft-lesson-${N[which] ?? 10})`);
+      document.body.style.setProperty("--accent", `var(--ft-lesson-${N[which] ?? 10})`);
+      const ctx = (figure) => ({ lesson: { id: "covers" }, figure, theme: () => theme, onTheme: () => () => {}, reducedMotion: () => false, lang, onLang });
+      if (which === "gripper") {
+        // Fig 5 alone in a stage-mode box (Lesson 2.1's stage)
+        const { FigureHost } = await import("/src/figure/FigureHost.ts");
+        const stage = document.createElement("div");
+        stage.className = "stage";
+        stage.style.width = `${W}px`;
+        stage.style.height = `${H}px`;
+        const body = document.createElement("div");
+        body.className = "stage-body";
+        body.dataset.figMode = "stage";
+        stage.append(body);
+        document.body.append(stage);
+        const figSlot = document.createElement("div");
+        figSlot.className = "figure-slot is-loaded";
+        body.append(figSlot);
+        window.__host = new FigureHost(figSlot, "gripper", theme, { mode: "stage", lang: lang() });
+        window.__stage = stage;
+      } else if (which === "teleop") {
+        const { FigureHost } = await import("/src/figure/FigureHost.ts");
+        const { mount } = await import("/src/widgets/teleop-maps.ts");
+        const stage = document.createElement("div");
+        stage.className = "stage";
+        stage.style.width = `${W}px`;
+        stage.style.height = `${H}px`;
+        const body = document.createElement("div");
+        body.className = "stage-body is-split";
+        body.dataset.figMode = "stage";
+        stage.append(body);
+        document.body.append(stage);
+        const figSlot = document.createElement("div");
+        figSlot.className = "figure-slot is-loaded";
+        body.append(figSlot);
+        const host = new FigureHost(figSlot, "gripper", theme, { mode: "stage", lang: lang() });
+        const slot = document.createElement("div");
+        slot.className = "widget-slot";
+        body.append(slot);
+        mount(slot, ctx(host), { form: "row" });
+        host.act("teleop", { object: "strawberry" });
+        window.__host = host;
+        window.__stage = stage;
+      } else {
+        const mod = await import(`/src/widgets/${which}.ts`);
+        const card = document.createElement("aside");
+        card.className = "demo-card cv is-on";
+        card.dataset.place = "stage";
+        card.dataset.maxH = String(H);
+        card.style.width = `${W}px`;
+        card.innerHTML = `<div class="demo-body"></div>`;
+        document.body.append(card);
+        const inst = mod.mount(card.querySelector(".demo-body"), ctx(null));
+        inst.fit?.(H - 2);
+        inst.layout?.();
+        window.__inst = inst;
+        window.__card = card;
+      }
+      window.__ready = true;
+    </script>
+  </head>
+  <body></body>
+</html>

@@ -1,0 +1,396 @@
+/* Real -> sim -> real (src/widgets/sim-results.ts), Lesson 3.5's card. The pipeline's pictures use the iso toolkit's
+   materials (.sx, sim-loop.css). The chart: vision + touch in the lesson colour, vision only in a neutral grey; the
+   part of a bar before practice in sim a light step of the same colour, the gain solid, a 2 px surface gap between
+   them, 4 px rounded data ends; gridlines hairline; every text a text token. */
+.sr {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 11px 14px 13px;
+  --sr-touch: var(--accent);
+  --sr-touch-pre: color-mix(in oklab, var(--accent) 34%, var(--face));
+  --sr-vision: color-mix(in oklab, var(--ink) 52%, var(--face));
+  --sr-vision-pre: color-mix(in oklab, var(--ink) 18%, var(--face));
+  --sr-grid: color-mix(in oklab, var(--ink) 9%, var(--face));
+  --sr-rec: #d33a2c;
+}
+:root[data-theme="dark"] .sr {
+  --sr-touch-pre: color-mix(in oklab, var(--accent) 38%, var(--face));
+  --sr-vision: color-mix(in oklab, var(--ink) 56%, var(--face));
+  --sr-vision-pre: color-mix(in oklab, var(--ink) 22%, var(--face));
+  --sr-grid: color-mix(in oklab, var(--ink) 11%, var(--face));
+  --sr-rec: #f0594b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sr {
+    --sr-touch-pre: color-mix(in oklab, var(--accent) 38%, var(--face));
+    --sr-vision: color-mix(in oklab, var(--ink) 56%, var(--face));
+    --sr-vision-pre: color-mix(in oklab, var(--ink) 22%, var(--face));
+    --sr-grid: color-mix(in oklab, var(--ink) 11%, var(--face));
+    --sr-rec: #f0594b;
+  }
+}
+.sr-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-height: 18px;
+  margin: 0;
+  padding-right: 24px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--muted);
+}
+/* a small loop with an arrow: the mark */
+.sr-mark {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--accent);
+  border-left-color: transparent;
+  border-radius: 50%;
+  transform: rotate(20deg);
+}
+.sr-name {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sr-sep {
+  color: var(--faint);
+}
+.sr-src {
+  cursor: help;
+}
+.sr-title {
+  margin: -2px 0 0;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+/* ---- the pipeline: four tiles, arrows between them */
+.sr-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sr-li {
+  position: relative;
+  min-width: 0;
+}
+.sr-li + .sr-li::before {
+  content: "";
+  position: absolute;
+  left: -11px;
+  top: 34%;
+  width: 7px;
+  height: 7px;
+  border-top: 1.5px solid var(--muted);
+  border-right: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+}
+.sr-tile {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 6px 7px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.sr-tile:hover {
+  border-color: var(--line-strong);
+}
+.sr-tile[aria-pressed="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.sr-tile:focus-visible,
+.sr-seg button:focus-visible,
+.sr-cite a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.sr-pic {
+  display: block;
+  width: 100%;
+  overflow: visible;
+  --sx-lw: 0.8;
+}
+.sr-rec {
+  fill: var(--sr-rec);
+}
+.sr-pic-lab {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  fill: var(--muted);
+}
+.sr-tt {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.sr-n {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: -1px;
+  border-radius: 50%;
+  background: var(--card-2);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  font: 700 10px/1 var(--mono);
+}
+.sr-tile[aria-pressed="true"] .sr-n {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-lc);
+}
+.sr-ts {
+  display: none;
+}
+.sr-detail {
+  margin: 0;
+  min-height: 2.9em;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.sr-detail b {
+  color: var(--ink);
+}
+
+/* ---- the results */
+.sr-res {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.sr-ph {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.sr-pt {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.sr-seg {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--card);
+}
+.sr-seg button {
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.03em;
+  padding: 7px 9px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.sr-seg button + button {
+  border-left: 1px solid var(--line);
+}
+.sr-seg button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--bg);
+}
+.sr-seg button:hover:not([aria-pressed="true"]) {
+  color: var(--ink);
+}
+/* the summary is the legend: a key square, the series' name and its range */
+.sr-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.sr-row:first-child {
+  flex-basis: 100%;
+}
+.sr-row .sr-k {
+  align-self: center;
+}
+.sr-leg-pre {
+  color: var(--muted);
+}
+.sr-k {
+  flex: none;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.sr-k-touch {
+  background: var(--sr-touch);
+}
+.sr-k-vision {
+  background: var(--sr-vision);
+}
+/* (the "before" key: a light step of both, side by side) */
+.sr-k-pre {
+  width: 14px;
+  background: linear-gradient(90deg, var(--sr-touch-pre) 0 50%, var(--sr-vision-pre) 50%);
+}
+.sr[data-phase="pre"] .sr-leg-pre {
+  opacity: 0.5;
+}
+.sr-chart {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+.sr-grid {
+  fill: none;
+  stroke: var(--sr-grid);
+  stroke-width: 1;
+}
+.sr-axis {
+  fill: none;
+  stroke: color-mix(in oklab, var(--ink) 30%, var(--face));
+  stroke-width: 1;
+}
+.sr-tick,
+.sr-task {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  fill: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.sr-task {
+  fill: var(--text);
+}
+.sr-pre.sr-touch {
+  fill: var(--sr-touch-pre);
+}
+.sr-post.sr-touch {
+  fill: var(--sr-touch);
+}
+.sr-pre.sr-vision {
+  fill: var(--sr-vision-pre);
+}
+.sr-post.sr-vision {
+  fill: var(--sr-vision);
+}
+.sr-val {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  fill: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.sr-val.is-touch {
+  fill: var(--ink);
+  font-weight: 600;
+}
+.sr-hit {
+  fill: transparent;
+}
+.sr-hit:hover {
+  fill: color-mix(in oklab, var(--ink) 5%, transparent);
+}
+.sr-sum {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px 18px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.sr-gain {
+  color: var(--muted);
+}
+.sr-sum b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.sr-cite {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.sr-cite a {
+  color: var(--accent);
+}
+.sr-line {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.sr[data-noline] .sr-line,
+.sr[data-notitle] .sr-title {
+  display: none;
+}
+
+/* ---- medium (a card under 520 px): short tile titles, tighter tiles */
+.sr[data-form="medium"] .sr-steps {
+  gap: 12px;
+}
+.sr[data-form="medium"] .sr-li + .sr-li::before {
+  left: -10px;
+}
+.sr[data-form="medium"] .sr-tile {
+  padding: 5px 4px 6px;
+}
+.sr[data-form="medium"] .sr-tl {
+  display: none;
+}
+.sr[data-form="medium"] .sr-ts {
+  display: inline;
+}
+.sr[data-form="medium"] .sr-tt {
+  font-size: 11.5px;
+}
+.sr[data-form="medium"] .sr-detail {
+  font-size: 12.5px;
+  min-height: 4.35em;
+}
+.sr[data-form="medium"] .sr-pt-x {
+  display: none;
+}
+.sr[data-form="medium"] .sr-sum {
+  font-size: 11.5px;
+}
+.sr[data-form="medium"] .sr-cite {
+  font-size: 11px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sr-tile {
+    transition: none;
+  }
+}

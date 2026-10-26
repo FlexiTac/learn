@@ -1,0 +1,779 @@
+/* The whole pad (src/widgets/pad-demo.ts), the content of Lesson 2 step 3's demo card. Colours from tokens: the scan's
+   two colours are the unit card's (signal pink = the powered drive line, 5 V; the ring's teal = the sense line A0
+   listens to), the materials are the figures' (palette.css: the FPC's amber, copper, Velostat, the laminating sheet,
+   the fingertip), every text a text token. The drawing's size comes from pad-demo.ts (its pitch fits the card). Type:
+   at least 11 px in the large and medium forms (a phone's mini form keeps its own smaller sizes). */
+.wp {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 11px 14px 13px;
+  --wp-power: var(--ft-signal);
+  --wp-power-soft: color-mix(in oklab, var(--ft-signal) 26%, transparent);
+  --wp-listen: var(--ft-hotspot);
+  --wp-listen-soft: color-mix(in oklab, var(--ft-hotspot) 28%, transparent);
+  --wp-wire: color-mix(in oklab, var(--ink) 42%, var(--face));
+  --wp-box: var(--card-2);
+  --wp-box-edge: color-mix(in oklab, var(--ink) 55%, var(--face));
+  /* palette.css, light: copper, the FPC film, the laminating sheet, the fingertip (pad.css) */
+  --wp-cu: #c0702e;
+  --wp-cu-hi: #a2561c;
+  --wp-fpc: #e8963c;
+  --wp-fpc-edge: #8a5412;
+  --wp-lam: #e1e9ee;
+  --wp-lam-edge: #8a959b;
+  --wp-hatch: rgba(24, 24, 26, 0.3);
+  --wp-finger: #e8c2a3;
+  --wp-finger-edge: #5a3a27;
+  /* the touch map's untouched square (Fig 1: --pd-map-zero), read by pad-demo.ts */
+  --wp-map-zero: #deded8;
+}
+:root[data-theme="dark"] .wp {
+  --wp-power-soft: color-mix(in oklab, var(--ft-signal) 34%, transparent);
+  --wp-listen-soft: color-mix(in oklab, var(--ft-hotspot) 34%, transparent);
+  --wp-box: var(--card-2);
+  --wp-cu: #c98140;
+  --wp-cu-hi: #e2894a;
+  --wp-fpc: #a66a24;
+  --wp-fpc-edge: #d39552;
+  --wp-lam: #3c4752;
+  --wp-lam-edge: #67727d;
+  --wp-hatch: rgba(255, 255, 255, 0.26);
+  --wp-finger-edge: #3f281b;
+  --wp-map-zero: #2a2b30;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .wp {
+    --wp-power-soft: color-mix(in oklab, var(--ft-signal) 34%, transparent);
+    --wp-listen-soft: color-mix(in oklab, var(--ft-hotspot) 34%, transparent);
+    --wp-box: var(--card-2);
+    --wp-cu: #c98140;
+    --wp-cu-hi: #e2894a;
+    --wp-fpc: #a66a24;
+    --wp-fpc-edge: #d39552;
+    --wp-lam: #3c4752;
+    --wp-lam-edge: #67727d;
+    --wp-hatch: rgba(255, 255, 255, 0.26);
+    --wp-finger-edge: #3f281b;
+    --wp-map-zero: #2a2b30;
+  }
+}
+
+/* ---- the kicker and the title */
+.wp-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-height: 18px;
+  margin: 0;
+  /* clear of the card's × (28 px at 6 px from the card's edge), plus 4 px */
+  padding-right: 24px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--muted);
+}
+/* a small 3 × 3 grid: the pad */
+.wp-mark {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--accent);
+  border-radius: 2px;
+  background:
+    linear-gradient(90deg, transparent 2.2px, var(--accent) 2.2px 3.4px, transparent 3.4px 4.6px, var(--accent) 4.6px 5.8px, transparent 5.8px),
+    linear-gradient(180deg, transparent 2.2px, var(--accent) 2.2px 3.4px, transparent 3.4px 4.6px, var(--accent) 4.6px 5.8px, transparent 5.8px);
+}
+.wp-name {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.wp-sep {
+  color: var(--faint);
+}
+.wp-ill {
+  cursor: help;
+}
+.wp-title {
+  margin: -2px 0 0;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+/* ---- the plan and its side column */
+.wp-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+}
+.wp[data-form="large"] .wp-side {
+  width: 172px;
+}
+.wp[data-form="medium"] .wp-side {
+  width: 112px;
+}
+.wp[data-form="mini"] .wp-main {
+  grid-template-columns: minmax(0, 1fr);
+}
+.wp-plan {
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  border-radius: 6px;
+  /* drags on the pad or the map move the fingertip; the page can still scroll sideways and zoom */
+  touch-action: pan-y pinch-zoom;
+}
+.wp-plan:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.wp-svg {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+.wp-hit {
+  fill: transparent;
+  cursor: crosshair;
+}
+
+/* labels (the svg's; the size per form) */
+.wp-lab {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  fill: var(--muted);
+}
+.wp[data-form="mini"] .wp-svg .wp-lab {
+  font-size: 9px;
+}
+.wp-lab-strong {
+  fill: var(--ink);
+  font-weight: 600;
+}
+
+/* the pad: wires, copper lines (drive under, sense over), the chips, the multiplexer */
+.wp-wire {
+  fill: none;
+  stroke: var(--wp-wire);
+  stroke-width: 1;
+}
+.wp-strip {
+  fill: none;
+  stroke: var(--wp-cu);
+  stroke-opacity: 0.55;
+  stroke-linecap: butt;
+}
+.wp-strip-s {
+  stroke-opacity: 0.8;
+}
+.wp-foot {
+  fill: var(--wp-finger);
+  fill-opacity: 0.32;
+  stroke: var(--wp-finger-edge);
+  stroke-opacity: 0.75;
+  stroke-width: 1;
+}
+.wp-mapfoot {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: 0.45;
+  stroke-width: 1;
+  stroke-dasharray: 2.5 2;
+  pointer-events: none;
+}
+.wp-halo {
+  fill: none;
+  stroke-linecap: round;
+}
+.wp-halo-d {
+  stroke: var(--wp-power-soft);
+}
+.wp-halo-s {
+  stroke: var(--wp-listen-soft);
+}
+.wp-on {
+  fill: none;
+  stroke-linecap: butt;
+}
+.wp-on-d {
+  stroke: var(--wp-power);
+}
+.wp-on-s {
+  stroke: var(--wp-listen);
+}
+.wp-chip,
+.wp-mux-box {
+  fill: var(--wp-box);
+  stroke: var(--wp-box-edge);
+  stroke-width: 1;
+}
+.wp-notch {
+  fill: none;
+  stroke: var(--wp-box-edge);
+  stroke-width: 1;
+}
+.wp-chain {
+  fill: none;
+  stroke: var(--wp-box-edge);
+  stroke-width: 1;
+}
+.wp-pin {
+  fill: var(--wp-box-edge);
+}
+.wp-pin-on {
+  fill: var(--wp-power);
+  stroke: var(--face);
+  stroke-width: 1;
+}
+.wp-contact {
+  fill: var(--wp-box-edge);
+}
+.wp-arm {
+  fill: none;
+  stroke: var(--wp-box-edge);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+.wp-arm-on {
+  stroke: var(--wp-listen);
+  stroke-width: 1.8;
+}
+.wp-pivot {
+  fill: var(--wp-box-edge);
+}
+.wp-out-on {
+  fill: none;
+  stroke: var(--wp-listen);
+  stroke-width: 1.8;
+}
+.wp-a0 {
+  fill: var(--face);
+  stroke: var(--wp-box-edge);
+  stroke-width: 1.3;
+}
+.wp-a0.is-on {
+  fill: var(--wp-listen);
+  stroke: var(--wp-listen);
+}
+.wp-arrow {
+  fill: none;
+  stroke: var(--wp-wire);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* the crossing being read: a ring, filled with the reading's colour once it is taken */
+.wp-ring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.4;
+}
+.wp-dot {
+  stroke: none;
+}
+/* the touch map: a square per crossing; squares not read yet in this picture show the last picture, faded */
+.wp-map rect {
+  shape-rendering: geometricPrecision;
+}
+.wp-map rect.is-old {
+  opacity: 0.4;
+}
+.wp-map rect.is-empty {
+  opacity: 0.3;
+}
+.wp-cell {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  pointer-events: none;
+}
+/* the mini form: the picked column and the powered row on the map itself */
+.wp-mark-s {
+  fill: none;
+  stroke: var(--wp-listen);
+  stroke-width: 1.2;
+  pointer-events: none;
+}
+.wp-mark-d {
+  fill: var(--wp-power-soft);
+  stroke: var(--wp-power);
+  stroke-width: 1;
+  pointer-events: none;
+}
+/* real speed: every line is powered and listened to 100 times a second; too fast to follow, so every line glows a
+   little and no one crossing is ringed */
+.wp[data-speed="real"] .wp-strip-d {
+  stroke: var(--wp-power);
+  stroke-opacity: 0.42;
+}
+.wp[data-speed="real"] .wp-strip-s {
+  stroke: var(--wp-listen);
+  stroke-opacity: 0.55;
+}
+
+/* ---- the side column: counters, controls, the rate, the legend */
+.wp-side {
+  display: grid;
+  gap: 10px;
+  align-content: center;
+  min-width: 0;
+}
+.wp-count {
+  display: grid;
+  gap: 6px;
+}
+.wp-c {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr);
+  column-gap: 5px;
+  margin: 0;
+  line-height: 1.25;
+}
+.wp-c > i {
+  grid-row: 1 / span 2;
+  align-self: start;
+  width: 9px;
+  height: 9px;
+  margin-top: 2px;
+  border-radius: 50%;
+}
+.wp-c-s > i {
+  background: var(--wp-listen);
+}
+.wp-c-d > i {
+  background: var(--wp-power);
+}
+.wp-c-n,
+.wp-c-a {
+  grid-template-columns: minmax(0, 1fr);
+}
+.wp-k {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.wp-v {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.wp-v b {
+  color: var(--ink);
+  font-weight: 700;
+}
+.wp-c.is-off .wp-v b {
+  color: var(--faint);
+}
+.wp-c.is-off > i {
+  opacity: 0.3;
+}
+.wp-c-a {
+  cursor: help;
+}
+/* (the A0 volts' badge: the site's illustrative badge, a little larger in this card) */
+.wp-c-a .badge {
+  font-size: 11px;
+  padding: 2px 5px;
+  margin-left: 6px;
+  vertical-align: 0.05em;
+}
+.wp-ks {
+  display: none;
+}
+.wp-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.wp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px 0 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--ink);
+  font: 600 11px/1 var(--mono);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+.wp-btn:hover {
+  background: var(--card-2);
+}
+.wp-btn svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+.wp-btn[hidden] {
+  display: none;
+}
+.wp-seg {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--card);
+}
+.wp-seg button {
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.03em;
+  padding: 7px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.wp-seg button + button {
+  border-left: 1px solid var(--line);
+}
+.wp-seg button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--bg);
+}
+.wp-seg button:hover:not([aria-pressed="true"]) {
+  color: var(--ink);
+}
+.wp-btn:focus-visible,
+.wp-seg button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+/* reduced motion: a static picture stepped by hand; the speeds would change nothing */
+.wp[data-reduced] .wp-seg,
+.wp[data-reduced] .wp-cycle {
+  display: none !important;
+}
+/* the narrow forms: the step buttons are icons (their titles say what they do) */
+.wp[data-form="medium"] .wp-next span,
+.wp[data-form="medium"] .wp-nextline span,
+.wp[data-form="mini"] .wp-next span,
+.wp[data-form="mini"] .wp-nextline span {
+  display: none;
+}
+/* (the single speed button: the mini form's) */
+.wp-cycle {
+  display: none;
+}
+.wp-rate {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--muted);
+}
+.wp-rate .wp-r1 {
+  color: var(--ink);
+}
+.wp-r2s {
+  display: none;
+}
+.wp-legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.wp-bar {
+  flex: 0 1 56px;
+  height: 6px;
+  border-radius: 3px;
+}
+
+/* the medium form's narrow side column: counters on two lines without "sense line", the speeds stacked */
+.wp[data-form="medium"] .wp-long,
+.wp[data-form="mini"] .wp-long {
+  display: none;
+}
+.wp[data-form="medium"] .wp-k {
+  letter-spacing: 0.02em;
+}
+.wp[data-form="mini"] .wp-k {
+  font-size: 8.5px;
+  letter-spacing: 0.04em;
+}
+.wp[data-form="medium"] .wp-pic {
+  display: block;
+}
+.wp[data-form="medium"] .wp-dsep {
+  display: none;
+}
+.wp[data-form="medium"] .wp-c-a,
+.wp[data-form="mini"] .wp-c-a {
+  display: none;
+}
+/* (one speed button, the play button without its word) */
+.wp[data-form="medium"] .wp-seg {
+  display: none;
+}
+.wp[data-form="medium"] .wp-cycle {
+  display: inline-flex;
+}
+.wp[data-form="medium"] .wp-play span {
+  display: none;
+}
+.wp[data-form="medium"] .wp-ctl {
+  gap: 5px;
+}
+.wp[data-form="medium"] .wp-btn {
+  padding: 0 8px;
+}
+.wp[data-form="mini"] .wp-rate {
+  font-size: 9.5px;
+}
+.wp[data-form="medium"] .wp-r1,
+.wp[data-form="mini"] .wp-r1 {
+  display: grid;
+}
+.wp[data-form="medium"] .wp-r-sp,
+.wp[data-form="mini"] .wp-r-sp,
+.wp[data-form="medium"] .wp-r2,
+.wp[data-form="mini"] .wp-r2 {
+  display: none;
+}
+.wp[data-form="medium"] .wp-r2s,
+.wp[data-form="mini"] .wp-r2s {
+  display: inline;
+}
+.wp[data-form="medium"] .wp-side {
+  gap: 8px;
+}
+
+/* the mini form (a phone's band): the map, the counters in two short rows, a play button and one speed button */
+.wp[data-form="mini"] {
+  gap: 6px;
+  padding: 9px 10px 10px;
+}
+.wp[data-form="mini"] .wp-title {
+  display: none;
+}
+.wp[data-form="mini"] .wp-kicker {
+  padding-right: 20px;
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+}
+.wp[data-form="mini"] .wp-mark,
+.wp[data-form="mini"] .wp-sep {
+  display: none;
+}
+.wp[data-form="mini"] .wp-ill {
+  flex-basis: 100%;
+}
+.wp[data-form="mini"] .wp-side {
+  gap: 6px;
+}
+/* (each counter on one row: "● sense 2/12") */
+.wp[data-form="mini"] .wp-count {
+  gap: 2px;
+}
+.wp[data-form="mini"] .wp-c {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.wp[data-form="mini"] .wp-c > i {
+  align-self: center;
+  width: 7px;
+  height: 7px;
+  margin: 0;
+}
+.wp[data-form="mini"] .wp-kl {
+  display: none;
+}
+.wp[data-form="mini"] .wp-ks {
+  display: inline;
+}
+.wp[data-form="mini"] .wp-k {
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.wp[data-form="mini"] .wp-v {
+  font-size: 11px;
+}
+.wp[data-form="mini"] .wp-c-a,
+.wp[data-form="mini"] .wp-r1 {
+  display: none;
+}
+.wp[data-form="mini"] .wp-pic,
+.wp[data-form="mini"] .wp-seg,
+.wp[data-form="mini"] .wp-legend {
+  display: none;
+}
+.wp[data-form="mini"] .wp-cycle {
+  display: inline-flex;
+}
+.wp[data-form="mini"] .wp-btn {
+  height: 24px;
+  padding: 0 7px;
+  font-size: 10px;
+}
+.wp[data-form="mini"] .wp-btn span {
+  display: none;
+}
+.wp[data-form="mini"] .wp-cycle,
+.wp[data-form="mini"] .wp-btn[hidden] + .wp-cycle {
+  font-size: 10px;
+}
+.wp[data-form="mini"] .wp-rate {
+  font-size: 9px;
+}
+
+/* ---- the sentence (a compact card drops it: .demo-extra) and what the layout drops for room */
+.wp-line {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.wp[data-noline] .wp-line,
+.wp[data-nonote] .wp-note,
+.wp[data-notitle] .wp-title {
+  display: none;
+}
+
+/* ---- the cross-section */
+.wp-sec {
+  min-width: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.wp-sec-svg {
+  display: block;
+  overflow: visible;
+}
+.wp-sec .wp-lab {
+  font-size: 11px;
+}
+.wp-sec .wp-lab-strong {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.wp-sec .wp-lab-sm {
+  font-size: 11px;
+}
+/* (the thin strip: a phone's, or a card with no room left; the mini form's smaller still) */
+.wp-sec-svg[data-level="strip"] .wp-lab-sm {
+  font-size: 9px;
+}
+.wp[data-form="mini"] .wp-sec .wp-lab-sm {
+  font-size: 8.5px;
+}
+.wp-sec .wp-lab-sm.wp-lab-strong {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.wp-lab-val {
+  fill: var(--ink);
+  font-weight: 600;
+}
+.wp-lab-ng {
+  font-style: italic;
+}
+.wp-lab-sub {
+  fill: var(--muted);
+}
+.wp-sec .wp-lab-ink {
+  fill: var(--text);
+}
+.wp-cap {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  fill: var(--muted);
+}
+.wp-sec .wp-cap {
+  font-size: 11px;
+}
+.wp-b-lam {
+  fill: var(--wp-lam);
+  stroke: var(--wp-lam-edge);
+  stroke-width: 0.8;
+  stroke-dasharray: 3 2;
+}
+.wp-b-fpc {
+  fill: var(--wp-fpc);
+  stroke: var(--wp-fpc-edge);
+  stroke-width: 0.8;
+}
+.wp-b-velo {
+  fill: var(--ft-velostat-top);
+  stroke: var(--ft-velostat-edge);
+  stroke-width: 0.8;
+}
+.wp-cu {
+  fill: var(--wp-cu-hi);
+  transition: fill 0.12s linear;
+}
+.wp-cu.is-on {
+  fill: var(--wp-listen);
+}
+.wp-hatch-bg {
+  fill: var(--wp-lam);
+}
+.wp-hatch {
+  stroke: var(--wp-hatch);
+  stroke-width: 1.3;
+}
+.wp-lead {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.wp-brk {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+.wp-scale {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+.wp-note {
+  margin: -2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.wp-note::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 2px;
+  background: var(--wp-cu-hi);
+  vertical-align: 0;
+}
+
+/* a phone-narrow card (src/ui/demo.ts data-narrow): tighter */
+.demo-card[data-narrow] .wp {
+  gap: 6px;
+  padding: 9px 10px 10px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wp-cu {
+    transition: none;
+  }
+}

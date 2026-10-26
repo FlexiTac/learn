@@ -1,0 +1,67 @@
+/* The Chinese site (src/i18n, docs/i18n.md). <html lang="zh-CN"> switches these on; nothing here applies in English
+   (except --sans-cjk, a token nothing in English uses).
+   - fonts: the Latin faces stay first (so numbers, code and English names look exactly as in English), a CJK sans
+     follows for Chinese glyphs, in the body face AND the mono face (a mono kicker with Chinese in it gets a sans CJK
+     glyph, never a fallback serif);
+   - Chinese is never upper-cased or letter-spaced: the mono / uppercase kicker styles all over the site set both, so
+     every element whose language is Chinese drops them. Something that stays English inside a Chinese page and keeps
+     the English look (the brand name) carries lang="en" and is left alone;
+   - no fake italics (Chinese has none), a little more line height for running text and headings. */
+:root {
+  --sans-cjk: "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "Source Han Sans CN", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+}
+:root:lang(zh) {
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "WenQuanYi Micro Hei", "Noto Sans", "DejaVu Sans", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Mono", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "Microsoft YaHei", monospace;
+}
+
+/* no upper-casing, no letter-spacing on Chinese (the kicker / label styles set both) */
+html:lang(zh) *:lang(zh),
+html:lang(zh) *:lang(zh)::before,
+html:lang(zh) *:lang(zh)::after {
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+/* no synthetic italics: the italic tags, and the site's own italic notes (a missing layer "未给出", an empty tab's or
+   an empty search's note, a guessed layer); a code comment keeps its italics */
+html:lang(zh) :is(i, em, cite, dfn, var, address, .empty, .wp-lab-ng, .w-li-ng, .w-li-row.is-guess .w-li-t):lang(zh) {
+  font-style: normal;
+}
+
+/* line height: running text a little taller, headings no tighter than 1.3 (CJK glyphs fill the em box) */
+html:lang(zh) body {
+  line-height: 1.65;
+}
+html:lang(zh) :is(h1, h2, h3):lang(zh) {
+  line-height: 1.3;
+}
+html:lang(zh) .hero-title:lang(zh) {
+  line-height: 1.22;
+}
+
+/* the sidebar's tiny mono labels: Chinese needs a size it can be read at */
+html:lang(zh) .side-label:lang(zh) {
+  font-family: var(--sans-cjk);
+  font-size: 11px;
+}
+html:lang(zh) .lang-label:lang(zh) > [lang="en"] {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+}
+
+/* the brand stays English: it keeps its English look (lang="en" on it) */
+html:lang(zh) .brand-tag:lang(zh) {
+  font-family: var(--sans-cjk);
+  font-size: 12px;
+}
+html:lang(zh) .brand-tag:lang(zh) i {
+  margin: 0 0.25em;
+}
+
+/* the lesson strip's two-line titles break between words, never inside one (“机器 / 人”): the titles' spaces and
+   punctuation are the break points, and every piece fits a card's line */
+html:lang(zh) .strip-name:lang(zh) {
+  word-break: keep-all;
+}

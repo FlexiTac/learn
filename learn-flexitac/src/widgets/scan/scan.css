@@ -1,0 +1,597 @@
+/* Board widgets (clock-stepper, frame-runner). Widget-scoped: every rule starts with .w-sc or .w-fr / .w-btn. */
+
+/* ---------------------------------------------------------------- shared */
+.w-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 11px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--face);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.w-btn:hover {
+  border-color: var(--line-strong);
+}
+.w-btn .icon {
+  width: 14px;
+  height: 14px;
+}
+.w-btn-strong {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+.w-btn-strong:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.w-btn[aria-pressed="true"] {
+  border-color: var(--accent-line);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.w-btn-icon {
+  width: 30px;
+  padding: 0;
+}
+
+/* ---------------------------------------------------------------- the frame grid (scan/frame-grid.ts) */
+/* rows = sense lines, columns = drive lines; --p is the cell size, --pitch the row/column step (cell + 1 px gap), --cg
+   the extra gap after every 8 columns (the four shift registers). Colours: the listened row is the sense line's teal
+   (--ft-hotspot), the reading going on now the drive line's signal pink (--ft-signal), as on the Lesson 2 pad cards;
+   finished cells carry their reading's viridis colour inline. */
+.w-fg,
+.w-fr {
+  /* a cell not read yet, and one on the listened row; dark: closer to the card, so a resting reading's dark viridis
+     purple still stands out from it */
+  --fg-todo: color-mix(in oklab, var(--line) 80%, var(--card));
+  --fg-row: color-mix(in oklab, var(--ft-hotspot) 22%, var(--card));
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) :is(.w-fg, .w-fr) {
+    --fg-todo: color-mix(in oklab, var(--line) 62%, var(--card));
+    --fg-row: color-mix(in oklab, var(--ft-hotspot) 20%, var(--card));
+  }
+}
+:root[data-theme="dark"] :is(.w-fg, .w-fr) {
+  --fg-todo: color-mix(in oklab, var(--line) 62%, var(--card));
+  --fg-row: color-mix(in oklab, var(--ft-hotspot) 20%, var(--card));
+}
+.w-fg {
+  --p: 9px;
+  --pitch: 10px;
+  --cg: 1px;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 8px;
+  row-gap: 3px;
+  align-items: start;
+  justify-content: start;
+}
+.w-fg-labels {
+  grid-column: 1;
+  display: grid;
+  grid-auto-rows: var(--p);
+  row-gap: 1px;
+  font-size: 10.5px;
+  color: var(--faint);
+  text-align: right;
+}
+.w-fg-labels span {
+  line-height: var(--p);
+  white-space: nowrap;
+  visibility: hidden;
+}
+.w-fg-labels span.is-end,
+.w-fg-labels span.is-cur {
+  visibility: visible;
+}
+.w-fg-labels span.is-cur {
+  color: var(--ft-hotspot);
+  font-weight: 700;
+}
+.w-fg-cells {
+  grid-column: 2;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--tracks);
+  grid-auto-rows: var(--p);
+  gap: 1px;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+.w-fg-cells i {
+  display: block;
+  border-radius: 1.5px;
+  background: var(--fg-todo);
+}
+.w-fg-cells i.is-row.is-todo {
+  background: var(--fg-row);
+}
+.w-fg-cells i.is-old {
+  opacity: 0.3;
+}
+.w-fg-cells i.is-now {
+  position: relative;
+  z-index: 2;
+  background: var(--ft-signal) !important;
+  box-shadow: 0 0 0 1.5px var(--ft-signal), 0 0 7px 1px var(--ft-signal-soft);
+}
+/* a picked crossing (frame-runner): a ring in ink with a gap in the card colour, so it shows on any reading */
+.w-fg-cells i.is-sel {
+  position: relative;
+  z-index: 3;
+  box-shadow: 0 0 0 1.5px var(--card), 0 0 0 3.5px var(--ink);
+}
+/* the listened row: a teal outline that moves down a row when the next sense line starts */
+.w-fg-band {
+  position: absolute;
+  z-index: 1;
+  left: -3px;
+  right: -3px;
+  top: calc(var(--row, 0) * var(--pitch) - 3px);
+  height: calc(var(--p) + 6px);
+  border: 1.5px solid var(--ft-hotspot);
+  border-radius: 4px;
+  pointer-events: none;
+  transition: top 0.28s var(--ease);
+}
+.w-fg-band[hidden] {
+  display: none;
+}
+.w-fg-axis {
+  grid-column: 2;
+  margin-top: 1px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  line-height: 13px;
+  color: var(--faint);
+}
+.w-fg-lane {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: var(--tracks);
+  column-gap: 1px;
+  align-items: center;
+}
+.w-fg-lanelab {
+  grid-column: 1;
+  align-self: center;
+  font-size: 10.5px;
+  line-height: 1;
+  color: var(--faint);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- clock-stepper (the scan, row by row) */
+.w-sc {
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 11px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--card);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: safe center;
+  align-content: safe center;
+  justify-content: center;
+  gap: 14px 20px;
+}
+.w-sc.is-wide {
+  flex-wrap: nowrap;
+}
+.w-sc-gridbox {
+  flex: none;
+  max-width: 100%;
+}
+.w-sc-side {
+  flex: 0 1 520px;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  align-content: center;
+}
+.w-sc:not(.is-wide) .w-sc-side {
+  flex-basis: 100%;
+}
+.w-sc-top {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.w-sc-frame {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.w-sc-status {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  /* two lines kept, so a longer sentence never moves the buttons */
+  min-height: 2.9em;
+}
+.w-sc-status b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.w-sc-status b.w-sc-s {
+  color: var(--ft-hotspot);
+}
+.w-sc-status b.w-sc-d {
+  color: var(--ft-signal);
+}
+.w-sc-status .w-sc-ch {
+  color: var(--muted);
+}
+.w-sc-sep {
+  color: var(--faint);
+}
+.w-sc-ctrl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* extra "outputs": the 32 outputs (a lamp lights on the HIGH drive line) and the shift stage (a dot where the 1 is),
+   one clock ahead of the outputs, under the grid and aligned with its columns; then the four chips. The axis line
+   gives way to the chips' names. */
+.w-sc:not([data-extra="outputs"]) :is(.w-sc-out, .w-sc-sr, .w-sc-chips) {
+  display: none;
+}
+.w-sc[data-extra="outputs"] .w-fg-axis {
+  display: none;
+}
+/* the lanes sit a little apart from the grid, and look different from its cells: the outputs are lamps (round), the
+   shift stage is a row of boxes (each holds a 0 or a 1, as in the lesson's bucket brigade) */
+.w-fg-cells + .w-fg-lanelab,
+.w-fg-cells + .w-fg-lanelab + .w-fg-lane {
+  margin-top: 4px;
+}
+.w-fg-lane.w-sc-out {
+  height: 9px;
+  justify-items: center;
+}
+.w-fg-lane.w-sc-out i {
+  width: min(9px, calc(var(--p) + 1px));
+  height: min(9px, calc(var(--p) + 1px));
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  transition: background-color 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+.w-fg-lane.w-sc-out i.is-on {
+  background: var(--ft-signal);
+  border-color: var(--ft-signal);
+  box-shadow: 0 0 6px 1px var(--ft-signal-soft);
+}
+.w-fg-lane.w-sc-sr {
+  height: 7px;
+  justify-items: center;
+}
+.w-fg-lane.w-sc-sr i {
+  width: min(7px, var(--p));
+  height: 7px;
+  border-radius: 1.5px;
+  border: 1px solid var(--line-strong);
+}
+.w-fg-lane.w-sc-sr i.is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.w-fg-groups {
+  height: 14px;
+}
+.w-fg-groups span {
+  font-size: 10.5px;
+  line-height: 13px;
+  text-align: center;
+  color: var(--muted);
+  border-top: 1px solid var(--line-strong);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.w-fg-groups span.is-on {
+  color: var(--ink);
+  border-top-color: var(--ft-signal);
+}
+
+/* extra "mux": the multiplexer as a 16-position dial; the channel it connects to A0 in the sense line's teal, its
+   number in binary (D7 D6 D5 D4) at the hub; channels 0-3 (dashed) are not wired on the 12 x 32 sensor */
+.w-sc-dial {
+  display: none;
+  flex: none;
+  margin: 0;
+  width: 132px;
+}
+.w-sc[data-extra="mux"] .w-sc-dial {
+  display: block;
+}
+.w-sc-dial svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  border-radius: 50%;
+}
+/* keyboard focus only: a click on a channel moves the scan, it should not ring the whole dial */
+.w-sc-dial svg:focus,
+.w-fg-cells:focus {
+  outline: none;
+}
+.w-sc-dial svg:focus-visible,
+.w-fg-cells:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.w-sc-ring {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.w-sc-pos {
+  cursor: pointer;
+}
+.w-sc-pos circle {
+  fill: var(--face);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  transition: fill 0.15s, stroke 0.15s;
+}
+.w-sc-pos text {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  text-anchor: middle;
+  fill: var(--ink);
+  pointer-events: none;
+}
+.w-sc-pos.is-nc circle {
+  fill: var(--card-2);
+  stroke-dasharray: 2 2;
+}
+.w-sc-pos.is-nc text {
+  fill: var(--faint);
+}
+.w-sc-pos:hover circle {
+  stroke: var(--ink);
+}
+.w-sc-pos.is-cur circle {
+  fill: var(--ft-hotspot);
+  stroke: var(--ft-hotspot);
+}
+.w-sc-pos.is-cur text {
+  fill: var(--card);
+  font-weight: 700;
+}
+.w-sc-pos.is-nc.is-cur circle {
+  fill: var(--muted);
+  stroke: var(--muted);
+}
+.w-sc-needle {
+  stroke: var(--ft-hotspot);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.w-sc-hub {
+  fill: var(--face);
+  stroke: var(--line-strong);
+}
+.w-sc-hubk {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-anchor: middle;
+  fill: var(--muted);
+}
+.w-sc-hubt {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-anchor: middle;
+  fill: var(--ink);
+}
+svg.is-off .w-sc-needle,
+svg.is-nc .w-sc-needle {
+  stroke: var(--faint);
+  stroke-dasharray: 3 3;
+}
+
+/* ---------------------------------------------------------------- frame-runner (one frame) */
+.w-fr {
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 11px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--card);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: safe center;
+  align-content: safe center;
+  justify-content: center;
+  gap: 14px 24px;
+}
+.w-fr.is-wide {
+  flex-wrap: nowrap;
+}
+.w-fr-gridbox {
+  flex: none;
+  max-width: 100%;
+}
+.w-fr[data-grid="off"] .w-fr-gridbox {
+  display: none;
+}
+/* the strip (lesson 4: the figure draws the map): the bar and the status follow the figure, no buttons of its own, and
+   the bar takes the stage's width so its 12 blocks read as the 12 rows of the map */
+.w-fr[data-grid="off"] {
+  padding: 10px 24px;
+}
+.w-fr[data-grid="off"] .w-fr-side {
+  flex: 1 1 auto;
+  max-width: 900px;
+}
+.w-fr[data-grid="off"] .w-fr-ctrl,
+.w-fr[data-grid="off"] [data-ill] {
+  display: none;
+}
+.w-fr[data-grid="off"] .w-fr-top {
+  min-height: 0;
+}
+.w-fr-gridbox .w-fg-cells {
+  cursor: pointer;
+}
+.w-fr-side {
+  flex: 0 1 520px;
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  align-content: center;
+  container-type: inline-size;
+}
+.w-fr:not(.is-wide) .w-fr-side {
+  flex-basis: 100%;
+}
+.w-fr-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-height: 30px;
+}
+.w-fr-top .w-fr-ctrl {
+  margin-left: auto;
+}
+/* the frame in send order: AA 55, then one block per sense line */
+.w-fr-bar {
+  display: flex;
+  gap: 4px;
+  height: 22px;
+  cursor: pointer;
+}
+.w-fr-hdr {
+  display: flex;
+  gap: 2px;
+  flex: none;
+}
+.w-fr-hdr i {
+  position: relative;
+  width: 24px;
+  display: grid;
+  place-items: center;
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px dashed var(--line-strong);
+  color: var(--faint);
+}
+.w-fr-hdr i.is-sent {
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--card);
+}
+.w-fr-hdr i.is-now {
+  border-color: var(--ft-signal);
+  background: var(--ft-signal);
+}
+.w-fr-bands {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 2px;
+}
+.w-fr-bands > i {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-radius: 3px;
+  background: var(--fg-todo);
+}
+/* the readings already sent: the colour of a resting reading (viridis), as on the grid */
+.w-fr-bands > i > b {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  background: var(--fr-sent, #471365);
+}
+.w-fr-mark {
+  position: absolute;
+  z-index: 1;
+  top: -3px;
+  bottom: -3px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+.w-fr-mark.is-cur {
+  background: var(--ft-signal);
+}
+.w-fr-mark.is-sel {
+  background: var(--ink);
+}
+.w-fr-status {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-height: 2.9em;
+}
+/* the longest status (a picked byte: "byte 179 of 386 · sense line 6, drive line 17 · reads 140 (0x8C)") is one line in
+   a side column 500 px wide: only narrower columns keep room for two */
+@container (min-width: 500px) {
+  .w-fr-status {
+    min-height: 1.45em;
+  }
+}
+.w-fr-status > span:not(.w-fr-sep) {
+  white-space: nowrap;
+}
+.w-fr-status b {
+  color: var(--ink);
+  font-weight: 600;
+}
+.w-fr-status b.w-fr-s {
+  color: var(--ft-hotspot);
+}
+.w-fr-status b.w-fr-d {
+  color: var(--ft-signal);
+}
+.w-fr-status b.w-fr-h {
+  font-family: var(--mono);
+}
+.w-fr-sep {
+  color: var(--faint);
+}
+.w-fr-ctrl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-fg-band,
+  .w-fg-lane.w-sc-out i,
+  .w-sc-pos circle {
+    transition: none;
+  }
+}

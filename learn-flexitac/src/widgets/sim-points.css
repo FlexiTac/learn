@@ -1,0 +1,719 @@
+/* Section 3 cards' shared art (src/widgets/sim-points.ts exports it; sim-springs.ts and sim-playground.ts use it) and
+   the "A pad made of points" card. Materials in four tones (top lightest, lit side, shadow side, a crisp edge), light
+   values first and the dark ones for data-theme="dark" and the system preference, as tokens.css does:
+     TPU  the UMI fin's real orange TPU (figures/robot/robot.css --rb-tpu-*, D11); the open side's inside is the same
+          orange in shade
+     FPC  the pad's amber polyimide (figures/palette.css --ft-fpc-*), with its own outline and a laminate sheen so it
+          reads apart from the orange finger; gold lines (--ft-gold-*)
+     alu  a light grey for the tube and the bar (robot.css --rb-alu-*); rubber for the ball (--ft-rubber-*); the
+          strawberry's red, seeds and calyx (robot.css --rb-berry-*, --rb-seed, --rb-leaf-*)
+   Touched points and squares are the touch spots' teal (--ft-hotspot, Lesson 2), the reading-order trail the lesson
+   colour (--accent). Maps: viridis (set by the module) on a quiet neutral zero (--sp-map-zero = Lesson 1's). */
+.sim {
+  --sp-tpu-top: #ff793d;
+  --sp-tpu-left: #ee5b12;
+  --sp-tpu-right: #cc460a;
+  --sp-tpu-edge: #6a2813;
+  --sp-fpc-top: #e8963c;
+  --sp-fpc-left: #cd7f24;
+  --sp-fpc-right: #ab6712;
+  --sp-fpc-edge: #653d10;
+  --sp-alu-top: #eaedf0;
+  --sp-alu-left: #c9cfd3;
+  --sp-alu-right: #969ea4;
+  --sp-alu-edge: #3f464b;
+  --sp-berry-top: #ec4b4c;
+  --sp-berry-left: #d23236;
+  --sp-berry-right: #ad2129;
+  --sp-berry-edge: #4f0b11;
+  --sp-seed: #f6d77c;
+  --sp-leaf-top: #6cbc47;
+  --sp-leaf-right: #3d8427;
+  --sp-leaf-edge: #183e0c;
+  --sp-dot: #5a360b;
+  --sp-sheen: rgba(255, 255, 255, 0.28);
+  --sp-in: color-mix(in oklab, var(--sp-tpu-right) 70%, #000000);
+  --sp-in2: color-mix(in oklab, var(--sp-tpu-right) 52%, #000000);
+  --sp-shadow: rgba(20, 12, 6, 0.34);
+  --sp-glass: #7fa3b6;
+  --sp-glass-edge: #3c5664;
+  --sp-map-zero: #deded8;
+}
+:root[data-theme="dark"] .sim {
+  --sp-tpu-top: #f36a27;
+  --sp-tpu-left: #dd530f;
+  --sp-tpu-right: #bd400a;
+  --sp-tpu-edge: #fbc3a7;
+  --sp-fpc-top: #c97a2c;
+  --sp-fpc-left: #af6619;
+  --sp-fpc-right: #94550e;
+  --sp-fpc-edge: #f8cba7;
+  --sp-alu-top: #babec1;
+  --sp-alu-left: #949b9f;
+  --sp-alu-right: #6b7379;
+  --sp-alu-edge: #dee2e5;
+  --sp-berry-top: #df4548;
+  --sp-berry-left: #c33035;
+  --sp-berry-right: #9d222a;
+  --sp-berry-edge: #f4a3a4;
+  --sp-seed: #e9c862;
+  --sp-leaf-top: #5aa53a;
+  --sp-leaf-right: #357221;
+  --sp-leaf-edge: #a8d699;
+  --sp-dot: #2a1804;
+  --sp-sheen: rgba(255, 255, 255, 0.2);
+  --sp-shadow: rgba(0, 0, 0, 0.62);
+  --sp-glass: #a9cde0;
+  --sp-glass-edge: #c4dfec;
+  --sp-map-zero: #2a2b30;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sim {
+    --sp-tpu-top: #f36a27;
+    --sp-tpu-left: #dd530f;
+    --sp-tpu-right: #bd400a;
+    --sp-tpu-edge: #fbc3a7;
+    --sp-fpc-top: #c97a2c;
+    --sp-fpc-left: #af6619;
+    --sp-fpc-right: #94550e;
+    --sp-fpc-edge: #f8cba7;
+    --sp-alu-top: #babec1;
+    --sp-alu-left: #949b9f;
+    --sp-alu-right: #6b7379;
+    --sp-alu-edge: #dee2e5;
+    --sp-berry-top: #df4548;
+    --sp-berry-left: #c33035;
+    --sp-berry-right: #9d222a;
+    --sp-berry-edge: #f4a3a4;
+    --sp-seed: #e9c862;
+    --sp-leaf-top: #5aa53a;
+    --sp-leaf-right: #357221;
+    --sp-leaf-edge: #a8d699;
+    --sp-dot: #2a1804;
+    --sp-sheen: rgba(255, 255, 255, 0.2);
+    --sp-shadow: rgba(0, 0, 0, 0.62);
+    --sp-glass: #a9cde0;
+    --sp-glass-edge: #c4dfec;
+    --sp-map-zero: #2a2b30;
+  }
+}
+
+/* ---------------------------------------------------------------- the shared art (SVG) */
+.sim svg path,
+.sim svg circle {
+  stroke-linejoin: round;
+}
+.sp-tpu-top {
+  fill: var(--sp-tpu-top);
+  stroke: var(--sp-tpu-edge);
+  stroke-width: 1;
+}
+.sp-tpu-l {
+  fill: var(--sp-tpu-left);
+  stroke: var(--sp-tpu-edge);
+  stroke-width: 1;
+}
+.sp-tpu-r {
+  fill: var(--sp-tpu-right);
+  stroke: var(--sp-tpu-edge);
+  stroke-width: 1;
+}
+/* the open side's inside: the back wall's inner face and the ribs' faces, in shade */
+.sp-tpu-in {
+  fill: var(--sp-in);
+  stroke: none;
+}
+.sp-tpu-in2 {
+  fill: var(--sp-in2);
+  stroke: color-mix(in oklab, var(--sp-in2) 70%, #000000);
+  stroke-width: 0.8;
+}
+.sp-hole {
+  fill: color-mix(in oklab, var(--sp-tpu-right) 40%, #000000);
+  stroke: var(--sp-tpu-edge);
+  stroke-width: 0.9;
+}
+.sp-hole-lit {
+  fill: var(--sp-tpu-right);
+  stroke: none;
+}
+.sp-fpc-top {
+  fill: var(--sp-fpc-top);
+  stroke: var(--sp-fpc-edge);
+  stroke-width: 1.1;
+}
+.sp-fpc-l {
+  fill: var(--sp-fpc-left);
+  stroke: var(--sp-fpc-edge);
+  stroke-width: 1;
+}
+.sp-fpc-r {
+  fill: var(--sp-fpc-right);
+  stroke: var(--sp-fpc-edge);
+  stroke-width: 1;
+}
+.sp-sheen {
+  fill: var(--sp-sheen);
+  stroke: none;
+  pointer-events: none;
+}
+.sp-lines {
+  fill: none;
+  stroke: var(--ft-gold-left);
+  stroke-width: 0.8;
+  stroke-opacity: 0.55;
+}
+.sp-dot {
+  fill: var(--sp-dot);
+  fill-opacity: 0.8;
+  stroke: none;
+}
+.sp-dot.is-swept {
+  fill: var(--accent);
+  fill-opacity: 1;
+}
+.sp-dot.is-near {
+  fill: var(--ft-hotspot);
+  fill-opacity: 0.45;
+}
+.sp-dot.is-near.n1 {
+  fill-opacity: 0.62;
+}
+.sp-dot.is-near.n2 {
+  fill-opacity: 0.8;
+}
+.sp-dot.is-touched {
+  fill: var(--ft-hotspot);
+  fill-opacity: 1;
+  stroke: var(--face);
+  stroke-width: 0.9;
+}
+/* the objects */
+.sp-shadow {
+  stroke: none;
+  pointer-events: none;
+}
+.sp-shadow-s0 {
+  stop-color: var(--sp-shadow);
+}
+.sp-shadow-s1 {
+  stop-color: var(--sp-shadow);
+  stop-opacity: 0;
+}
+.sp-rub-s0 {
+  stop-color: var(--ft-rubber-top);
+}
+.sp-rub-s1 {
+  stop-color: var(--ft-rubber-left);
+}
+.sp-rub-s2 {
+  stop-color: var(--ft-rubber-right);
+}
+.sp-ball {
+  stroke: var(--ft-rubber-edge);
+  stroke-width: 1;
+}
+.sp-ball-hi {
+  fill: #ffffff;
+  fill-opacity: 0.1;
+  stroke: none;
+}
+/* glass: the see-through look (the points under the object stay in view) */
+.sp-glass-s0 {
+  stop-color: var(--sp-glass);
+  stop-opacity: 0.1;
+}
+.sp-glass-s1 {
+  stop-color: var(--sp-glass);
+  stop-opacity: 0.42;
+}
+.sp-glass-s2 {
+  stop-color: var(--sp-glass);
+  stop-opacity: 0.7;
+}
+.sp-glass {
+  stroke: var(--sp-glass-edge);
+  stroke-width: 1.2;
+}
+.sp-glass-hi {
+  fill: #ffffff;
+  fill-opacity: 0.55;
+  stroke: none;
+}
+.sp-glass-shine {
+  fill: none;
+  stroke: #ffffff;
+  stroke-opacity: 0.75;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.sp-glass-cap {
+  fill: var(--sp-glass);
+  fill-opacity: 0.22;
+  stroke: var(--sp-glass-edge);
+  stroke-width: 1.1;
+}
+.sp-box-glass {
+  fill: var(--sp-glass);
+  stroke: var(--sp-glass-edge);
+  stroke-width: 1.1;
+}
+.sp-box-glass.g-top {
+  fill-opacity: 0.14;
+}
+.sp-box-glass.g-l {
+  fill-opacity: 0.26;
+}
+.sp-box-glass.g-r {
+  fill-opacity: 0.38;
+}
+.sp-dot.is-lit {
+  fill-opacity: 1;
+  stroke: var(--face);
+  stroke-width: 0.7;
+}
+.sp-glass-bore {
+  fill: none;
+  stroke: var(--sp-glass-edge);
+  stroke-width: 0.8;
+  stroke-opacity: 0.7;
+}
+.sp-alu-s0 {
+  stop-color: var(--sp-alu-top);
+}
+.sp-alu-s1 {
+  stop-color: var(--sp-alu-left);
+}
+.sp-alu-s2 {
+  stop-color: var(--sp-alu-right);
+}
+.sp-tube {
+  stroke: var(--sp-alu-edge);
+  stroke-width: 1;
+}
+.sp-tube-shine {
+  fill: none;
+  stroke: #ffffff;
+  stroke-opacity: 0.5;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.sp-tube-cap {
+  fill: var(--sp-alu-right);
+  stroke: var(--sp-alu-edge);
+  stroke-width: 1;
+}
+.sp-tube-bore {
+  fill: color-mix(in oklab, var(--sp-alu-right) 55%, #000000);
+  stroke: var(--sp-alu-edge);
+  stroke-width: 0.8;
+}
+.sp-box {
+  stroke: var(--sp-alu-edge);
+  stroke-width: 1;
+}
+.sp-alu-top {
+  fill: var(--sp-alu-top);
+}
+.sp-alu-l {
+  fill: var(--sp-alu-left);
+}
+.sp-alu-r {
+  fill: var(--sp-alu-right);
+}
+.sp-berry-s0 {
+  stop-color: var(--sp-berry-top);
+}
+.sp-berry-s1 {
+  stop-color: var(--sp-berry-left);
+}
+.sp-berry-s2 {
+  stop-color: var(--sp-berry-right);
+}
+.sp-berry {
+  stroke: var(--sp-berry-edge);
+  stroke-width: 1;
+}
+.sp-seed {
+  fill: var(--sp-seed);
+}
+.sp-leaf {
+  fill: var(--sp-leaf-top);
+  stroke: var(--sp-leaf-edge);
+  stroke-width: 0.8;
+}
+.sp-stem {
+  fill: var(--sp-leaf-right);
+  stroke: var(--sp-leaf-edge);
+  stroke-width: 0.8;
+}
+.sp-stem-top {
+  fill: var(--sp-leaf-top);
+  stroke: var(--sp-leaf-edge);
+  stroke-width: 0.8;
+}
+/* the cursor: a ring on a point, its number on a tag above the pad */
+.sp-cursor {
+  pointer-events: none;
+}
+.sp-cur-ring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.6;
+}
+.sp-cur-lead {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1;
+  stroke-opacity: 0.7;
+}
+.sp-cur-box {
+  fill: var(--face);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.sp-cur-text {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.sp-canvas {
+  display: block;
+  border-radius: 3px;
+}
+/* names of parts in the drawing: text, an elbow leader, a dot on the part */
+.sp-lab {
+  font-family: var(--mono);
+  font-size: 11px;
+  fill: var(--muted);
+}
+.sp-lab-name {
+  font-weight: 700;
+  fill: var(--ink);
+}
+.sp-lead {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: 0.6;
+  stroke-width: 1;
+}
+.sp-lead-end {
+  fill: var(--ink);
+  stroke: var(--face);
+  stroke-width: 1.2;
+}
+
+/* ---------------------------------------------------------------- the shared card chrome (all three cards) */
+.sim {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 11px 14px 13px;
+}
+.sim .sp-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-height: 18px;
+  margin: 0;
+  padding-right: 24px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--muted);
+}
+.sim .sp-key {
+  flex: none;
+  width: 12px;
+  height: 9px;
+  background-image: radial-gradient(circle, var(--ft-hotspot) 1.2px, transparent 1.6px);
+  background-size: 4px 4.5px;
+  background-position: 0 0;
+}
+.sim .sp-name {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sim .sp-sep {
+  color: var(--faint);
+}
+.sim .sp-ill {
+  cursor: help;
+}
+.sim .sp-anim {
+  border-radius: 6px;
+  touch-action: none;
+}
+.sim .sp-anim:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.sim .sp-svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+  cursor: crosshair;
+}
+.sim .sp-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.sim .sp-btn,
+.sim .sp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 11px 0 8px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--face);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+.sim .sp-chip {
+  padding: 0 10px;
+  border-radius: 0;
+  margin-left: -1px;
+  color: var(--muted);
+}
+.sim .sp-seg {
+  display: inline-flex;
+  padding-left: 1px;
+}
+.sim .sp-seg .sp-chip:first-child {
+  border-radius: 7px 0 0 7px;
+}
+.sim .sp-seg .sp-chip:last-child {
+  border-radius: 0 7px 7px 0;
+}
+.sim .sp-chip[aria-pressed="true"] {
+  position: relative;
+  z-index: 1;
+  color: var(--ink);
+  font-weight: 700;
+  border-color: color-mix(in oklab, var(--accent) 60%, var(--line));
+  background: color-mix(in oklab, var(--accent) 13%, var(--face));
+}
+.sim .sp-btn[aria-pressed="true"] {
+  border-color: color-mix(in oklab, var(--accent) 60%, var(--line));
+  background: color-mix(in oklab, var(--accent) 13%, var(--face));
+}
+.sim .sp-btn:hover,
+.sim .sp-chip:hover {
+  border-color: var(--line-strong);
+}
+.sim .sp-btn:focus-visible,
+.sim .sp-chip:focus-visible {
+  position: relative;
+  z-index: 2;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.sim .sp-ico {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  flex: none;
+}
+.sim .sp-ico-line {
+  fill: none;
+  stroke: currentColor;
+}
+.sim.is-reduced .sp-play {
+  display: none;
+}
+.sim .sp-line {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.sim .sp-line b {
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------- the points card */
+.sp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+.sp[data-form="large"] .sp-row {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 18px;
+}
+.sp-mapbox {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  min-width: 0;
+}
+.sp:not([data-form="large"]) .sp-mapbox {
+  justify-items: center;
+}
+.sp-maphead {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sp-formula {
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text);
+}
+.sp-formula b {
+  color: var(--ink);
+}
+.sp-mapgrid {
+  display: grid;
+  grid-template-columns: auto var(--sp-mapw, 400px);
+  grid-template-rows: auto var(--sp-maph, 150px);
+  grid-template-areas: ". j" "i map";
+  gap: 2px 4px;
+}
+.sp-ax {
+  font-size: 10px;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.sp-ax-j {
+  grid-area: j;
+  display: flex;
+  justify-content: space-between;
+}
+.sp-ax-i {
+  grid-area: i;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 1px 0;
+  line-height: 1;
+}
+.sp-mapcell {
+  grid-area: map;
+  cursor: pointer;
+}
+.sp[data-form="mini"] .sp-ax {
+  display: none;
+}
+.sp[data-form="mini"] .sp-mapgrid {
+  grid-template-areas: ". j" ". map";
+  grid-template-columns: 0 var(--sp-mapw, 260px);
+}
+.sp-side {
+  display: grid;
+  gap: 5px;
+  align-content: center;
+  min-width: 0;
+}
+.sp-count {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.sp-count b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+/* the map's two touch colours as swatches before the counts */
+.sp-count::before,
+.sp-near-n:not(:empty)::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 2px;
+  vertical-align: -0.5px;
+  background: var(--ft-hotspot);
+}
+.sp-near-n:not(:empty)::before {
+  background: color-mix(in oklab, var(--ft-hotspot) 38%, var(--sp-map-zero));
+}
+.sp-near-n {
+  display: block;
+  color: var(--muted);
+  font-weight: 600;
+}
+.sp:not([data-form="large"]) .sp-near-n {
+  display: inline;
+  margin-left: 6px;
+}
+.sp-k {
+  margin: 0;
+  min-height: calc(2 * 1.45em);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.sp-k b {
+  color: var(--ink);
+}
+.sp-kv {
+  font-family: var(--mono);
+}
+.sp-kline {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.sp-kt {
+  color: var(--ft-hotspot);
+  font-weight: 700;
+}
+.sp-hint {
+  color: var(--muted);
+}
+.sp:not([data-form="large"]) .sp-side {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 14px;
+}
+.sp:not([data-form="large"]) .sp-k {
+  font-size: 12px;
+}
+.sp:not([data-form="large"]) .sp-kline {
+  display: none;
+}
+.sp[data-form="mini"] .sp-side {
+  grid-template-columns: minmax(0, 1fr);
+}
+.sp[data-form="mini"] .sp-btn-t {
+  display: none;
+}
+.sp[data-form="mini"] .sp-btn {
+  padding: 0 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sim .sp-btn,
+  .sim .sp-chip {
+    transition: none;
+  }
+}

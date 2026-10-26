@@ -1,0 +1,20 @@
+# Whitelist: only the course site and the shared data/models it builds from are published.
+# Everything else in this folder (the Anatomy kit, source materials, plans, research downloads, renders) stays local.
+/*
+!/.gitignore
+!/README.md
+!/.github/
+
+!/learn-flexitac/
+/learn-flexitac/node_modules/
+/learn-flexitac/dist/
+/learn-flexitac/review/
+/learn-flexitac/log-*.txt
+
+!/flexitac-anatomy/
+/flexitac-anatomy/*
+!/flexitac-anatomy/shared/
+/flexitac-anatomy/shared/node_modules/
+
+.DS_Store
+*.log

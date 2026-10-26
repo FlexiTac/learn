@@ -1,0 +1,435 @@
+/* Why simulate touch (src/widgets/sim-loop.ts), Lesson 3.1's card, and the iso toolkit's materials (.sx, also used by
+   sim-results.ts). Materials: four colours each (top lightest, lit side, shadow side, edge), light values first, dark
+   below, copied from flexitac-anatomy/figures/palette.css and figures/robot/robot.css (the reBot's silver, black and
+   lime; the UMI finger's orange TPU, D11; the FlexiTac pad's amber; the cutting mat's blue for the block), plus the
+   simulation's own cool slate tones (the "digital twin"). Every text a text token; the touch maps in viridis (set
+   inline by the widget; an untouched taxel is a quiet neutral, as Fig 1's map). */
+.sx {
+  --sx-table-top: #f0efeb; --sx-table-left: #e4e3de; --sx-table-right: #d2d1cb; --sx-table-edge: #8f8e88;
+  --sx-alu-top: #eaedf0; --sx-alu-left: #c9cfd3; --sx-alu-right: #969ea4; --sx-alu-edge: #3f464b;
+  --sx-black-top: #4c5151; --sx-black-left: #3c4141; --sx-black-right: #2d3131; --sx-black-edge: #0c1010;
+  --sx-lime-top: #d4f953; --sx-lime-left: #c1e439; --sx-lime-right: #9fc129; --sx-lime-edge: #404f0b;
+  --sx-tpu-top: #ff793d; --sx-tpu-left: #ee5b12; --sx-tpu-right: #cc460a; --sx-tpu-edge: #6a2813;
+  --sx-pad-top: #e8963c; --sx-pad-left: #f0b264; --sx-pad-right: #ab6712; --sx-pad-edge: #653d10;
+  --sx-block-top: #1f93dc; --sx-block-left: #0a7cbd; --sx-block-right: #016196; --sx-block-edge: #00304e;
+  --sx-ic-top: #38393f; --sx-ic-left: #2d2e33; --sx-ic-right: #202026; --sx-ic-edge: #101116;
+  --sx-tin-top: #d3d7dc; --sx-tin-left: #bbbfc4; --sx-tin-right: #9fa3a7; --sx-tin-edge: #45484c;
+  /* the simulation: one cool slate hue, the plate lightest */
+  --sx-plate-top: #eef2fa; --sx-plate-left: #dbe2f1; --sx-plate-right: #c3cde4; --sx-plate-edge: #8190b5;
+  --sx-sim-top: #e1e8f6; --sx-sim-left: #c5d1ea; --sx-sim-right: #a1b2d6; --sx-sim-edge: #3c4b73;
+  --sx-simblock-top: #b9c8e8; --sx-simblock-left: #9fb2db; --sx-simblock-right: #8098c8; --sx-simblock-edge: #33416a;
+  --sx-simpad-top: #d6c3a4; --sx-simpad-left: #e2d1b4; --sx-simpad-right: #b8a17c; --sx-simpad-edge: #4c3f2c;
+  --sx-grid: rgba(60, 80, 130, 0.16);
+  --sx-silk: #f2f2ec;
+  /* a pad that feels something: viridis' bright end */
+  --sx-lit: #c2df23;
+  --sx-lit-edge: #4b5a00;
+  --sx-lit-glow: rgba(194, 223, 35, 0.55);
+}
+:root[data-theme="dark"] .sx {
+  --sx-table-top: #2a2a2e; --sx-table-left: #232327; --sx-table-right: #1b1b1e; --sx-table-edge: #55555c;
+  --sx-alu-top: #babec1; --sx-alu-left: #949b9f; --sx-alu-right: #6b7379; --sx-alu-edge: #dee2e5;
+  --sx-black-top: #3c4141; --sx-black-left: #2f3434; --sx-black-right: #232728; --sx-black-edge: #888d8d;
+  --sx-lime-top: #c1e441; --sx-lime-left: #adce2e; --sx-lime-right: #8baa1f; --sx-lime-edge: #e0f7a3;
+  --sx-tpu-top: #f36a27; --sx-tpu-left: #dd530f; --sx-tpu-right: #bd400a; --sx-tpu-edge: #fbc3a7;
+  --sx-pad-top: #d08a3a; --sx-pad-left: #e3a85e; --sx-pad-right: #94550e; --sx-pad-edge: #f8cba7;
+  --sx-block-top: #1b7fc0; --sx-block-left: #0e6aa3; --sx-block-right: #005587; --sx-block-edge: #96c2e6;
+  --sx-ic-top: #4a4b53; --sx-ic-left: #383940; --sx-ic-right: #26272e; --sx-ic-edge: #898a8f;
+  --sx-tin-top: #a9afb6; --sx-tin-left: #9499a0; --sx-tin-right: #7f848a; --sx-tin-edge: #d4d8dc;
+  --sx-plate-top: #252b3b; --sx-plate-left: #1f2433; --sx-plate-right: #191d29; --sx-plate-edge: #4f5b7c;
+  --sx-sim-top: #5f6c8c; --sx-sim-left: #4e5a77; --sx-sim-right: #3d4760; --sx-sim-edge: #b3c0e2;
+  --sx-simblock-top: #7584a6; --sx-simblock-left: #637190; --sx-simblock-right: #4f5b77; --sx-simblock-edge: #c3cfee;
+  --sx-simpad-top: #9a8a70; --sx-simpad-left: #ab9b80; --sx-simpad-right: #7b6d56; --sx-simpad-edge: #e2d4bb;
+  --sx-grid: rgba(150, 170, 220, 0.14);
+  --sx-silk: #e4e6e0;
+  --sx-lit: #d4e22a;
+  --sx-lit-edge: #f3f8b0;
+  --sx-lit-glow: rgba(212, 226, 42, 0.45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sx {
+    --sx-table-top: #2a2a2e; --sx-table-left: #232327; --sx-table-right: #1b1b1e; --sx-table-edge: #55555c;
+    --sx-alu-top: #babec1; --sx-alu-left: #949b9f; --sx-alu-right: #6b7379; --sx-alu-edge: #dee2e5;
+    --sx-black-top: #3c4141; --sx-black-left: #2f3434; --sx-black-right: #232728; --sx-black-edge: #888d8d;
+    --sx-lime-top: #c1e441; --sx-lime-left: #adce2e; --sx-lime-right: #8baa1f; --sx-lime-edge: #e0f7a3;
+    --sx-tpu-top: #f36a27; --sx-tpu-left: #dd530f; --sx-tpu-right: #bd400a; --sx-tpu-edge: #fbc3a7;
+    --sx-pad-top: #d08a3a; --sx-pad-left: #e3a85e; --sx-pad-right: #94550e; --sx-pad-edge: #f8cba7;
+    --sx-block-top: #1b7fc0; --sx-block-left: #0e6aa3; --sx-block-right: #005587; --sx-block-edge: #96c2e6;
+    --sx-ic-top: #4a4b53; --sx-ic-left: #383940; --sx-ic-right: #26272e; --sx-ic-edge: #898a8f;
+    --sx-tin-top: #a9afb6; --sx-tin-left: #9499a0; --sx-tin-right: #7f848a; --sx-tin-edge: #d4d8dc;
+    --sx-plate-top: #252b3b; --sx-plate-left: #1f2433; --sx-plate-right: #191d29; --sx-plate-edge: #4f5b7c;
+    --sx-sim-top: #5f6c8c; --sx-sim-left: #4e5a77; --sx-sim-right: #3d4760; --sx-sim-edge: #b3c0e2;
+    --sx-simblock-top: #7584a6; --sx-simblock-left: #637190; --sx-simblock-right: #4f5b77; --sx-simblock-edge: #c3cfee;
+    --sx-simpad-top: #9a8a70; --sx-simpad-left: #ab9b80; --sx-simpad-right: #7b6d56; --sx-simpad-edge: #e2d4bb;
+    --sx-grid: rgba(150, 170, 220, 0.14);
+    --sx-silk: #e4e6e0;
+    --sx-lit: #d4e22a;
+    --sx-lit-edge: #f3f8b0;
+    --sx-lit-glow: rgba(212, 226, 42, 0.45);
+  }
+}
+
+/* ---- the iso toolkit's faces: a material class sets four colours, a tone class picks one */
+.sx-m-table { --t: var(--sx-table-top); --l: var(--sx-table-left); --r: var(--sx-table-right); --e: var(--sx-table-edge); }
+.sx-m-alu { --t: var(--sx-alu-top); --l: var(--sx-alu-left); --r: var(--sx-alu-right); --e: var(--sx-alu-edge); }
+.sx-m-black { --t: var(--sx-black-top); --l: var(--sx-black-left); --r: var(--sx-black-right); --e: var(--sx-black-edge); }
+.sx-m-lime { --t: var(--sx-lime-top); --l: var(--sx-lime-left); --r: var(--sx-lime-right); --e: var(--sx-lime-edge); }
+.sx-m-tpu { --t: var(--sx-tpu-top); --l: var(--sx-tpu-left); --r: var(--sx-tpu-right); --e: var(--sx-tpu-edge); }
+.sx-m-pad { --t: var(--sx-pad-top); --l: var(--sx-pad-left); --r: var(--sx-pad-right); --e: var(--sx-pad-edge); }
+.sx-m-block { --t: var(--sx-block-top); --l: var(--sx-block-left); --r: var(--sx-block-right); --e: var(--sx-block-edge); }
+.sx-m-ic { --t: var(--sx-ic-top); --l: var(--sx-ic-left); --r: var(--sx-ic-right); --e: var(--sx-ic-edge); }
+.sx-m-tin { --t: var(--sx-tin-top); --l: var(--sx-tin-left); --r: var(--sx-tin-right); --e: var(--sx-tin-edge); }
+.sx-m-plate { --t: var(--sx-plate-top); --l: var(--sx-plate-left); --r: var(--sx-plate-right); --e: var(--sx-plate-edge); }
+.sx-m-sim { --t: var(--sx-sim-top); --l: var(--sx-sim-left); --r: var(--sx-sim-right); --e: var(--sx-sim-edge); }
+.sx-m-simblock { --t: var(--sx-simblock-top); --l: var(--sx-simblock-left); --r: var(--sx-simblock-right); --e: var(--sx-simblock-edge); }
+.sx-m-simpad { --t: var(--sx-simpad-top); --l: var(--sx-simpad-left); --r: var(--sx-simpad-right); --e: var(--sx-simpad-edge); }
+.sx-f {
+  stroke: var(--e);
+  stroke-width: var(--sx-lw, 1);
+  stroke-linejoin: round;
+}
+.sx-top { fill: var(--t); }
+.sx-left { fill: var(--l); }
+.sx-right { fill: var(--r); }
+.sx-line { fill: none; }
+/* a pad that feels something (sim copies and the real pad while it holds the block) */
+.sx-pad.is-lit {
+  --t: var(--sx-lit);
+  --l: var(--sx-lit);
+  --r: color-mix(in oklab, var(--sx-lit) 82%, #000);
+  --e: var(--sx-lit-edge);
+}
+.sx-pad.is-lit path {
+  filter: drop-shadow(0 0 2px var(--sx-lit-glow));
+}
+.sx-grid {
+  fill: none;
+  stroke: var(--sx-grid);
+  stroke-width: 1;
+}
+.sx-net {
+  fill: none;
+  stroke: var(--sx-silk);
+  stroke-opacity: 0.55;
+  stroke-width: 0.8;
+}
+.sx-node {
+  fill: var(--sx-silk);
+  stroke: none;
+}
+
+/* ---- the card */
+.sl {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  padding: 11px 14px 13px;
+  --sl-k: 1;
+  --sl-map-zero: #deded8;
+  --sl-arc: color-mix(in oklab, var(--ink) 38%, var(--face));
+}
+:root[data-theme="dark"] .sl {
+  --sl-map-zero: #2a2b30;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .sl {
+    --sl-map-zero: #2a2b30;
+  }
+}
+.sl-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  min-height: 18px;
+  margin: 0;
+  /* clear of the card's × (28 px at 6 px from the card's edge), plus 4 px */
+  padding-right: 24px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--muted);
+}
+/* a small loop: the mark */
+.sl-mark {
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--accent);
+  border-right-color: transparent;
+  border-radius: 50%;
+  transform: rotate(-30deg);
+}
+.sl-name {
+  color: var(--accent);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sl-sep {
+  color: var(--faint);
+}
+.sl-ill {
+  cursor: help;
+}
+.sl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: -2px;
+}
+.sl-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+.sl-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px 0 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--ink);
+  font: 600 11px/1 var(--mono);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+.sl-btn:hover {
+  background: var(--card-2);
+}
+.sl-btn svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+.sl-btn[hidden] {
+  display: none;
+}
+.sl-btn:focus-visible,
+.sl-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---- the drawing */
+.sl-draw {
+  min-width: 0;
+}
+.sl-svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+.sl-g,
+.sl-arcs,
+.sl-tok {
+  transition: opacity 0.35s var(--ease);
+}
+.sl-lab {
+  font-family: var(--mono);
+  font-size: calc(11px * var(--sl-k));
+  letter-spacing: 0.01em;
+  fill: var(--muted);
+}
+.sl-lab-strong {
+  font-family: var(--sans);
+  font-size: calc(13px * var(--sl-k));
+  font-weight: 650;
+  letter-spacing: 0;
+  fill: var(--ink);
+}
+.sl-arc {
+  fill: none;
+  stroke: var(--sl-arc);
+  stroke-width: 1.5;
+  stroke-dasharray: 1 4.5;
+  stroke-linecap: round;
+}
+.sl-head {
+  fill: none;
+  stroke: var(--sl-arc);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sl-arc-lab {
+  fill: var(--text);
+}
+.sl-tok-dot {
+  fill: var(--accent);
+  stroke: var(--face);
+  stroke-width: 2;
+}
+.sl-map rect {
+  fill: var(--sl-map-zero);
+}
+.sl-map .sl-map-bg {
+  fill: var(--face);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.sl-approx {
+  font-family: var(--sans);
+  font-size: calc(20px * var(--sl-k));
+  font-weight: 600;
+  fill: var(--ink);
+}
+
+/* ---- focus: one part stands out, the rest dims */
+.sl[data-focus] .sl-g,
+.sl[data-focus] .sl-arcs,
+.sl[data-focus] .sl-tok {
+  opacity: 0.28;
+}
+.sl[data-focus="real"] .sl-realg,
+.sl[data-focus="sim"] .sl-simg,
+.sl[data-focus="policy"] .sl-pol,
+.sl[data-focus="policy"] .sl-arcs,
+.sl[data-focus="policy"] .sl-tok,
+.sl[data-focus="touch"] .sl-maps {
+  opacity: 1;
+}
+.sl[data-focus="real"] .sl-maps .sl-map-sim,
+.sl[data-focus="sim"] .sl-maps .sl-map-real {
+  opacity: 0.35;
+}
+.sl[data-focus="real"] .sl-maps,
+.sl[data-focus="sim"] .sl-maps {
+  opacity: 1;
+}
+/* touch: the maps, and the pads on both sides */
+.sl[data-focus="touch"] .sl-realg,
+.sl[data-focus="touch"] .sl-simg {
+  opacity: 0.55;
+}
+
+/* ---- the cards: three aligned columns, in the drawing's order */
+.sl-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.sl-card {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px 9px;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+}
+.sl-card:hover {
+  border-color: var(--line-strong);
+}
+.sl-card[aria-pressed="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.sl-card-t {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.sl-card-s {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.sl-card-n {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.sl-card-n b {
+  color: var(--ink);
+  font-weight: 700;
+}
+.sl[data-reduced] .sl-card[data-k="real"] .sl-card-n,
+.sl[data-reduced] .sl-card[data-k="sim"] .sl-card-n {
+  display: none;
+}
+.sl-key {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid var(--sx-tpu-edge);
+  background: var(--sx-tpu-left);
+}
+.sl-key-sim {
+  border-color: var(--sx-sim-edge);
+  background: var(--sx-sim-left);
+}
+.sl-key-touch {
+  width: auto;
+  height: auto;
+  border: 0;
+  background: none;
+  font-weight: 700;
+  font-style: normal;
+  color: var(--ink);
+}
+.sl-line {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.sl[data-noline] .sl-line {
+  display: none;
+}
+
+/* ---- the narrower forms */
+.sl[data-form="medium"] .sl-long,
+.sl[data-form="mini"] .sl-long {
+  display: none;
+}
+.sl[data-form="medium"] .sl-cards {
+  gap: 6px;
+}
+.sl[data-form="medium"] .sl-card {
+  padding: 7px 8px 8px;
+}
+.sl[data-form="medium"] .sl-card-t {
+  font-size: 12px;
+}
+.sl[data-form="medium"] .sl-card-s {
+  font-size: 11.5px;
+}
+.sl[data-form="medium"] .sl-btn span {
+  display: none;
+}
+.sl[data-form="mini"] .sl-cards,
+.sl[data-form="mini"] .sl-title {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sl-g,
+  .sl-arcs,
+  .sl-tok,
+  .sl-card {
+    transition: none;
+  }
+}

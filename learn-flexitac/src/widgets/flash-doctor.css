@@ -1,0 +1,155 @@
+/* Flash doctor: the Troubleshooter, the Fix card of lesson 6 (Build your own). Scoped to .w-doc. */
+.w-doc {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  overflow: auto;
+  container-type: inline-size;
+}
+.w-doc-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.w-doc-hint {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+.w-doc-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+  gap: 14px;
+}
+.w-doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow: auto;
+}
+.w-doc-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--face);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.w-doc-pick:hover {
+  border-color: var(--line-strong);
+}
+.w-doc-pick[aria-pressed="true"] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.w-doc-pick:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.w-doc-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+.w-doc-dot.is-ok {
+  background: #3f8a52;
+}
+.w-doc-dot.is-custom {
+  background: var(--accent);
+}
+.w-doc-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+.w-doc-term {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #161618;
+  color: #d8d8da;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+}
+.w-doc-term.is-error {
+  color: #f0a8a0;
+}
+.w-doc-prompt {
+  color: #9fd4a5;
+}
+.w-doc-com {
+  color: #8e8e93;
+}
+.w-doc-pics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.w-doc-pics figure {
+  margin: 0;
+}
+.w-doc-pics canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 32 / 12;
+  image-rendering: pixelated;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+.w-doc-pics figcaption {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.w-doc-why {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.w-doc-why p {
+  margin: 0 0 8px;
+}
+.w-doc-why b {
+  color: var(--ink);
+}
+.w-doc-why code {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+@container (max-width: 560px) {
+  .w-doc-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .w-doc-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+  .w-doc-pick {
+    padding: 6px 9px;
+    font-size: 12px;
+  }
+  .w-doc-hint {
+    display: none;
+  }
+}
