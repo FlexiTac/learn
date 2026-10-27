@@ -397,3 +397,10 @@
     transition: none;
   }
 }
+/* (a touch screen: a slider a finger can catch; the negative margins keep the rows where they were) */
+@media (pointer: coarse) {
+  .sc-r {
+    height: 30px;
+    margin: -5px 0;
+  }
+}

@@ -7,11 +7,14 @@
     "stage panel"
     "strip strip";
   gap: 16px;
-  padding: 0 var(--gutter) 18px;
+  padding: 0 var(--gutter-r) 18px var(--gutter-l);
 }
-@media (min-width: 1024px) and (min-height: 640px) {
+/* (the layouts' queries: src/state/layout.ts, which says why a tall portrait window up to 1180 px wide stacks; the
+   stacked queries below end at the same 799/1000, so no window falls between the two layouts) */
+@media (min-width: 1181px) and (min-height: 640px), (min-width: 1024px) and (min-height: 640px) and (min-aspect-ratio: 799/1000) {
   /* desktop: the lesson fits the window; panes scroll inside */
   body[data-view="lesson"] .app {
+    height: 100vh; /* (before dvh: Safari 15.4, Chrome 108) */
     height: 100dvh;
     overflow: hidden;
     grid-template-rows: auto minmax(0, 1fr);
@@ -83,10 +86,11 @@
    dial; one height for all its forms, so a step change does not resize the figure; the grid takes the row's height,
    so a shorter window gets smaller cells and the figure keeps the room: 168 px is the dial plus its padding),
    "strip" = lesson 4's frame bar under Fig 3's own map. (Measured at 1366-1920 px windows, 2026-10-24.) */
-.stage-body.is-split[data-fig-mode="stage"]:has(> .widget-slot[data-row="short"]) {
+/* (data-wrow: the slot's data-row, copied onto the stage body by views/lesson.ts, so no :has() is needed) */
+.stage-body.is-split[data-fig-mode="stage"][data-wrow="short"] {
   grid-template-rows: minmax(min(300px, 64%), 1fr) minmax(0, clamp(168px, 26%, 236px));
 }
-.stage-body.is-split[data-fig-mode="stage"]:has(> .widget-slot[data-row="strip"]) {
+.stage-body.is-split[data-fig-mode="stage"][data-wrow="strip"] {
   grid-template-rows: minmax(min(300px, 64%), 1fr) minmax(0, 104px);
 }
 /* a widget taller than its row scrolls inside the row (a short window): the slot is the scroller, so a widget with a
@@ -792,6 +796,24 @@
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+/* a touch screen: a box a finger can hit (25 px tall and at least 44 px wide, it was 19 px tall), and 16 px text, or iOS
+   Safari zooms the page in when it takes focus. The code's lines open up to 27 px (the gutter's numbers with them), so
+   two boxes on lines one under the other never touch. */
+@media (pointer: coarse) {
+  .code,
+  .code-gutter {
+    line-height: 27px;
+  }
+  .param {
+    font-size: 16px;
+    width: calc(var(--w, 3ch) + 22px);
+    min-width: 44px;
+    height: 25px;
+    padding: 0 6px;
+    margin: 0 2px;
+    vertical-align: 1px;
+  }
+}
 .code-hint {
   font-size: 12px;
   color: var(--muted);
@@ -1099,7 +1121,7 @@
 }
 
 /* ---------------------------------------------------------------- tablet + phone: stacked */
-@media (max-width: 1023px), (max-height: 639px) {
+@media (max-width: 1023.98px), (max-height: 639.98px), (max-width: 1180.98px) and (max-aspect-ratio: 799/1000) {
   .lesson-view {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
@@ -1111,12 +1133,15 @@
   .stage {
     height: auto;
   }
+  /* (until the figure reports its height, about what a figure takes at this width: 1-1.3 times it, so the steps bar and
+     the text under it move little when the figure comes) */
   .figure-slot {
     flex: none;
-    height: var(--fig-h, min(70svh, 640px));
+    height: var(--fig-h, min(70svh, 640px, 120cqw));
   }
   .widget-slot {
     flex: none;
+    height: min(60vh, 460px); /* (before svh) */
     height: min(60svh, 460px);
   }
   /* a step's own picture (GuidedStep.stage) takes the figure's place in the page flow; the figure stays behind it at its
@@ -1128,19 +1153,67 @@
     left: 0;
     right: 0;
   }
+  /* the figure behind is often taller than the picture (Fig 1 at 535 px under a 315 px picture): clip it to the stage
+     body, or it paints over the steps bar below (it is inert, so the bar would still take taps nobody can see) */
+  .stage-body[data-stage] {
+    position: relative;
+    overflow: hidden;
+  }
   .stage-body[data-stage] > .stage-over {
     position: relative;
     inset: auto;
     flex: none;
   }
+  /* until the picture's widget has loaded (a moment on a slow network), the layer keeps the room the picture will take,
+     so the steps bar and the text under it do not jump down when it comes. The robot grasp's stacked form (a phone,
+     widgets/robot-grasp.ts layout): its padding, kicker, names, legend and caption (~180 px), the video at the box's
+     width (1400 : 1080) and under it the two maps on their side (12 cells down, the cell from the box's width) */
+  .stage-body[data-stage] > .stage-over[data-stage="robot-grasp"]:empty {
+    min-height: calc(180px + 0.772 * (100cqw - 24px) + 0.1875 * (100cqw - 42px));
+  }
   @container stage (min-width: 604px) {
     .stage-body[data-stage] > .stage-over {
+      min-height: 0;
       height: min(70svh, 640px);
     }
+    /* (the phone's placeholder off; the heights here, robot grasp's and a phone on its side's, hold while it loads) */
+    .stage-body[data-stage] > .stage-over[data-stage]:empty {
+      min-height: 0;
+    }
+    /* the robot grasp's side-by-side form is about 0.62 times as tall as it is wide (widgets/robot-grasp.ts): no
+       taller, or a tablet in portrait shows it in a band of empty stage (768 x 1024: 640 px for ~430 px of picture) */
+    .stage-body[data-stage] > .stage-over[data-stage="robot-grasp"] {
+      height: min(70svh, 640px, 62cqw + 64px);
+    }
   }
-  /* a short widget under the figure (data-row, above) takes its own height here too */
-  .widget-slot[data-row] {
+  /* a short widget under the figure (data-row, above) takes its own height here too. Not as a size container: size
+     containment ignores the content, so an auto height would be 0 and the widget would paint over the steps bar below
+     (lesson 1.4's frame strip, 2.2's maps). The strip is as tall as its content. The maps size their cells to the box
+     they get (widgets/teleop-maps.ts reads the slot's height and picks its form from it), so their row gets a set
+     height: on a stage of 600 px and up (tablets, phones on their side) the compact "row" form (both maps lying side
+     by side, the force block beside them: ~180 px), so the gripper and the maps fit on the screen together; a phone's
+     narrow stage has no room for the force block beside the maps, so it goes under them (the maps' narrow form:
+     280-291 px at 320-430) and the row grows with the text (a status line that wraps). (Measured 2026-10-26: 390 x 844,
+     768 x 1024, 844 x 390; the narrow form at 320, 360, 390, 430.) */
+  .stage-body.is-split > .widget-slot[data-row] {
+    container-type: inline-size;
     height: auto;
+  }
+  /* (the strip's content is 96-117 px: its least, while it loads) */
+  .stage-body.is-split > .widget-slot[data-row="strip"] {
+    min-height: 96px;
+  }
+  .stage-body.is-split > .widget-slot[data-row="short"] {
+    height: 204px;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+  @container stage (max-width: 599px) {
+    .stage-body.is-split > .widget-slot[data-row="short"] {
+      height: auto;
+      min-height: 280px;
+      overflow: visible;
+    }
   }
   .widget-slot[data-row] > * {
     height: auto;
@@ -1177,7 +1250,22 @@
     max-height: none;
   }
 }
-@media (max-width: 600px) {
+/* a short, wide window (state/layout.ts FLAT_QUERY: a phone on its side, 844 x 390; a laptop at 150 %, 1280 x 610):
+   stacked, but the figure fills a slot as tall as the window ("stage" mode) instead of taking a height from the stage's
+   width (570-940 px), so it is seen whole and the steps bar is right under it; a step's own picture takes the same
+   height */
+@media (min-width: 601px) and (max-height: 639.98px) {
+  .figure-slot {
+    height: calc(100vh - 16px); /* (before svh: Safari 15.4, Chrome 108) */
+    height: max(240px, 100svh - 16px);
+  }
+  @container stage (min-width: 604px) {
+    .stage-body[data-stage] > .stage-over[data-stage] {
+      height: max(240px, 100svh - 16px);
+    }
+  }
+}
+@media (max-width: 600.98px) {
   .lesson-view {
     gap: 12px;
   }
@@ -1281,7 +1369,7 @@
   overflow: hidden;
   white-space: pre-line;
 }
-@media (max-width: 1023px), (max-height: 639px) {
+@media (max-width: 1023.98px), (max-height: 639.98px), (max-width: 1180.98px) and (max-aspect-ratio: 799/1000) {
   .read-toggle,
   .figure-readout {
     display: none;
@@ -1292,7 +1380,7 @@
 .w-build code {
   overflow-wrap: anywhere;
 }
-@media (max-width: 1023px), (max-height: 639px) {
+@media (max-width: 1023.98px), (max-height: 639.98px), (max-width: 1180.98px) and (max-aspect-ratio: 799/1000) {
   .console {
     position: static;
     max-height: none;
@@ -1307,5 +1395,25 @@
   }
   .code-caption {
     padding-bottom: 6px;
+  }
+}
+/* very wide windows (2560 px and up at 100 %: a 1440p or 4K screen without scaling): the panel grows a little with the
+   window, the lesson stops growing at 2560 px and sits in the middle (the top bar with it, shell.css), and the step
+   text keeps a line short enough to read (it ran ~240 characters on one line at 2560 px). Below 2200 px (every laptop,
+   1920 x 1080) nothing here applies. */
+/* (the panel's column only beside the stage: a window this wide but under 640 px tall is stacked, one column) */
+@media (min-width: 2200px) and (min-height: 640px) {
+  .lesson-view {
+    grid-template-columns: minmax(0, 1fr) clamp(440px, 21vw, 560px);
+  }
+}
+@media (min-width: 2200px) {
+  .lesson-view {
+    width: 100%;
+    max-width: 2560px;
+    margin-inline: auto;
+  }
+  .steps-body {
+    max-width: 1000px;
   }
 }

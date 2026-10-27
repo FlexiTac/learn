@@ -33,7 +33,7 @@ export const zh: LessonZh = {
   steps: [
     {
       title: `${TAXELS} 个点`,
-      text: `在仿真器眼里，传感垫只是手指表面上 ${ROWS} × ${COLS} = ${TAXELS} 个点，间距 2 mm。把球移到上面并按住按键：球里面的点会亮起来。`,
+      text: `在仿真器眼里，传感垫只是手指表面上 ${ROWS} × ${COLS} = ${TAXELS} 个点，间距 2 mm。<span class="only-mouse">把球移到上面并按住按键</span><span class="only-touch">在上面按住，拖动来移动球</span>：球里面的点会亮起来。`,
     },
     {
       title: "按帧的顺序",

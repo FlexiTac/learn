@@ -72,6 +72,13 @@ export const f1 = (n: number) => (Math.round(n * 10) / 10).toString();
 export const pathOf = (pts: Pt[], close = true) => pts.map(([x, y], i) => `${i ? "L" : "M"}${f1(x)} ${f1(y)}`).join("") + (close ? "Z" : "");
 export const range = (a: number, b: number, n: number) => Array.from({ length: n + 1 }, (_, i) => a + ((b - a) * i) / n);
 export const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+/** A short, wide window (a phone on its side): a stacked page gives the card no height, and a card in its usual form
+ *  (drawing over maps over controls) is two or three times the window's height, so the maps and the controls that
+ *  change them are never on screen together. The cards then take their side form (drawing beside the maps; no
+ *  taller than the window): sim-points, sim-springs, sim-playground. */
+export const shortWindow = () => window.innerHeight < 560 && window.innerWidth > window.innerHeight;
+/** Whether a card with no height budget (maxH 0) and `cardW` px wide takes its side form now. */
+export const sideForm = (maxH: number, cardW: number) => !maxH && cardW >= 560 && shortWindow();
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 export const wave = (t: number) => 0.5 - 0.5 * Math.cos(Math.PI * clamp01(t));
 const memo = new WeakMap<Element, Record<string, string>>();
@@ -773,6 +780,9 @@ export function placeObject(shape: Shape, pad: Pad, a: number, b: number, depth:
   }
 }
 
+/** A touch screen: the hint says tap, not hover. */
+const COARSE = matchMedia("(pointer: coarse)");
+
 // ================================================================== the card
 // the card's words (docs/i18n.md): painted from STR() and again on a language switch (the drawing's labels too: it is
 // built again)
@@ -802,6 +812,7 @@ const STR = strings(
     pad: "FlexiTac pad",
     points: "384 points",
     hint: "Hover a square, or move the object over the pad: each point's number is <b>k</b> = <b>i</b> × 32 + <b>j</b>.",
+    hintTap: "Tap a square, or move the object over the pad: each point's number is <b>k</b> = <b>i</b> × 32 + <b>j</b>.",
     kline: "sense line {i} · drive line {j}{t}",
     kTouched: ' · <span class="sp-kt">touched</span>',
     desc: "{n} of 384 points touched",
@@ -830,6 +841,7 @@ const STR = strings(
     pad: "FlexiTac 传感垫",
     points: "384 个点",
     hint: "把指针移到一个方格上，或把物体移到传感垫上：每个点的编号是 <b>k</b> = <b>i</b> × 32 + <b>j</b>。",
+    hintTap: "轻点一个方格，或把物体移到传感垫上：每个点的编号是 <b>k</b> = <b>i</b> × 32 + <b>j</b>。",
     kline: "感应线 {i} · 驱动线 {j}{t}",
     kTouched: ' · <span class="sp-kt">被触碰</span>',
     desc: "384 个点中有 {n} 个被触碰",
@@ -1108,12 +1120,14 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimPointsInstance {
     underK = Math.abs(cur.a) <= 32.5 && Math.abs(cur.b) <= 12 && jj >= 0 && jj < 32 && ii >= 0 && ii < 12 ? ii * 32 + jj : null;
     const k = shownK();
     nEl.textContent = String(touched);
+    // (a count that is not 0, e.g. the tube still on the pad's edge, keeps its place beside the readout: sim-points.css)
+    nEl.parentElement!.toggleAttribute("data-some", touched > 0 || near > 0);
     const T = STR();
     nearEl.textContent = near ? fillT(T.near, { n: near }) : "";
     // the readout: the point's number
     const kTxt =
       k === null
-        ? `<span class="sp-hint">${T.hint}</span>`
+        ? `<span class="sp-hint">${COARSE.matches ? T.hintTap : T.hint}</span>`
         : `<b>k</b> = ${Math.floor(k / 32)} × 32 + ${k % 32} = <b class="sp-kv">${k}</b><span class="sp-kline">${fillT(T.kline, { i: Math.floor(k / 32), j: k % 32, t: meas.depth[k] > 0 ? T.kTouched : "" })}</span>`;
     if (kEl.dataset.v !== kTxt) {
       kEl.dataset.v = kTxt;
@@ -1435,37 +1449,58 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimPointsInstance {
   // ------------------------------------------------------------------ layout
   const relayout = () => {
     if (!root.isConnected) return;
-    const W = Math.round(anim.getBoundingClientRect().width);
+    let W = Math.round(anim.getBoundingClientRect().width);
     if (W < 60) return;
     const maxH = Number(root.closest<HTMLElement>("[data-max-h]")?.dataset.maxH) || 0;
     const compact = Boolean(root.closest("[data-compact]"));
-    const key = `${W} ${maxH} ${compact}`;
+    // the side form (a phone on its side, see sideForm): the drawing left, the frame and its counts right
+    const cardW = root.clientWidth;
+    const sideOn = sideForm(maxH, cardW);
+    const key = `${W} ${maxH} ${compact} ${sideOn} ${sideOn ? `${cardW}x${window.innerHeight}` : ""}`;
     if (key === builtKey) return;
     builtKey = key;
+    root.toggleAttribute("data-side", sideOn);
+    let colW = 0;
+    if (sideOn) {
+      const cs = getComputedStyle(root);
+      const inner = cardW - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      colW = Math.floor((inner - 16) * 0.5);
+      W = Math.floor(inner - 16 - colW);
+      root.style.setProperty("--sp-col", `${colW}px`);
+    }
     const form = W >= 470 ? "large" : W >= 300 ? "medium" : "mini";
     root.dataset.form = form;
-    // the map: as wide as it may be (large: beside the readout; else the full width)
-    const side = form === "large" ? 170 : 0;
+    // the map: as wide as it may be (large: beside the readout; else the full width; the side form: its column)
+    const side = form === "large" && !sideOn ? 170 : 0;
     const axisW = form === "mini" ? 0 : 24;
-    const cell = Math.max(4, Math.min(form === "large" ? 14 : 10, Math.floor((W - side - axisW - (side ? 18 : 0)) / 32)));
+    const cell = sideOn
+      ? Math.max(4, Math.min(10, Math.floor((colW - axisW) / 32)))
+      : Math.max(4, Math.min(form === "large" ? 14 : 10, Math.floor((W - side - axisW - (side ? 18 : 0)) / 32)));
     map.size(cell);
+    // (sizing the canvas cleared it: paint the map again, though the frame it shows has not changed)
+    mapKey = "";
     root.style.setProperty("--sp-mapw", `${map.width}px`);
     root.style.setProperty("--sp-maph", `${map.height}px`);
     build(W, 0);
     now();
-    if (maxH) {
+    // (the side form: no taller than the window)
+    const budget = maxH || (sideOn ? window.innerHeight - 24 : 0);
+    if (budget) {
       // the drawing gives up the height the rest of the card needs; in the full form at most a fifth of its scale
       // (then the card is too tall and the host drops the closing sentence: compact), in compact as much as it must
       const card = root.closest<HTMLElement>(".demo-card") ?? el;
-      const over = card.offsetHeight - maxH;
+      const over = card.offsetHeight - budget;
       if (over > 0) {
-        build(W, Math.max(90, anim.offsetHeight - over), compact ? 0.45 : 0.8);
+        build(W, Math.max(90, anim.offsetHeight - over), compact || sideOn ? 0.45 : 0.8);
         now();
       }
     }
   };
   const ro = new ResizeObserver(() => relayout());
   ro.observe(anim);
+  // (the side form depends on the window's height too)
+  const onWin = () => relayout();
+  window.addEventListener("resize", onWin);
 
   const onVis = () => {
     visible = !document.hidden;
@@ -1526,6 +1561,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimPointsInstance {
       io.disconnect();
       offTheme();
       offLang();
+      window.removeEventListener("resize", onWin);
       document.removeEventListener("visibilitychange", onVis);
       root.remove();
     },

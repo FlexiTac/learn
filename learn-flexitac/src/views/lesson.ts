@@ -5,6 +5,7 @@
 // bar's words are drawn again.
 import { FigureHost, type FigureMode, type FigureStatus } from "../figure/FigureHost";
 import { lang, loc, onLang, t } from "../i18n";
+import { FLAT_QUERY, WIDE_QUERY } from "../state/layout";
 import { onTheme, reducedMotion, theme } from "../state/theme";
 import { load, update } from "../state/store";
 import type { DemoId, Lesson, LessonCtx, StageId, WidgetInstance } from "../types";
@@ -41,7 +42,7 @@ const TABS: { id: TabId; label: "tab.overview" | "tab.parts" | "tab.wiring" | "t
  *  their own (wheel, touch, keys) lets go at once. Desktop stages have a fixed height, so nothing moves there.
  *  Returns a disposer. */
 function keepBarInPlace(stage: HTMLElement, bar: HTMLElement): () => void {
-  const wide = matchMedia("(min-width: 1024px) and (min-height: 640px)");
+  const wide = matchMedia(WIDE_QUERY);
   const HOLD_MS = 3000;
   let keep: { top: number; until: number } | null = null;
   const hold = () => {
@@ -164,10 +165,13 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
     stageBody.append(slot);
     // Desktop/tablet: the stage has a fixed size and the card fills it both ways at natural px ("stage"; the drawing
     // widens its viewBox to the room, so extra width is usable and text stays at its own size). Stacked layouts: the
-    // card takes the stage width and tells us its height ("fill"), so phones get the figure's own narrow layout.
-    // ("fit", the old desktop mode that zoomed the whole 650 px card, still works in FigureHost but is not used here.)
-    const wide = matchMedia("(min-width: 1024px) and (min-height: 640px)");
-    const modeNow = (): FigureMode => (wide.matches ? "stage" : "fill");
+    // card takes the stage width and tells us its height ("fill"), so phones get the figure's own narrow layout; a
+    // phone on its side stacks too, but its figure fills a slot as tall as the window ("stage", state/layout.ts
+    // FLAT_QUERY, lesson.css). ("fit", the old desktop mode that zoomed the whole 650 px card, still works in FigureHost
+    // but is not used here.)
+    const wide = matchMedia(WIDE_QUERY);
+    const flat = matchMedia(FLAT_QUERY);
+    const modeNow = (): FigureMode => (wide.matches || flat.matches ? "stage" : "fill");
     figure = new FigureHost(slot, lesson.figure.fig, theme(), { title: t(`fig.title.${lesson.figure.fig}`), mode: modeNow(), reveal: Boolean(lesson.figure.reveal), lang: lang() });
     const host = figure;
     // CSS hook: the split-stage row shares and the duplicate readout depend on the layout (lesson.css)
@@ -176,8 +180,15 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
       host.setMode(modeNow());
       stageBody.dataset.figMode = host.currentMode;
     };
+    // (a phone turned either way loads its figure again in the new layout's mode, so the page is the one a lesson opened
+    // that way gets; what the learner did in the figure (Fig 5's pose and grip, pan and zoom) starts again. Keeping a
+    // "stage" figure in a phone's portrait slot instead left its readout, cards and the grid card short of room)
     wide.addEventListener("change", onWide);
-    disposers.push(() => wide.removeEventListener("change", onWide));
+    flat.addEventListener("change", onWide);
+    disposers.push(() => {
+      wide.removeEventListener("change", onWide);
+      flat.removeEventListener("change", onWide);
+    });
     disposers.push(
       figure.onSize(({ height }) => {
         if (host.currentMode === "fill") slot.style.setProperty("--fig-h", `${height}px`);
@@ -224,6 +235,22 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
 
   if (lesson.widget) {
     const slot = h("div", { class: "widget-slot" }, `<p class="figure-status mono">${t("widget.loading")}</p>`);
+    // The split stage's row a widget asks for on its slot when it mounts (data-row, lesson.css), set ahead from what the
+    // lesson opens on, so the row has its size while the widget loads and nothing under it jumps when it comes (a
+    // stacked layout on a slow network): 2.2's maps ask for the short row, 1.4's frame runner in its strip form (a step's
+    // widgetView grid: false) for the strip. The widget sets the same on mount.
+    const rowAhead = split ? (lesson.widget === "teleop-maps" ? "short" : lesson.widget === "frame-runner" && lesson.steps?.[openingStep(lesson)]?.widgetView?.grid === false ? "strip" : null) : null;
+    if (rowAhead) slot.dataset.row = rowAhead;
+    // the row on the stage body too (data-wrow), for the split stage's row sizes (lesson.css): a selector on the stage
+    // body itself, so a browser without :has() (Firefox before 121, ESR 115) sizes the rows the same
+    const mirrorRow = () => {
+      if (slot.dataset.row) stageBody.dataset.wrow = slot.dataset.row;
+      else delete stageBody.dataset.wrow;
+    };
+    mirrorRow();
+    const rowWatch = new MutationObserver(mirrorRow);
+    rowWatch.observe(slot, { attributes: true, attributeFilter: ["data-row"] });
+    disposers.push(() => rowWatch.disconnect());
     stageBody.append(slot);
     widgetSlot = slot;
     showWidgetAt(openingStep(lesson));

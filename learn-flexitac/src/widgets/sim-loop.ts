@@ -25,7 +25,10 @@
 // Layout: the drawing's size comes from the card's width and its height budget (layout(maxH) / fit(maxH), else the
 // card's px max-height, else ~1.06 x the width), at most 0.72 x its width; a short budget drops the closing sentence
 // first. The stations are scaled to fit their places. A card under 520 px wide is "medium" (shorter card text, an
-// icon-only play button), under 220 px "mini" (no cards: the drawing only).
+// icon-only play button), under 220 px "mini" (no cards: the drawing only). A drawing under NARROW (a phone) is taller
+// (0.9 x its width, with no height given), leaves the policy's job out and puts "learn from demos" on two lines where
+// it must; a card under 420 px stacks its three cards. A short, wide window with no height given (a phone on its side)
+// takes the side form: the loop left, the three cards one under the other right, no taller than the window.
 //
 // THE ISO TOOLKIT (exported; sim-results.ts draws its pipeline with it): a camera (azimuth, elevation), an IsoScene
 // that collects convex solids (box, beam, extruded prism, upright cylinder) as painter-sorted items, each face shaded
@@ -507,6 +510,8 @@ const STR = strings(
   },
 );
 const fmtInt = (n: number) => n.toLocaleString("en-US");
+/** Under this drawing width (a phone) the drawing is taller and leaves the policy's job out (see build). */
+const NARROW = 440;
 
 let seq = 0;
 
@@ -573,6 +578,28 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimLoopInstance {
     tok: SVGCircleElement;
   } | null = null;
 
+  /** A label's width in the drawing (the .sl-lab style at the drawing's type scale). */
+  const textW = (t: string) => {
+    const e = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    e.setAttribute("class", "sl-lab sl-arc-lab");
+    e.setAttribute("visibility", "hidden");
+    e.textContent = t;
+    svg.append(e);
+    const w = e.getComputedTextLength();
+    e.remove();
+    return w || t.length * 6.6;
+  };
+  /** A label on one line if it fits `room` px, else on two (split at the space nearest its middle; a label with no
+   *  space, Chinese, in the middle). */
+  const fitLines = (t: string, room: number): string[] => {
+    if (textW(t) <= room) return [t];
+    const mid = t.length / 2;
+    let at = -1;
+    for (let i = 0; i < t.length; i++) if (t[i] === " " && (at < 0 || Math.abs(i - mid) < Math.abs(at - mid))) at = i;
+    return at > 0 ? [t.slice(0, at), t.slice(at + 1)] : [t.slice(0, Math.ceil(mid)), t.slice(Math.ceil(mid))];
+  };
+  const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
   const budget = () => {
     if (fixedMax !== null) return fixedMax;
     const card = root.closest<HTMLElement>(".demo-card");
@@ -596,12 +623,36 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimLoopInstance {
       return root.offsetHeight - 10;
     };
     root.removeAttribute("data-noline");
+    // (a phone's narrow drawing with no height given, a stacked page: as tall as its width wants, the card takes its
+    // own height, its three cards one under the other)
+    const given = fixedMax !== null || parseFloat(root.closest<HTMLElement>(".demo-card")?.style.maxHeight ?? "") > 0;
+    // (a phone on its side, a stacked page with no height given: the loop on the left, its three cards one under the
+    // other on the right, the whole card no taller than the window)
+    const side = !given && Wc >= 560 && window.innerHeight < 560 && window.innerWidth > window.innerHeight;
+    root.toggleAttribute("data-side", side);
+    if (side) {
+      const colW = Math.floor((W - 16) * 0.36);
+      const dW = W - 16 - colW;
+      root.style.setProperty("--sl-col", `${colW}px`);
+      root.setAttribute("data-noline", "");
+      svg.setAttribute("height", "10");
+      svg.style.height = "10px";
+      const cardsH = (root.querySelector(".sl-cards") as HTMLElement).offsetHeight;
+      const restS = root.offsetHeight - Math.max(10, cardsH);
+      build(dW, Math.round(Math.max(150, Math.min(dW * 0.72, window.innerHeight - 26 - restS))));
+      return;
+    }
+    if (W < NARROW && !given) {
+      build(W, Math.round(Math.max(150, W * 0.9)));
+      return;
+    }
     let H = budget() - rest();
     if (H < W * 0.62) {
       root.setAttribute("data-noline", "");
       H = budget() - rest();
     }
-    build(W, Math.round(Math.max(150, Math.min(W * 0.72, H))));
+    // (a phone's narrow drawing is a little taller: its stations, labels and maps need the rows)
+    build(W, Math.round(Math.max(150, Math.min(W * (W < NARROW ? 0.9 : 0.72), H))));
   };
 
   const build = (W: number, H: number) => {
@@ -615,9 +666,11 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimLoopInstance {
     const kt = Math.min(1.15, Math.max(0.96, W / 560));
     root.style.setProperty("--sl-k", String(kt));
     // places: the policy on top, the real robot left, the simulation right, the maps and the return arrow below
-    const mapY = H * 0.835;
-    const stTop = H * 0.27;
-    const stBot = H * 0.74;
+    // (a narrow drawing: the stations end higher, so the pads' names over the maps keep clear of their bases)
+    const narrow = W < NARROW;
+    const mapY = H * (narrow ? 0.845 : 0.835);
+    const stTop = H * (narrow ? 0.29 : 0.27);
+    const stBot = H * (narrow ? 0.665 : 0.74);
     const stH = stBot - stTop;
     const real = fitScene(
       (sc, p: GripPose) => realStation(sc, p),
@@ -650,10 +703,11 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimLoopInstance {
     })();
     const pb = polSc.box;
     const T = STR();
+    // (a narrow drawing leaves the policy's job out: it would run into both stations; the step text says it)
     gPol.innerHTML =
       polSc.sc.render() +
       `<text class="sl-lab sl-lab-strong" x="${f1(W / 2)}" y="${f1(pb.y + pb.h + lab * 1.45)}" text-anchor="middle">${T.policy}</text>` +
-      `<text class="sl-lab" x="${f1(W / 2)}" y="${f1(pb.y + pb.h + lab * 2.85)}" text-anchor="middle">${T.policyJob}</text>`;
+      (narrow ? "" : `<text class="sl-lab" x="${f1(W / 2)}" y="${f1(pb.y + pb.h + lab * 2.85)}" text-anchor="middle">${T.policyJob}</text>`);
 
     // the copies: one group each (back to front), its parts translated per frame
     gSim.innerHTML = "";
@@ -712,11 +766,26 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimLoopInstance {
       const p = (da: number) => [tip[0] - s * Math.cos(ang + da), tip[1] - s * Math.sin(ang + da)].map(f1).join(" ");
       return `M${p(0.5)}L${tip.map(f1).join(" ")}L${p(-0.5)}`;
     };
+    // the arcs' labels stay inside the drawing: "learn from demos" left of its arc, on two lines where one does not
+    // fit (a phone), "practise" right of its arc, against the right edge where it would run past it
+    const learnX = a1.p0[0] - 7;
+    const learnY = (a1.p0[1] + a1.p1[1]) / 2 + 4;
+    const lines = fitLines(T.learn, learnX - 3);
+    const learnSvg =
+      lines.length === 1
+        ? `<text class="sl-lab sl-arc-lab" x="${f1(learnX)}" y="${f1(learnY)}" text-anchor="end">${esc(lines[0])}</text>`
+        : `<text class="sl-lab sl-arc-lab" x="${f1(learnX)}" y="${f1(learnY - lab * 0.62)}" text-anchor="end">${lines.map((l, i) => `<tspan x="${f1(learnX)}" dy="${i ? f1(lab * 1.25) : 0}">${esc(l)}</tspan>`).join("")}</text>`;
+    const prX = a2.c[0] + 7;
+    const prW = textW(T.practise);
+    const practiseSvg =
+      prX + prW > W - 2
+        ? `<text class="sl-lab sl-arc-lab" x="${f1(W - 2)}" y="${f1((a2.p0[1] + a2.p1[1]) / 2 + 8)}" text-anchor="end">${T.practise}</text>`
+        : `<text class="sl-lab sl-arc-lab" x="${f1(prX)}" y="${f1((a2.p0[1] + a2.p1[1]) / 2 + 8)}" text-anchor="start">${T.practise}</text>`;
     gArcs.innerHTML =
       `<path class="sl-arc" d="${q(a1)}"/><path class="sl-arc" d="${q(a2)}"/><path class="sl-arc" d="${d3}"/>` +
       `<path class="sl-head" d="${head(a1.p1, a1.c)}${head(a2.p1, a2.c)}${head(a3.p1, [x31, a3.p1[1] + 10])}"/>` +
-      `<text class="sl-lab sl-arc-lab" x="${f1(a1.p0[0] - 7)}" y="${f1((a1.p0[1] + a1.p1[1]) / 2 + 4)}" text-anchor="end">${T.learn}</text>` +
-      `<text class="sl-lab sl-arc-lab" x="${f1(a2.c[0] + 7)}" y="${f1((a2.p0[1] + a2.p1[1]) / 2 + 8)}" text-anchor="start">${T.practise}</text>` +
+      learnSvg +
+      practiseSvg +
       `<text class="sl-lab sl-arc-lab" x="${f1(W / 2)}" y="${f1(Math.min(H - 3, yBot + 14 * kt))}" text-anchor="middle">${T.back}</text>`;
     const arcs = [...gArcs.querySelectorAll<SVGPathElement>(".sl-arc")];
     gTok.innerHTML = `<circle class="sl-tok-dot" r="${f1(4.2 * k)}" cx="-99" cy="-99"/>`;
@@ -871,6 +940,14 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimLoopInstance {
     }
   });
   ro.observe(root);
+  // (the side form depends on the window's height too)
+  let lastWinH = window.innerHeight;
+  const onWin = () => {
+    if (window.innerHeight === lastWinH) return;
+    lastWinH = window.innerHeight;
+    relayout();
+  };
+  window.addEventListener("resize", onWin);
   document.fonts?.ready.then(() => relayout());
 
   // a language switch: the words, the play button, and the drawing built again with its labels in the new language
@@ -931,6 +1008,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimLoopInstance {
       ro.disconnect();
       io.disconnect();
       document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("resize", onWin);
       offLang();
       root.remove();
     },

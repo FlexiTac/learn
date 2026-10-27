@@ -53,8 +53,10 @@
 // width less the gaps, and from 360 px wide on its LARGE form, as tall as TALL (85 %) of the stage allows within the free
 // height (the figure's top corner text, its bottom corner text and its viewbar stay clear). Each card takes that height
 // its own way (budget()): the unit card fills it exactly (style.height, at most ~its width), the grid card shrinks its
-// drawing to it (data-max-h), the pad card lays out within it (a px max-height). A phone's band (under 360 px) keeps
-// the cards' own forms down to their mini forms, with no height given.
+// drawing to it (data-max-h), the pad card lays out within it (a px max-height). A narrower band (a tablet's, a phone's)
+// keeps the cards' own forms down to their mini forms; the grid and pad cards (spec.fit) still get the free height as
+// their budget there, so their mini forms fit beside the pad (a phone's figure is short: the steps bar is right under
+// it). A card still too tall for that height in its last form is held to it and scrolls inside (never over the bar).
 //   unit    step 2: vertically centred on Fig 1's focus ring (one crossing; clamped inside the stage's free bands), with
 //           ONE straight horizontal leader drawn here, over the iframe, from the ring's right edge to the card's left
 //           edge, a terminal dot on the ring. The figure reports where the ring and the band are (ft:focus,
@@ -83,6 +85,7 @@ import { onLang, strings, t } from "../i18n";
 import { loadWidget } from "../widgets";
 import { h } from "./dom";
 import { icon } from "./icons";
+import { WIDE_QUERY } from "../state/layout";
 
 type Place = "side" | "corner" | "beside";
 type Form = "full" | "compact" | "short";
@@ -109,6 +112,8 @@ export const BESIDE_ROOM: ReserveRoom[] = [{ f: 0.5, min: 360 }, { f: 0.46, min:
 const FILL_W = { min: 100, pref: 0, max: Infinity, share: 1 };
 /** From this card width on, a card with a `tall` spec takes its large form: a height budget from the stage. */
 const LARGE_MIN = 360;
+/** A touch screen (a phone on its side: roomAt keeps a short band's card under LARGE_MIN). */
+const COARSE = matchMedia("(pointer: coarse)");
 /** The share of the stage body's height a large card may take (within the free height). */
 const TALL = 0.85;
 /** The figure hears a card's scan at most this often (ms). */
@@ -147,6 +152,8 @@ interface DemoSpec {
   /** Give the card its height budget `h` (px, the card's border box; null = none: the card takes its own height) for a
    *  card `w` px wide, before it lays out. */
   budget?(card: HTMLElement, h: number | null, w: number): void;
+  /** A card under LARGE_MIN px wide still gets the free height beside the pad as its budget (its mini form fits it). */
+  fit?: boolean;
   /** Mirror the card's state on the figure once its content is mounted; returns the undo (called when the card goes). */
   mirror?(card: HTMLElement, inst: WidgetInstance, figure: FigureHost | null): () => void;
 }
@@ -247,6 +254,7 @@ const SPECS: Record<DemoId, DemoSpec> = {
     room: () => ({ ok: true, width: null }),
     band: { from: "focus", w: FILL_W },
     tall: TALL,
+    fit: true,
     // the drawing shrinks to the budget (the card's own height comes from its content)
     budget: (card, h) => {
       if (h) card.dataset.maxH = String(Math.round(h));
@@ -291,6 +299,7 @@ const SPECS: Record<DemoId, DemoSpec> = {
     room: () => ({ ok: true, width: null }),
     band: { from: "reserve", w: FILL_W, rooms: BESIDE_ROOM },
     tall: TALL,
+    fit: true,
     // the card lays out within its max-height (pad-demo.ts reads it as its height budget)
     budget: (card, h) => {
       if (h) card.style.maxHeight = `${Math.round(h)}px`;
@@ -353,7 +362,7 @@ export interface DemoSlots {
 /** `onClose` runs when the learner closes the card (× or Escape), not when the host hides it. */
 export function demoHost(slots: DemoSlots, ctx: LessonCtx, onClose?: () => void): DemoHost {
   const { stage, stageBody } = slots;
-  const wide = matchMedia("(min-width: 1024px) and (min-height: 640px)");
+  const wide = matchMedia(WIDE_QUERY);
   let card: HTMLElement | null = null;
   let inst: WidgetInstance | null = null;
   let showing: DemoId | null = null;
@@ -450,6 +459,12 @@ export function demoHost(slots: DemoSlots, ctx: LessonCtx, onClose?: () => void)
     card.toggleAttribute("data-short", f === "short");
   };
 
+  /** A touch screen's card that fills its band and fits it in no form at the band's width (a short band: the grid's
+   *  forms from TIGHT_W keep their drawing, the large unit stops shrinking): place() tries it just under LARGE_MIN, in
+   *  the forms a narrower band's card takes (the grid's tight levels), and keeps that if a form fits there or the card
+   *  is at least shorter. */
+  let underTry = false;
+
   /** The room at place p: whether it is allowed, the card's width, the tallest it may be and, for a card that fills
    *  its band (spec.tall, at least LARGE_MIN px wide), the height budget it is given (else null). */
   const roomAt = (p: Place) => {
@@ -458,12 +473,17 @@ export function demoHost(slots: DemoSlots, ctx: LessonCtx, onClose?: () => void)
     if (p === "beside") {
       const b = besideAt();
       const free = b ? besideFloor(b) - TOP_BAND : 0;
-      const large = Boolean(b && spec?.tall && b.width >= LARGE_MIN);
+      // (a touch screen's band too short for the large forms, whose unit stops shrinking at ~0.9 x LARGE_MIN of height
+      // (unit-demo.ts LARGE_S): a phone on its side; the card stays just under LARGE_MIN, in the forms a narrower band's
+      // card takes)
+      const under = Boolean(b && spec?.tall && b.width >= LARGE_MIN && COARSE.matches && (underTry || (!spec.fit && free < 0.9 * LARGE_MIN)));
+      const width = b ? (under ? LARGE_MIN - 1 : b.width) : null;
+      const large = Boolean(b && spec?.tall && width! >= LARGE_MIN);
       const maxH = large ? Math.floor(Math.min(spec!.tall! * H, free)) : free;
-      return { ok: Boolean(b), width: b ? b.width : null, maxH, budget: large ? maxH : null };
+      return { ok: Boolean(b), width, maxH, large, budget: large || (b && spec?.fit) ? Math.floor(maxH) : null };
     }
     const r = spec!.room(p, W);
-    return { ok: r.ok, width: r.width, maxH: H - BOTTOM_BAND - TOP_BAND, budget: null };
+    return { ok: r.ok, width: r.width, maxH: H - BOTTOM_BAND - TOP_BAND, large: false, budget: null };
   };
 
   /** Move the card to place p (data-place and width; it is always over the stage body). */
@@ -476,9 +496,14 @@ export function demoHost(slots: DemoSlots, ctx: LessonCtx, onClose?: () => void)
     const r = roomAt(p);
     if (r.width) card.style.width = `${r.width}px`;
     else card.style.removeProperty("width");
-    // (a card that fills its band: its height budget, given before it lays out; none for a narrower one)
+    // (a card held to the free height last time scrolls no more: its own budget, if any, sets its max-height again)
+    card.style.removeProperty("max-height");
+    card.style.removeProperty("overflow-y");
+    card.style.removeProperty("scrollbar-gutter");
+    card.removeAttribute("data-capped");
+    // (a card that fills its band, or one that fits its mini form to it: its height budget, given before it lays out)
     spec.budget?.(card, r.budget, r.width ?? card.offsetWidth);
-    card.toggleAttribute("data-large", r.budget !== null);
+    card.toggleAttribute("data-large", r.large);
     if (p === "beside" && lastBeside) card.style.left = `${Math.round(lastBeside.left)}px`;
     else card.style.removeProperty("left");
     // a phone-narrow card in a band: the widgets' narrow forms key off the card's width (container queries), this only
@@ -534,9 +559,24 @@ export function demoHost(slots: DemoSlots, ctx: LessonCtx, onClose?: () => void)
     return !(bd && bd.right > 0 && bd.settled);
   };
 
+  /** "beside": the band the card was last laid out for by place(). A figure report that only moves the ring (ft:focus on
+   *  every frame of a pan or a zoom) re-centres the card on it without laying it out again: trying its forms at every
+   *  frame (a short band's tight levels, under LARGE_MIN) would hold up the figure's own animation. */
+  let laidFor = "";
+  const bandKey = (b: Beside) => `${b.width} ${b.left} ${Math.floor(besideFloor(b))} ${stageBody.clientWidth}x${stageBody.clientHeight}`;
+  const follow = () => {
+    const b = card && placed === "beside" && laidFor && !card.classList.contains("is-waiting") ? besideAt() : null;
+    if (!card || !b || bandKey(b) !== laidFor) return place();
+    const hh = card.offsetHeight;
+    const top = Math.round(Math.max(TOP_BAND, Math.min(b.cy - hh / 2, besideFloor(b) - hh)));
+    card.style.top = `${top}px`;
+    drawLeader(top, hh);
+  };
+
   const place = () => {
     if (!card || !spec) return;
     clearTimeout(waitTimer);
+    laidFor = "";
     if (bandPending()) {
       const now = performance.now();
       if (!waitSince) waitSince = now;
@@ -552,6 +592,7 @@ export function demoHost(slots: DemoSlots, ctx: LessonCtx, onClose?: () => void)
     let form: Form = "full";
     // the last place with room (its width), for a card too tall for every place
     let last: Place | null = null;
+    underTry = false;
     for (const p of order) {
       if (!roomAt(p).ok) continue;
       last = p;
@@ -571,6 +612,15 @@ export function demoHost(slots: DemoSlots, ctx: LessonCtx, onClose?: () => void)
       chosen = last;
       const forms = spec.forms(chosen);
       form = forms[forms.length - 1] ?? "full";
+      if (spec.tall && COARSE.matches) {
+        const at = last;
+        const h0 = card.scrollHeight;
+        underTry = true;
+        put(at);
+        const f = forms.find((x) => (setForm(x), fits(at)));
+        if (f) form = f;
+        else if (card.scrollHeight >= h0) underTry = false;
+      }
     }
     if (!chosen) {
       // no place at all (no band reported yet): wait, hidden where it is, for the figure's next report
@@ -590,23 +640,43 @@ export function demoHost(slots: DemoSlots, ctx: LessonCtx, onClose?: () => void)
       card.style.top = `${Math.round(top)}px`;
     } else if (chosen === "beside" && lastBeside) {
       // vertically centred on the ring (or where it was while the ring is not drawn; or in the band's free height),
-      // kept clear of the figure's top and bottom corner text (the top wins for a card taller than that height)
-      const top = Math.round(Math.max(TOP_BAND, Math.min(lastBeside.cy - ch / 2, besideFloor(lastBeside) - ch)));
+      // kept clear of the figure's top and bottom corner text; a card still taller than that height in its smallest
+      // form is held to it and scrolls inside, so it never reaches over the figure's readout or the steps bar under it
+      const free = Math.floor(besideFloor(lastBeside) - TOP_BAND);
+      if (free > 80 && (ch > free || card.scrollHeight > card.clientHeight + 1)) {
+        card.style.maxHeight = `${free}px`;
+        // (its scrollbar's room kept whether it shows or not: a classic scrollbar coming and going changes the content's
+        // width, which a card fitting its drawing to that width answers by fitting, and the bar goes, and comes back. A
+        // browser without scrollbar-gutter (Safari before 18) keeps the bar itself)
+        card.style.overflowY = CSS.supports?.("scrollbar-gutter", "stable") ? "auto" : "scroll";
+        card.style.scrollbarGutter = "stable";
+        card.setAttribute("data-capped", "");
+        // (laid out again at the width the gutter leaves: it was laid out at the uncapped width)
+        inst?.layout?.();
+      }
+      const hh = card.offsetHeight;
+      const top = Math.round(Math.max(TOP_BAND, Math.min(lastBeside.cy - hh / 2, besideFloor(lastBeside) - hh)));
       card.style.top = `${top}px`;
-      drawLeader(top, ch);
+      drawLeader(top, hh);
+      laidFor = bandKey(lastBeside);
     } else card.style.removeProperty("top");
     if (chosen !== "beside") drawLeader(0, 0);
   };
 
   // the stage's size: the band a reserved spec needs (a resize may need another, or none), then the card's place
   let sizeKey = "";
-  const ro = new ResizeObserver(() => {
+  let roRaf = 0;
+  const ro = new ResizeObserver((entries) => {
     const key = `${stageBody.clientWidth}x${stageBody.clientHeight}`;
     if (key !== sizeKey) {
       sizeKey = key;
       reserveNow();
     }
-    place();
+    // (only the card changed size, e.g. its caption took another line: placed in the next frame, as placing it may
+    // resize the card again, which this observer cannot report in the same frame: a "ResizeObserver loop" error)
+    cancelAnimationFrame(roRaf);
+    if (entries.every((e) => e.target === card)) roRaf = requestAnimationFrame(() => place());
+    else place();
   });
   ro.observe(stageBody);
   const onWide = () => place();
@@ -614,6 +684,7 @@ export function demoHost(slots: DemoSlots, ctx: LessonCtx, onClose?: () => void)
 
   const teardown = () => {
     clearTimeout(waitTimer);
+    cancelAnimationFrame(roRaf);
     waitSince = 0;
     offMirror?.();
     offMirror = null;
@@ -680,7 +751,7 @@ export function demoHost(slots: DemoSlots, ctx: LessonCtx, onClose?: () => void)
       leader.setAttribute("aria-hidden", "true");
       leader.innerHTML = `<path class="demo-leader-halo"/><path class="demo-leader-line"/><circle class="demo-leader-end" r="3.5"/>`;
       stageBody.append(leader);
-      offFocus = fig ? (spec.band.from === "focus" ? fig.onFocus(() => place()) : fig.onBand(() => place())) : null;
+      offFocus = fig ? (spec.band.from === "focus" ? fig.onFocus(() => follow()) : fig.onBand(() => place())) : null;
     }
     place();
     ro.observe(card);

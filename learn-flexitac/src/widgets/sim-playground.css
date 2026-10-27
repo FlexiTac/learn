@@ -54,8 +54,11 @@
   margin: 0;
   font-size: 11px;
   color: var(--muted);
-  white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+/* (its two parts each on one line: a narrow map's stat breaks between them, never runs into the other map's) */
+.sg-nw {
+  white-space: nowrap;
 }
 .sg-stat b {
   color: var(--ink);
@@ -128,6 +131,13 @@
   margin: 2px 0 0;
   accent-color: var(--accent);
 }
+/* a touch screen: a slider a finger can catch (30 px tall; the negative margins keep the knobs' rows where they were) */
+@media (pointer: coarse) {
+  .sg-sl input {
+    height: 30px;
+    margin: -5px 0 -5px;
+  }
+}
 .sg-short {
   display: none;
 }
@@ -156,6 +166,74 @@
 }
 .sg[data-form="mini"] .sg-sliders {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+/* (a phone's card, under 400 px: two columns, so every knob keeps its name; in three, "Noise" and "Thresh." were cut
+   to "N…" and "Th…", "阻尼器 kd" to "k") */
+@container (max-width: 399px) {
+  /* (and each map's stat on two lines: how many lit, then the divisor) */
+  .sg .sg-stat .sg-nw {
+    display: block;
+  }
+  .sg .sg-stat .sg-dot {
+    display: none;
+  }
+  .sg .sg-sliders {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sg .sg-sl-name {
+    min-width: min-content;
+  }
+}
+/* (a 300-355 px phone's card, its maps' columns 113 px wide: the divisor line, "top 14 < 15 → ÷ 60" / "最大 14 < 15 →
+   ÷ 60", ran 2-10 px past the card's edge; with narrower spaces it fits, at the same height (not letter-spacing:
+   Chinese takes none, i18n.css)) */
+@container (max-width: 271.98px) {
+  .sg .sg-stat .sg-nw:last-child {
+    word-spacing: -0.2em;
+  }
+}
+
+/* ---- the side form (sim-playground.ts: a wide card in a short window, a phone on its side): the drawing and the maps
+   side by side, the controls under the drawing and the rule under the maps, the knobs under both */
+.sg[data-side] {
+  grid-template-columns: minmax(0, 1fr) var(--sg-col, 300px);
+  grid-template-areas: "kick kick" "anim maps" "ctl rule" "sl sl";
+  column-gap: 16px;
+}
+.sg[data-side] > .sp-kicker {
+  grid-area: kick;
+}
+.sg[data-side] > .sg-anim {
+  grid-area: anim;
+  align-self: center;
+}
+.sg[data-side] > .sg-maps {
+  grid-area: maps;
+  align-self: center;
+}
+.sg[data-side] > .sg-rule {
+  grid-area: rule;
+  margin: 0;
+}
+.sg[data-side] > .sg-ctl {
+  grid-area: ctl;
+  align-self: start;
+}
+.sg[data-side] > .sg-sliders {
+  grid-area: sl;
+}
+.sg[data-side] > .sp-line,
+.sg[data-side] .sp-btn-t,
+.sg[data-side] .sg-how {
+  display: none;
+}
+.sg[data-side] .sp-btn {
+  padding: 0 8px;
+}
+/* (a 700-770 px phone on its side, e.g. 740 x 360: the right map's divisor line, "top 12 < 15 → ÷ 60" / "最大 12 < 15 →
+   ÷ 60", ran 2-10 px past the card's edge, which cut "60"; with narrower spaces it fits, at the same height) */
+.sg[data-side] .sg-stat .sg-nw:last-child {
+  word-spacing: -0.2em;
 }
 .sg.is-reduced .sg-play {
   display: none;

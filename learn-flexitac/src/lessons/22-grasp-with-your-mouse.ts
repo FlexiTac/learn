@@ -21,7 +21,7 @@ export const lesson: Lesson = {
   lede: `Drive the gripper yourself and pick something up. The moment the fingers close, both pads' touch maps show what each finger feels.`,
   status: "ready",
   features: [
-    { icon: "mouse", title: "Mouse only", text: "Left / right along the row, up / down for height, hold the button to grip" },
+    { icon: "mouse", title: "Mouse or touch", text: `<span class="only-mouse">Left / right along the row, up / down for height, hold the button to grip</span><span class="only-touch">Drag along the row and up / down, tap Grip to close</span>` },
     { icon: "heat", title: "Two live maps", text: `Left and right finger, ${ROWS} × ${COLS} each` },
     { icon: "touch", title: "Shapes leave patterns", text: "A patch for the fruit, a line along the cube's edge" },
   ],
@@ -39,7 +39,9 @@ export const lesson: Lesson = {
 row of things on the mat; move it up and down and the gripper rises and sinks. Hold the mouse button to close the fingers;
 let go to open them. Close on something and move the mouse up: it comes along. Near an object the gripper eases onto it,
 a dashed line shows where the fingertips will land, and the object glows when the open fingers are low enough round it.
-(Keys work too: the arrows move it and raise and lower it, Space grips; the wheel also raises and lowers.)</p>
+(Keys work too: the arrows move it and raise and lower it, Space grips; the wheel also raises and lowers.)
+<span class="only-touch">On a touch screen, drag on the drawing to move the gripper and tap <b>Grip</b> to close the fingers;
+<b>Let go</b> opens them.</span></p>
 <p><b>What the maps show.</b> Under the gripper are the two pads' touch maps, left finger and right finger, each
 ${ROWS} × ${COLS} squares: exactly what the two reading boards from Lesson 2.1 would send. A square lights where its touch
 spot is pressed, and the harder it is pressed, the brighter it gets. The bar beside them is the total squeeze, with a mark
@@ -67,19 +69,19 @@ time.</p>`,
     {
       title: "Reach",
       // keep every text to 2-3 lines in a 475-530 px column (1366-1440 px windows)
-      text: "Move the mouse: left and right slide the gripper along the row, up and down raise and lower it. Bring the open fingers down round the strawberry, or press Show me.",
+      text: `<span class="only-mouse">Move the mouse</span><span class="only-touch">Drag on the drawing</span>: left and right slide the gripper along the row, up and down raise and lower it. Bring the open fingers down round the strawberry, or press Show me.`,
       // the lesson opens here, in teleop mode (figure.initial)
       start: true,
       show: [{ name: "reach", arg: "strawberry", once: true }],
     },
     {
       title: "Close",
-      text: "Hold the mouse button to close the fingers. Both maps light up where the pads touch the fruit; a firmer squeeze reads brighter.",
+      text: `<span class="only-mouse">Hold the mouse button</span><span class="only-touch">Tap <b>Grip</b></span> to close the fingers. Both maps light up where the pads touch the fruit; a firmer squeeze reads brighter.`,
       show: [{ name: "close", once: true }],
     },
     {
       title: "Lift",
-      text: "Keep holding and move the mouse up. If the squeeze is enough, the strawberry comes along. The bar shows the squeeze it needs.",
+      text: `<span class="only-mouse">Keep holding and move the mouse up.</span><span class="only-touch">Keep them closed and drag up.</span> If the squeeze is enough, the strawberry comes along. The bar shows the squeeze it needs.`,
       show: [{ name: "lift", arg: 35, once: true }],
     },
     {

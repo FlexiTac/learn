@@ -87,11 +87,11 @@ export const zh: LessonZh = {
   steps: [
     {
       title: "读取板",
-      text: `这块板负责读取传感垫：它检查全部 ${TAXELS} 个交叉点，并通过 USB 把结果发送到你的电脑，每秒 ${FRAME_HZ} 次。点击读取板，抬起 Nano，看看它的零件。`,
+      text: `这块板负责读取传感垫：它检查全部 ${TAXELS} 个交叉点，并通过 USB 把结果发送到你的电脑，每秒 ${FRAME_HZ} 次。<span class="only-mouse">点击</span><span class="only-touch">轻点</span>读取板，抬起 Nano，看看它的零件。`,
     },
     {
       title: "两条通路",
-      text: `<b>驱动：</b>D2 和 D3 → 移位寄存器 U2–U5 → FPC2 → ${COLS} 条驱动线。<b>感应：</b>${ROWS} 条感应线 → FPC1 → 多路选择器 U6 → A0，加上 R1。点击卡片查看详情。`,
+      text: `<b>驱动：</b>D2 和 D3 → 移位寄存器 U2–U5 → FPC2 → ${COLS} 条驱动线。<b>感应：</b>${ROWS} 条感应线 → FPC1 → 多路选择器 U6 → A0，加上 R1。<span class="only-mouse">点击卡片查看详情。</span><span class="only-touch">轻点零件查看详情。</span>`,
     },
   ],
   quiz: [

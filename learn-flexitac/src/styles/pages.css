@@ -1,6 +1,6 @@
 /* ---------------------------------------------------------------- simple pages */
 .page {
-  padding: 8px var(--gutter) 48px;
+  padding: 8px var(--gutter-r) 48px var(--gutter-l);
   max-width: 1180px;
   margin-inline: auto;
   width: 100%;
@@ -278,6 +278,7 @@
 /* "Coming next" (no lessons yet): a dashed card, a muted picture with a "Coming soon" pill, not a link */
 .fig-card.is-soon {
   --lc: var(--line-strong);
+  --lc-soft: var(--card-2);
   border-style: dashed;
   cursor: default;
 }
@@ -385,6 +386,7 @@
 }
 .lesson-card.is-soon {
   --lc: var(--line-strong);
+  --lc-soft: var(--card-2);
   border-style: dashed;
 }
 .lesson-card.is-soon .thumb-icon {
@@ -470,6 +472,13 @@
   font: inherit;
   margin-top: 6px;
 }
+/* a touch screen: 16 px, or iOS Safari zooms the page in when the field takes focus (and leaves it zoomed) */
+@media (pointer: coarse) {
+  .search input {
+    font-size: 16px;
+    height: 44px;
+  }
+}
 .glossary {
   margin: 0;
   display: grid;
@@ -511,6 +520,15 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+/* a touch screen: the small "Lesson 1.3" link gets a finger-sized hit area (~29 px tall, it was 13) without moving
+   anything (the padding reaches into the space around it) */
+@media (pointer: coarse) {
+  .term-lesson {
+    display: inline-block;
+    padding: 8px 6px;
+    margin: -8px -6px;
+  }
 }
 
 /* about */
@@ -566,7 +584,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (max-width: 600px) {
+@media (max-width: 600.98px) {
   .fig-card {
     grid-template-columns: minmax(0, 1fr);
   }

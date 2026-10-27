@@ -1099,6 +1099,21 @@ html[data-embed="stage"] .pd .iso-plate-corner[data-corner="hint"] { display: fl
 /* the two lines again on the closed pad's top face (in .pd-scan, over the laminate; the group fades as the pad opens) */
 .pd-scan .pd-scan-top { opacity: 1; }
 
+/* (iOS Safari: no text autosizing in landscape, which would grow the figure's labels and break their fitted layout; and
+   inside a website iframe outside stage mode the page is as tall as its card: no scrollbar of its own, e.g. Firefox's) */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html[data-embed=""], html[data-embed=""] body { overflow: hidden; }
+/* a touch screen: the small controls get a finger-sized hit area (an invisible margin round each; nothing moves) and the
+   label's "Details ›" a little larger type */
+@media (pointer: coarse) {
+  .ft-label-more { position: relative; font-size: max(11px, 1em); }
+  .ft-label-more::after { content: ""; position: absolute; inset: -10px -8px; }
+  .ft-label.ft-all.is-chip .ft-label-more::after { content: none; }
+  .ft-viewbar button { position: relative; }
+  .ft-viewbar button::after { content: ""; position: absolute; inset: -8px 0; }
+  .ft-reveal-close::after { content: ""; position: absolute; inset: -9px -4px; }
+}
+
 html:lang(zh) .iso,html:lang(zh) .iso[data-theme]{--anatomy-mono:ui-monospace,"SF Mono",Menlo,Consolas,"PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "WenQuanYi Micro Hei",monospace}
 html:lang(zh) body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI","PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "WenQuanYi Micro Hei",sans-serif}
 html:lang(zh) *,html:lang(zh) *::before,html:lang(zh) *::after{letter-spacing:0!important;text-transform:none!important}

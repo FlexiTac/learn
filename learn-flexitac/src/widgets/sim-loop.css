@@ -355,6 +355,7 @@
   font-size: 12px;
   line-height: 1.4;
   color: var(--text);
+  text-wrap: pretty;
 }
 .sl-card-n {
   margin-top: 2px;
@@ -401,6 +402,56 @@
   display: none;
 }
 
+/* ---- a phone's card (under ~420 px): the three cards one under the other, each as wide as the card (three columns
+   of ~80-95 px cut "Simulation" and broke words one or two characters to a line) */
+@container (max-width: 419px) {
+  .sl-cards {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  .sl-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: 10px;
+  }
+  .sl-card-t {
+    grid-column: 1 / -1;
+  }
+  .sl-card-n {
+    margin-top: 0;
+    white-space: nowrap;
+  }
+}
+.sl-card-n {
+  word-break: keep-all;
+}
+/* ---- the side form (sim-loop.ts: a phone on its side): the loop left, the three cards one under the other right */
+.sl[data-side] {
+  grid-template-columns: minmax(0, 1fr) var(--sl-col, 220px);
+  grid-template-areas: "kick kick" "head head" "draw cards";
+  column-gap: 16px;
+  align-items: center;
+}
+.sl[data-side] > .sl-kicker {
+  grid-area: kick;
+}
+.sl[data-side] > .sl-head {
+  grid-area: head;
+}
+.sl[data-side] > .sl-draw {
+  grid-area: draw;
+}
+.sl[data-side] > .sl-cards {
+  grid-area: cards;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+.sl[data-side] .sl-card {
+  padding: 6px 9px 7px;
+}
+.sl[data-side] .sl-long {
+  display: none;
+}
 /* ---- the narrower forms */
 .sl[data-form="medium"] .sl-long,
 .sl[data-form="mini"] .sl-long {
@@ -431,5 +482,13 @@
   .sl-tok,
   .sl-card {
     transition: none;
+  }
+}
+/* (a touch screen: the play button a finger can hit) */
+@media (pointer: coarse) {
+  .sl-btn {
+    height: 34px;
+    min-width: 36px;
+    justify-content: center;
   }
 }

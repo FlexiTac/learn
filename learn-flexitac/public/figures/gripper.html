@@ -376,7 +376,13 @@ body{margin:0;background:var(--anatomy-page);color:var(--anatomy-text);font:14px
 .ft-m-gr-pla{--m-top:var(--gr-pla-top);--m-left:var(--gr-pla-left);--m-right:var(--gr-pla-right);--m-edge:var(--gr-pla-edge)}
 .ft-m-gr-carriage{--m-top:var(--gr-carriage-top);--m-left:var(--gr-carriage-left);--m-right:var(--gr-carriage-right);--m-edge:var(--gr-carriage-edge)}
 
-.gr-stage { position: relative; outline: none; }
+/* the bottom corners (live.js fitCorners): the readout wraps inside the card instead of running past
+   its left edge; where it would meet the hint, the hint goes up over it */
+.gr .iso-plate-corner[data-corner="readout"] { max-width: 100%; white-space: normal; text-align: right; }
+.gr .iso-plate-corner[data-corner="hint"] { max-width: 100%; white-space: normal; }
+html[data-embed=""] .gr .iso-plate-corner:is([data-corner="readout"], [data-corner="hint"]) { line-height: 1.3; }
+.gr .iso-plate[data-gr-stack] .iso-plate-corner[data-corner="hint"] { bottom: calc(var(--gr-read-h, 11px) + 6px); }
+.gr-stage { position: relative; outline: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 .gr-svg { display: block; width: 100%; height: auto; overflow: visible; }
 
 /* fin: the rims of the rib gaps (seen on the side face) */
@@ -450,11 +456,34 @@ body{margin:0;background:var(--anatomy-page);color:var(--anatomy-text);font:14px
 /* the object the open fingers are at grasp height round: a soft glow in the hotspot colour */
 .tp-obj.tp-ready { filter: drop-shadow(0 0 2px var(--ft-hotspot)) drop-shadow(0 0 5px color-mix(in srgb, var(--ft-hotspot) 60%, transparent)); }
 [data-theme="light"] .tp-obj.tp-ready { filter: drop-shadow(0 0 1.6px var(--ft-hotspot)) drop-shadow(0 0 4.5px color-mix(in srgb, var(--ft-hotspot) 70%, transparent)); }
+/* (iOS Safari: WebKit may not draw a CSS filter on an element inside the svg, so the glow would not show; the object's
+   outline takes the hotspot colour there too. @supports matches iOS's -webkit-touch-callout only) */
+@supports (-webkit-touch-callout: none) {
+  .iso .tp-obj.tp-ready .iso-edge { stroke: var(--ft-hotspot); stroke-opacity: 1; }
+}
 .gr-stage[data-teleop] { cursor: crosshair; }
 .gr-stage[data-teleop] .ft-viewbar { display: none; }
+/* teleop on a touch screen: the Grip button (teleop.js), bottom right of the drawing, a calm pill at a finger's size;
+   pressed (the fingers closed) it fills with the hotspot tint and reads "Let go" */
+.tp-grip { position: absolute; right: 10px; bottom: 8px; z-index: 3; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; min-width: 104px; justify-content: center; padding: 0 18px 0 14px; border: 0; border-radius: 999px; background: var(--ft-callout-bg); box-shadow: 0 0 0 1.5px color-mix(in oklab, var(--ft-hotspot) 60%, transparent), var(--ft-callout-shadow); color: var(--ft-callout-ink); font: 700 12px/1.2 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; transition: background-color 160ms var(--anatomy-ease), box-shadow 160ms var(--anatomy-ease), transform 120ms linear; }
+.tp-grip[hidden] { display: none; }
+.tp-grip-icon { display: block; width: 20px; height: 16px; color: var(--ft-hotspot); }
+.tp-grip-icon svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tp-grip .tp-grip-shut, .tp-grip[data-on] .tp-grip-open { display: none; }
+.tp-grip[data-on] .tp-grip-shut { display: inline; }
+.tp-grip[data-on] { background: color-mix(in oklab, var(--ft-hotspot) 22%, var(--ft-callout-bg)); box-shadow: 0 0 0 2px var(--ft-hotspot), var(--ft-callout-shadow); }
+.tp-grip:active { box-shadow: 0 0 0 2.5px var(--ft-hotspot), var(--ft-callout-shadow); }
+.tp-grip:focus { outline: none; }
+.tp-grip:focus-visible { box-shadow: 0 0 0 2px var(--ft-callout-bg), 0 0 0 4px var(--ft-hotspot), var(--ft-callout-shadow); }
+@media (prefers-reduced-motion: reduce) { .tp-grip { transition: none; } }
 .tp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* a click target with no look of its own (the near finger's extenders, over its holder's cheek: explore mode only) */
 .gr-hit { fill: none; stroke: none; pointer-events: all; }
+
+/* (iOS Safari: no text autosizing in landscape, which would grow the figure's labels and break their fitted layout; and
+   inside a website iframe outside stage mode the page is as tall as its card: no scrollbar of its own, e.g. Firefox's) */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html[data-embed=""], html[data-embed=""] body { overflow: hidden; }
 /* ---- explore mode (live page and ?embed only; never in ?record or ?film). It starts clean: no dots, no cards. The
    hovered part rises a few px with a soft glow; a click shows ONE label for the picked part with a straight horizontal
    leader. The label, the focus ring and the view bar are deliberately outside the kit's no-floating-label rule: the
@@ -463,6 +492,18 @@ body{margin:0;background:var(--anatomy-page);color:var(--anatomy-text);font:14px
 .gr-stage.ft-explore[data-hover] { cursor: pointer; }
 .gr-stage.ft-explore[data-panning] { cursor: grabbing; }
 .gr-stage.ft-explore[data-zoomed] { overflow: hidden; touch-action: none; }
+/* teleop (Lesson 2.2) keeps every touch on the drawing: a vertical drag lowers or raises the gripper, never scrolls the
+   page (a scroll would also cancel the drag) */
+.gr-stage[data-teleop], .gr-stage.ft-explore[data-teleop] { touch-action: none; }
+/* (on the website's card outside stage mode, a phone's or a portrait tablet's, the gripper goes on up past the drawing's
+   top into the corner titles' band: there it fades out over the drawing's top 24 px instead) */
+html[data-embed=""] .gr-stage[data-teleop] .gr-svg { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24px); mask-image: linear-gradient(to bottom, transparent, #000 24px); }
+/* (and in a narrow stage, a landscape tablet's split stage: the drawing under 720 px wide reaches the corner title too.
+   Wider stages, desktop's, keep the gripper running up to the card's edge as before) */
+html[data-embed="stage"] .gr-stage[data-teleop] { container-type: inline-size; }
+@container (max-width: 719px) {
+  html[data-embed="stage"] .gr-stage[data-teleop] .gr-svg { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24px); mask-image: linear-gradient(to bottom, transparent, #000 24px); }
+}
 /* the drawing focused by a click (so its keys work) draws no outline; focused from the keyboard it does */
 .gr-stage.ft-explore[data-pointer-focus]:focus-visible { outline: none; }
 
@@ -535,7 +576,7 @@ body{margin:0;background:var(--anatomy-page);color:var(--anatomy-text);font:14px
 }
 
 /* view bar: zoom out, zoom in, fit (like la_home.png's toolbar) */
-.ft-viewbar { position: absolute; left: 50%; bottom: 2px; z-index: 3; display: flex; align-items: center; gap: 1px; padding: 3px; transform: translateX(-50%); border-radius: 8px; background: var(--ft-viewbar-bg); box-shadow: 0 0 0 1px var(--ft-viewbar-line), 0 6px 14px -8px rgba(0, 0, 0, .45); }
+.ft-viewbar { position: absolute; left: 50%; bottom: 2px; z-index: 3; pointer-events: auto; display: flex; align-items: center; gap: 1px; padding: 3px; transform: translateX(-50%); border-radius: 8px; background: var(--ft-viewbar-bg); box-shadow: 0 0 0 1px var(--ft-viewbar-line), 0 6px 14px -8px rgba(0, 0, 0, .45); }
 .ft-viewbar button { display: grid; place-items: center; width: 28px; height: 26px; padding: 0; border: 0; border-radius: 5px; background: none; color: var(--ft-viewbar-ink); cursor: pointer; transition: background 160ms var(--anatomy-ease); }
 .ft-viewbar button:hover { background: var(--ft-viewbar-line); }
 .ft-viewbar button:focus { outline: none; }
@@ -588,6 +629,8 @@ html[data-embed="stage"] .ft-explore[data-compact] .ft-label:not(.ft-all) { grid
 /* the view bar sits in the drawing area's bottom-left corner, which the board never reaches (the bottom middle is
    where the mat's front corner comes down) */
 html[data-embed="stage"] .ft-viewbar { left: 0; bottom: 0; transform: none; }
+/* (and on the phone's card too: its bottom middle is under the fingertips, and the touch maps take the right) */
+html[data-embed=""] .gr-stage .ft-viewbar { left: 0; bottom: 0; transform: none; }
 html[data-embed="stage"] .ft-explore[data-flat] .ft-viewbar { display: none; }
 @media (min-width: 641px) {
   html[data-embed="stage"] .ft-viewbar button { width: calc(28px * var(--ft-stage-k, 1)); height: calc(26px * var(--ft-stage-k, 1)); }
@@ -669,6 +712,16 @@ html[data-embed="stage"] .ft-reveal-close { font-size: var(--ft-fs-ui, 11px); }
   .ft-all-lead, .ft-all-lead.is-float { translate: none; transition: none; }
   .ft-reveal, .ft-reveal-in, .ft-reveal-arrow, .ft-reveal-arrow i, .ft-reveal-close { animation: none; }
   .ft-reveal-text { animation: none; background: none; -webkit-text-fill-color: currentColor; }
+}
+
+/* a touch screen: the label's "Details ›", the view bar and the pills get a finger-sized hit area (an invisible margin
+   round each; nothing moves), and "Details ›" a little larger type */
+@media (pointer: coarse) {
+  .ft-more { position: relative; font-size: max(11px, 1em); }
+  .ft-more::after { content: ""; position: absolute; inset: -10px -8px; }
+  .ft-viewbar button { position: relative; }
+  .ft-viewbar button::after { content: ""; position: absolute; inset: -8px 0; }
+  .ft-reveal-close::after { content: ""; position: absolute; inset: -9px -4px; }
 }
 
 html:lang(zh) .iso,html:lang(zh) .iso[data-theme]{--anatomy-mono:ui-monospace,"SF Mono",Menlo,Consolas,"PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "Microsoft YaHei", "WenQuanYi Micro Hei",monospace}
@@ -1747,7 +1800,7 @@ const FILM = (() => {
 // ---------------------------------------------------------------- language (figures/i18n.mjs, figures/EMBED.md "Language")
 // ?lang=zh draws the words in Chinese; without it the page is the English page. The `lang` act switches in place.
 const I18N = (() => {
-  const PACK = {"ZH":{"Fig 5":"图 5","FlexiTac on a gripper":"夹爪上的 FlexiTac","FlexiTac on a gripper · Fig 5":"夹爪上的 FlexiTac · 图 5","Click a part · drag to pan":"点击部件 · 拖动平移","A gripper with FlexiTac pads. Click a part to label it, or Tab to the parts.":"装着 FlexiTac 传感垫的夹爪。点击一个部件给它加标签，或按 Tab 逐个选部件。","A robot gripper close up: a motor on top drives two carriages along a rail, and each carriage holds an orange, fin-shaped soft finger. On each finger's flat gripping face lies a FlexiTac pad, held on by strips of amber polyimide tape that run over the pad, round the fingertip and onto the finger's back. The pad's two tails come out of its side and wrap round the finger's side to its back, where their gold fingers plug into small FFC extenders; two white flat cables run up the back and round the end of the gripper's bracket to a reading board beside the motor, one board per finger, and each board's Arduino Nano has its own USB cable to the computer.":"机器人夹爪的特写：顶部的电机带着两个滑块沿导轨移动，每个滑块上装着一根橙色的鳍形软指。每根软指平的夹持面上贴着一块 FlexiTac 传感垫，用几条琥珀色的聚酰亚胺胶带固定：胶带盖过传感垫，绕过指尖，贴到软指背面。传感垫的两条尾线从侧面出来，绕过软指侧面到背面，在那里它们的金手指插进小小的 FFC 转接板；两根白色排线沿背面向上，绕过夹爪支架的一端，通到电机旁边的读取板，每根软指一块；每块读取板上的 Arduino Nano 都有自己的 USB 线接到电脑。","Two pads, two boards, two USB cables":"两块传感垫，两块读取板，两根 USB 线","Wrap the pad on":"把传感垫包上去","Tail to the back":"尾线绕到背面","Extension board and FFC":"转接板和 FFC 排线","Two boards, two USB":"两块读取板，两根 USB 线","{finger} pad pressed · {n} touch spots lit · its own board, its own USB":"{finger}边的传感垫被按下 · {n} 个触摸点亮起 · 它有自己的读取板和 USB","left":"左","right":"右","laying the pad on the gripping face":"把传感垫放到夹持面上","taping it on: round the fingertip to the back":"贴胶带：绕过指尖贴到背面","folding the tails round the finger's side to the back":"把尾线绕过软指侧面折到背面","gold fingers into the FFC extenders":"金手指插进 FFC 转接板","an FFC to each reading board, with slack":"每块读取板接一根 FFC 排线，留出余量","one USB cable per board, to the computer":"每块读取板一根 USB 线，接到电脑","two pads · two boards · two USB":"两块传感垫 · 两块读取板 · 两根 USB 线","bare fingers: no pad yet":"光秃秃的软指：还没有传感垫","pad taped on · tails still flat":"传感垫已贴好 · 尾线还平放着","tails on the back · gold fingers free":"尾线已到背面 · 金手指还空着","extenders on · no cable yet":"转接板已装上 · 还没接排线","FFCs to both boards · no USB yet":"排线已接到两块读取板 · 还没接 USB","opening":"正在张开","closing":"正在合拢","{how} · {g} mm · the FFC loops take up the slack":"{how} · {g} mm · FFC 排线的那圈余量吸收了拉扯","{say} · opening {g} mm":"{say} · 张开 {g} mm","WHAT THE COMPUTER GETS":"电脑收到的","· SIMULATED":"· 仿真","SIMULATED":"仿真","LEFT FINGER":"左手指","RIGHT FINGER":"右手指","{n} lit":"{n} 个亮起","light":"轻","firm":"重","Click a finger to press its pad":"点击一根软指，按压它的传感垫","Details":"详情","Close":"关闭","Lesson {n}":"第 {n} 课","Click a part or a card · Details tells more":"点击部件或卡片 · “详情”讲得更多","Click the gripper to open it":"点击夹爪把它张开","Click to open":"点击张开","Close the gripper":"合上夹爪","zoomed in · labels hidden · 0 to reset":"已放大 · 标签已隐藏 · 按 0 重置","Zoom out":"缩小","Zoom in":"放大","Fit":"适应画面","zoom {z}×":"缩放 {z}×","Move: left/right · up/down = height · hold to grip":"移动：左右平移 · 上下调高度 · 按住夹紧","A robot gripper over a cutting mat with a strawberry and a wooden cube in a row. Move the mouse left and right to slide the gripper along the row and up and down to raise and lower it (or use the arrow keys), and hold the mouse button or press Space to close the fingers; move up while holding to lift. Each finger's FlexiTac pad feels what it touches.":"切割垫上方的机器人夹爪，垫上排着一颗草莓和一块木头立方体。左右移动鼠标让夹爪沿这一排滑动，上下移动来升降（也可以用方向键）；按住鼠标键或按空格让两根软指合拢，按住的同时往上移就能拿起来。每根软指上的 FlexiTac 传感垫都能感觉到它碰到了什么。","strawberry":"草莓","cube":"立方体","holding the {name} {up} mm up · {f}":"夹着{name}，已抬起 {up} mm · {f}","holding the {name} · {f}":"夹着{name} · {f}","the {name} drops":"{name}掉下去了","both pads on the {name} · {f}":"两块传感垫都碰到了{name} · {f}","both pads on the {name} · {f} · letting go":"两块传感垫都碰到了{name} · {f} · 正在松开","left pad alone · pushes the {name} along":"只有左边传感垫碰到 · 推着{name}走","left pad on the {name}":"左边传感垫碰到{name}","right pad alone · pushes the {name} along":"只有右边传感垫碰到 · 推着{name}走","right pad on the {name}":"右边传感垫碰到{name}","closed on nothing · fingertips {z} mm up":"合拢了但什么也没夹到 · 指尖距垫面 {z} mm","over the {name} · fingertips {z} mm up":"在{name}上方 · 指尖距垫面 {z} mm","over the {name} · fingertips {z} mm up · closing":"在{name}上方 · 指尖距垫面 {z} mm · 正在合拢","fingertips {z} mm up":"指尖距垫面 {z} mm","fingertips {z} mm up · closing":"指尖距垫面 {z} mm · 正在合拢","Holding the {name}.":"夹着{name}。","Let go.":"松开了。"},"parts":{"fin":{"title":"鳍形软指","short":"会弯曲着夹住东西的 TPU 软指","intro":"一根用柔性 TPU 打印的鳍形软指（fin-shaped finger）。它的肋条让它能顺着夹住的东西弯曲，所以贴在平面上的传感垫能接触到物体更多的地方。同一块传感垫也能装在平口夹爪、ALOHA 和 xArm 夹爪以及 LeRobot 机械臂上；这根软指只是一个例子。","facts":[{"label":"尺寸","value":"40 × 123.4 × 25.8 mm","src":"UMI soft finger (UMI hardware guide; UMI_figure_tip.stl; refs/s2s3-research/papers.md §1)"},{"label":"夹持面","value":"平面，宽 25.8 mm","src":"UMI soft finger (UMI hardware guide; UMI_figure_tip.stl; refs/s2s3-research/papers.md §1)"},{"label":"材料","value":"TPU 95A，打印成橙色","src":"UMI soft finger (UMI hardware guide; UMI_figure_tip.stl; refs/s2s3-research/papers.md §1)"}]},"pad":{"title":"FlexiTac 传感垫","short":"在 12 × 32 个点上感受压力","intro":"就是第 1 部分里的那个传感器，平贴在软指的夹持面上，也就是接触物体的地方。12 × 32 = 384 个触摸点，排成 2 mm 间距的网格，厚度不到 1 mm，所以能跟着软指一起弯曲。","facts":[{"label":"触摸点","value":"12 × 32 = 384","src":"user-confirmed 2026-10-21 (12 x 32)"},{"label":"感应区","value":"24 × 64 mm","src":"material/FlexiTac Hardware Guide.docx image7(b) \"24 mm x 64 mm\"; computed from electrode pitch"},{"label":"厚度","value":"不到 1 mm","src":"material/2604.28156v1.pdf"},{"label":"位置","value":"平的夹持面上，从指尖往上约 5 mm 处开始","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"tape":{"title":"聚酰亚胺胶带","short":"把传感垫平贴在软指上","intro":"单面聚酰亚胺胶带（polyimide tape，就是那种琥珀色、耐高温的胶带）把传感垫压在软指上。每条胶带都顺着软指走：盖过夹持面上的传感垫，绕过指尖，贴到软指背面，这样软指弯曲时传感垫也不会翘起来。","facts":[{"label":"胶带","value":"单面聚酰亚胺胶带","src":"the FlexiTac team's build (photos, 2026-10-25)"},{"label":"贴法","value":"盖过传感垫，绕过指尖，贴到背面","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"tail":{"title":"尾线 · 金手指","short":"绕过软指侧面，到背面","intro":"传感垫的两条尾线把线引出来：A 字形那条带 32 条驱动线，L 字形那条带 12 条感应线。两条都从传感垫的侧面出来（图 1，从上面看），绕过软指的侧面到背面，从不经过指尖，所以它们的金手指（gold fingers）在背面，远离软指夹住的东西。（L 形尾线画得比实物短，好让两个金手指端并排。）","facts":[{"label":"驱动尾线","value":"A 字形，32 个金手指，间距 0.5 mm","src":"material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_TopLayer.GTL"},{"label":"感应尾线","value":"L 字形，12 个金手指，间距 0.5 mm","src":"material/Gerber_Top_FPC_2026-03-02.zip:Gerber_TopLayer.GTL"},{"label":"走线","value":"从传感垫侧面出来，绕过软指侧面到背面","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"extender":{"title":"FFC 转接板","short":"把每条尾线接到一根排线上","intro":"零件清单里一个现成的小转接板（extender）：尾线的金手指插进一边，一根更长的 FFC 排线（flat flexible cable）插进另一边。每条尾线一个，所以每根软指的背面有两个。","facts":[{"label":"零件","value":"20/40 针 FFC 转接板（BOM）","src":"the FlexiTac team's build (photos, 2026-10-25)"},{"label":"数量","value":"每根软指 2 个","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"ffc":{"title":"FFC 排线","short":"留着余量，一直通到读取板","intro":"每根软指有两根白色 FFC 排线（32 针和 16 针，间距 0.5 mm），从转接板一直通到读取板，长约 15 cm。它们留出一圈余量，所以软指可以完全张开、合拢，却从来不会扯到排线。","facts":[{"label":"排线","value":"32 针和 16 针 FFC，间距 0.5 mm","src":"material/PickAndPlace_PCB_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv + material/BOM_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv"},{"label":"长度","value":"约 15 cm，余量够走完整个行程","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"board":{"title":"读取板","short":"每根软指一块，装在电机旁","intro":"就是第 1 部分里的读取板，每根软指一块。每块都装在夹爪电机旁边，所以它的排线只需跟着软指滑动，从不经过机器人的关节。每块读取板每秒读取自己的传感垫约 100 次。（打印的板托是建议做法。）","facts":[{"label":"读取板","value":"56.8 × 39.9 mm","src":"material/Gerber_16_32.zip:Gerber_BoardOutlineLayer.GKO"},{"label":"位置","value":"夹爪电机旁边，每根软指一块","src":"the FlexiTac team's build (photos, 2026-10-25)"},{"label":"帧率","value":"每秒约 100 帧","src":"user-confirmed 2026-10-21; material/2604.28156v1.pdf"}]},"nano":{"short":"运行扫描，发出每一帧","intro":"每块读取板上的 Nano 运行扫描，并通过它的 USB 接口把每一帧（386 字节）发给电脑。","facts":[{"label":"帧","value":"386 字节","src":"user-confirmed 2026-10-21; refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4)"},{"label":"串口","value":"2,000,000 baud","src":"refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4); refs/fw/32_16_fast.ino (github.com/FlexiTac/FlexiTac_Hardware_Repo)"}]},"usb":{"title":"USB 线","short":"每块板一根，接到电脑","intro":"每块读取板都有自己的 USB 线接到电脑，所以电脑会看到两个串口：一个是左手指的，一个是右手指的。把它们和机器人自己的线一起顺着机械臂走。","facts":[{"label":"数量","value":"2 根（每块板一根）","src":"the FlexiTac team's build (photos, 2026-10-25)"},{"label":"在电脑上","value":"两个串口，左一个、右一个","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"motor":{"title":"夹爪电机","short":"让两根软指张开、合拢","intro":"夹爪自己的电机（reBot 上用的是 Damiao DM-J4310）转动一个小齿轮，带着两个滑块沿导轨一起往里、往外走。读取板就装在它旁边，跟着夹爪一起移动。","facts":[{"label":"电机","value":"DM-J4310, Ø57 × 46 mm","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)"},{"label":"传动","value":"一个小齿轮和两根齿条","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)"},{"label":"行程","value":"张开 0–100 mm","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)"}]},"slide":{"title":"导轨和滑块","short":"每根软指装在一个滑块上滑动","intro":"两根软指都挂在滑块上，滑块在夹爪支架下面的一根导轨上滑动。只有软指会动；电机、支架和读取板都不动。","facts":[{"label":"导轨","value":"MGN9 直线导轨，170 mm","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)"},{"label":"滑块","value":"2 个，每根软指一个","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)"}]},"holder":{"title":"手指支架","short":"夹住软指的根部","intro":"一个打印的支架用螺丝固定在每个滑块上，并通过软指根部的三个螺丝孔把它夹住。支架的具体形状取决于夹爪（这里是按 reBot 画的）；软指、传感垫和接线都不变。","facts":[{"label":"支架","value":"打印件，3 颗螺丝穿过软指根部","src":"UMI soft finger (UMI hardware guide; UMI_figure_tip.stl; refs/s2s3-research/papers.md §1)"},{"label":"用于这款夹爪","value":"为本图绘制，不是文档中的零件（建议做法）","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)","badge":"proposed"}]}}};
+  const PACK = {"ZH":{"Fig 5":"图 5","FlexiTac on a gripper":"夹爪上的 FlexiTac","FlexiTac on a gripper · Fig 5":"夹爪上的 FlexiTac · 图 5","Click a part · drag to pan":"点击部件 · 拖动平移","Tap a part · drag to pan":"轻点部件 · 拖动平移","A gripper with FlexiTac pads. Click a part to label it, or Tab to the parts.":"装着 FlexiTac 传感垫的夹爪。点击一个部件给它加标签，或按 Tab 逐个选部件。","A gripper with FlexiTac pads. Tap a part to label it.":"装着 FlexiTac 传感垫的夹爪。轻点一个部件给它加标签。","A robot gripper close up: a motor on top drives two carriages along a rail, and each carriage holds an orange, fin-shaped soft finger. On each finger's flat gripping face lies a FlexiTac pad, held on by strips of amber polyimide tape that run over the pad, round the fingertip and onto the finger's back. The pad's two tails come out of its side and wrap round the finger's side to its back, where their gold fingers plug into small FFC extenders; two white flat cables run up the back and round the end of the gripper's bracket to a reading board beside the motor, one board per finger, and each board's Arduino Nano has its own USB cable to the computer.":"机器人夹爪的特写：顶部的电机带着两个滑块沿导轨移动，每个滑块上装着一根橙色的鳍形软指。每根软指平的夹持面上贴着一块 FlexiTac 传感垫，用几条琥珀色的聚酰亚胺胶带固定：胶带盖过传感垫，绕过指尖，贴到软指背面。传感垫的两条尾线从侧面出来，绕过软指侧面到背面，在那里它们的金手指插进小小的 FFC 转接板；两根白色排线沿背面向上，绕过夹爪支架的一端，通到电机旁边的读取板，每根软指一块；每块读取板上的 Arduino Nano 都有自己的 USB 线接到电脑。","Two pads, two boards, two USB cables":"两块传感垫，两块读取板，两根 USB 线","Wrap the pad on":"把传感垫包上去","Tail to the back":"尾线绕到背面","Extension board and FFC":"转接板和 FFC 排线","Two boards, two USB":"两块读取板，两根 USB 线","{finger} pad pressed · {n} touch spots lit · its own board, its own USB":"{finger}边的传感垫被按下 · {n} 个触摸点亮起 · 它有自己的读取板和 USB","left":"左","right":"右","laying the pad on the gripping face":"把传感垫放到夹持面上","taping it on: round the fingertip to the back":"贴胶带：绕过指尖贴到背面","folding the tails round the finger's side to the back":"把尾线绕过软指侧面折到背面","gold fingers into the FFC extenders":"金手指插进 FFC 转接板","an FFC to each reading board, with slack":"每块读取板接一根 FFC 排线，留出余量","one USB cable per board, to the computer":"每块读取板一根 USB 线，接到电脑","two pads · two boards · two USB":"两块传感垫 · 两块读取板 · 两根 USB 线","bare fingers: no pad yet":"光秃秃的软指：还没有传感垫","pad taped on · tails still flat":"传感垫已贴好 · 尾线还平放着","tails on the back · gold fingers free":"尾线已到背面 · 金手指还空着","extenders on · no cable yet":"转接板已装上 · 还没接排线","FFCs to both boards · no USB yet":"排线已接到两块读取板 · 还没接 USB","opening":"正在张开","closing":"正在合拢","{how} · {g} mm · the FFC loops take up the slack":"{how} · {g} mm · FFC 排线的那圈余量吸收了拉扯","{say} · opening {g} mm":"{say} · 张开 {g} mm","WHAT THE COMPUTER GETS":"电脑收到的","· SIMULATED":"· 仿真","SIMULATED":"仿真","LEFT FINGER":"左手指","RIGHT FINGER":"右手指","{n} lit":"{n} 个亮起","light":"轻","firm":"重","Click a finger to press its pad":"点击一根软指，按压它的传感垫","Tap a finger to press its pad":"轻点软指，按压它的传感垫","Details":"详情","Close":"关闭","Lesson {n}":"第 {n} 课","Click a part or a card · Details tells more":"点击部件或卡片 · “详情”讲得更多","Tap a part or a card · Details tells more":"轻点部件或卡片 · “详情”讲得更多","Click the gripper to open it":"点击夹爪把它张开","Click to open":"点击张开","Tap to open":"轻点张开","Tap the gripper to open it":"轻点夹爪把它张开","Close the gripper":"合上夹爪","zoomed in · labels hidden · 0 to reset":"已放大 · 标签已隐藏 · 按 0 重置","Zoom out":"缩小","Zoom in":"放大","Fit":"适应画面","zoom {z}×":"缩放 {z}×","Move: left/right · up/down = height · hold to grip":"移动：左右平移 · 上下调高度 · 按住夹紧","A robot gripper over a cutting mat with a strawberry and a wooden cube in a row. Move the mouse left and right to slide the gripper along the row and up and down to raise and lower it (or use the arrow keys), and hold the mouse button or press Space to close the fingers; move up while holding to lift. Each finger's FlexiTac pad feels what it touches.":"切割垫上方的机器人夹爪，垫上排着一颗草莓和一块木头立方体。左右移动鼠标让夹爪沿这一排滑动，上下移动来升降（也可以用方向键）；按住鼠标键或按空格让两根软指合拢，按住的同时往上移就能拿起来。每根软指上的 FlexiTac 传感垫都能感觉到它碰到了什么。","Drag to move · tap Grip to close":"拖动来移动 · 轻点“夹住”合拢","A robot gripper over a cutting mat with a strawberry and a wooden cube in a row. Drag a finger on the drawing to move the gripper: left and right along the row, up and down to raise and lower it. The Grip button (or a second finger) closes and opens the fingers; drag up while they are closed to lift. Each finger's FlexiTac pad feels what it touches.":"切割垫上方的机器人夹爪，垫上排着一颗草莓和一块木头立方体。用手指在图上拖动来移动夹爪：左右沿这一排滑动，上下来升降。轻点“夹住”按钮（或者再放上第二根手指）让两根软指合拢或张开；合拢后往上拖就能拿起来。每根软指上的 FlexiTac 传感垫都能感觉到它碰到了什么。","Grip":"夹住","Let go":"松开","strawberry":"草莓","cube":"立方体","holding the {name} {up} mm up · {f}":"夹着{name}，已抬起 {up} mm · {f}","holding the {name} · {f}":"夹着{name} · {f}","the {name} drops":"{name}掉下去了","both pads on the {name} · {f}":"两块传感垫都碰到了{name} · {f}","both pads on the {name} · {f} · letting go":"两块传感垫都碰到了{name} · {f} · 正在松开","left pad alone · pushes the {name} along":"只有左边传感垫碰到 · 推着{name}走","left pad on the {name}":"左边传感垫碰到{name}","right pad alone · pushes the {name} along":"只有右边传感垫碰到 · 推着{name}走","right pad on the {name}":"右边传感垫碰到{name}","closed on nothing · fingertips {z} mm up":"合拢了但什么也没夹到 · 指尖距垫面 {z} mm","over the {name} · fingertips {z} mm up":"在{name}上方 · 指尖距垫面 {z} mm","over the {name} · fingertips {z} mm up · closing":"在{name}上方 · 指尖距垫面 {z} mm · 正在合拢","fingertips {z} mm up":"指尖距垫面 {z} mm","fingertips {z} mm up · closing":"指尖距垫面 {z} mm · 正在合拢","Holding the {name}.":"夹着{name}。","Let go.":"松开了。"},"parts":{"fin":{"title":"鳍形软指","short":"会弯曲着夹住东西的 TPU 软指","intro":"一根用柔性 TPU 打印的鳍形软指（fin-shaped finger）。它的肋条让它能顺着夹住的东西弯曲，所以贴在平面上的传感垫能接触到物体更多的地方。同一块传感垫也能装在平口夹爪、ALOHA 和 xArm 夹爪以及 LeRobot 机械臂上；这根软指只是一个例子。","facts":[{"label":"尺寸","value":"40 × 123.4 × 25.8 mm","src":"UMI soft finger (UMI hardware guide; UMI_figure_tip.stl; refs/s2s3-research/papers.md §1)"},{"label":"夹持面","value":"平面，宽 25.8 mm","src":"UMI soft finger (UMI hardware guide; UMI_figure_tip.stl; refs/s2s3-research/papers.md §1)"},{"label":"材料","value":"TPU 95A，打印成橙色","src":"UMI soft finger (UMI hardware guide; UMI_figure_tip.stl; refs/s2s3-research/papers.md §1)"}]},"pad":{"title":"FlexiTac 传感垫","short":"在 12 × 32 个点上感受压力","intro":"就是第 1 部分里的那个传感器，平贴在软指的夹持面上，也就是接触物体的地方。12 × 32 = 384 个触摸点，排成 2 mm 间距的网格，厚度不到 1 mm，所以能跟着软指一起弯曲。","facts":[{"label":"触摸点","value":"12 × 32 = 384","src":"user-confirmed 2026-10-21 (12 x 32)"},{"label":"感应区","value":"24 × 64 mm","src":"material/FlexiTac Hardware Guide.docx image7(b) \"24 mm x 64 mm\"; computed from electrode pitch"},{"label":"厚度","value":"不到 1 mm","src":"material/2604.28156v1.pdf"},{"label":"位置","value":"平的夹持面上，从指尖往上约 5 mm 处开始","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"tape":{"title":"聚酰亚胺胶带","short":"把传感垫平贴在软指上","intro":"单面聚酰亚胺胶带（polyimide tape，就是那种琥珀色、耐高温的胶带）把传感垫压在软指上。每条胶带都顺着软指走：盖过夹持面上的传感垫，绕过指尖，贴到软指背面，这样软指弯曲时传感垫也不会翘起来。","facts":[{"label":"胶带","value":"单面聚酰亚胺胶带","src":"the FlexiTac team's build (photos, 2026-10-25)"},{"label":"贴法","value":"盖过传感垫，绕过指尖，贴到背面","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"tail":{"title":"尾线 · 金手指","short":"绕过软指侧面，到背面","intro":"传感垫的两条尾线把线引出来：A 字形那条带 32 条驱动线，L 字形那条带 12 条感应线。两条都从传感垫的侧面出来（图 1，从上面看），绕过软指的侧面到背面，从不经过指尖，所以它们的金手指（gold fingers）在背面，远离软指夹住的东西。（L 形尾线画得比实物短，好让两个金手指端并排。）","facts":[{"label":"驱动尾线","value":"A 字形，32 个金手指，间距 0.5 mm","src":"material/Gerber_Bottom_FPC_2026-03-02.zip:Gerber_TopLayer.GTL"},{"label":"感应尾线","value":"L 字形，12 个金手指，间距 0.5 mm","src":"material/Gerber_Top_FPC_2026-03-02.zip:Gerber_TopLayer.GTL"},{"label":"走线","value":"从传感垫侧面出来，绕过软指侧面到背面","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"extender":{"title":"FFC 转接板","short":"把每条尾线接到一根排线上","intro":"零件清单里一个现成的小转接板（extender）：尾线的金手指插进一边，一根更长的 FFC 排线（flat flexible cable）插进另一边。每条尾线一个，所以每根软指的背面有两个。","facts":[{"label":"零件","value":"20/40 针 FFC 转接板（BOM）","src":"the FlexiTac team's build (photos, 2026-10-25)"},{"label":"数量","value":"每根软指 2 个","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"ffc":{"title":"FFC 排线","short":"留着余量，一直通到读取板","intro":"每根软指有两根白色 FFC 排线（32 针和 16 针，间距 0.5 mm），从转接板一直通到读取板，长约 15 cm。它们留出一圈余量，所以软指可以完全张开、合拢，却从来不会扯到排线。","facts":[{"label":"排线","value":"32 针和 16 针 FFC，间距 0.5 mm","src":"material/PickAndPlace_PCB_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv + material/BOM_05mm_FFC_16_32_1mux_4sr_2025-11-01.csv"},{"label":"长度","value":"约 15 cm，余量够走完整个行程","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"board":{"title":"读取板","short":"每根软指一块，装在电机旁","intro":"就是第 1 部分里的读取板，每根软指一块。每块都装在夹爪电机旁边，所以它的排线只需跟着软指滑动，从不经过机器人的关节。每块读取板每秒读取自己的传感垫约 100 次。（打印的板托是建议做法。）","facts":[{"label":"读取板","value":"56.8 × 39.9 mm","src":"material/Gerber_16_32.zip:Gerber_BoardOutlineLayer.GKO"},{"label":"位置","value":"夹爪电机旁边，每根软指一块","src":"the FlexiTac team's build (photos, 2026-10-25)"},{"label":"帧率","value":"每秒约 100 帧","src":"user-confirmed 2026-10-21; material/2604.28156v1.pdf"}]},"nano":{"short":"运行扫描，发出每一帧","intro":"每块读取板上的 Nano 运行扫描，并通过它的 USB 接口把每一帧（386 字节）发给电脑。","facts":[{"label":"帧","value":"386 字节","src":"user-confirmed 2026-10-21; refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4)"},{"label":"串口","value":"2,000,000 baud","src":"refs/fw/pyflexitac/template.ino (github.com/WT-MM/PyFlexiTac @e006b17, flexitac-flash defaults rows=12 mux-offset=4); refs/fw/32_16_fast.ino (github.com/FlexiTac/FlexiTac_Hardware_Repo)"}]},"usb":{"title":"USB 线","short":"每块板一根，接到电脑","intro":"每块读取板都有自己的 USB 线接到电脑，所以电脑会看到两个串口：一个是左手指的，一个是右手指的。把它们和机器人自己的线一起顺着机械臂走。","facts":[{"label":"数量","value":"2 根（每块板一根）","src":"the FlexiTac team's build (photos, 2026-10-25)"},{"label":"在电脑上","value":"两个串口，左一个、右一个","src":"the FlexiTac team's build (photos, 2026-10-25)"}]},"motor":{"title":"夹爪电机","short":"让两根软指张开、合拢","intro":"夹爪自己的电机（reBot 上用的是 Damiao DM-J4310）转动一个小齿轮，带着两个滑块沿导轨一起往里、往外走。读取板就装在它旁边，跟着夹爪一起移动。","facts":[{"label":"电机","value":"DM-J4310, Ø57 × 46 mm","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)"},{"label":"传动","value":"一个小齿轮和两根齿条","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)"},{"label":"行程","value":"张开 0–100 mm","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)"}]},"slide":{"title":"导轨和滑块","short":"每根软指装在一个滑块上滑动","intro":"两根软指都挂在滑块上，滑块在夹爪支架下面的一根导轨上滑动。只有软指会动；电机、支架和读取板都不动。","facts":[{"label":"导轨","value":"MGN9 直线导轨，170 mm","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)"},{"label":"滑块","value":"2 个，每根软指一个","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)"}]},"holder":{"title":"手指支架","short":"夹住软指的根部","intro":"一个打印的支架用螺丝固定在每个滑块上，并通过软指根部的三个螺丝孔把它夹住。支架的具体形状取决于夹爪（这里是按 reBot 画的）；软指、传感垫和接线都不变。","facts":[{"label":"支架","value":"打印件，3 颗螺丝穿过软指根部","src":"UMI soft finger (UMI hardware guide; UMI_figure_tip.stl; refs/s2s3-research/papers.md §1)"},{"label":"用于这款夹爪","value":"为本图绘制，不是文档中的零件（建议做法）","src":"reBot-DevArm B601-DM CAD and docs (Seeed Studio; refs/s2s3-research/rebot.md)","badge":"proposed"}]}}};
   const ZH = PACK.ZH || {};
   let want = "";
   try { want = new URLSearchParams(location.search).get("lang") || ""; } catch {}
@@ -4105,7 +4158,12 @@ function createExplore(o) {
   marks.setAttribute("class", "ft-marks");
   overlay.appendChild(marks);
   stage.appendChild(overlay);
-  const hintText = hint.textContent;
+  // (a touch screen: the words say "tap"; the build's hint is the mouse's)
+  const coarse = matchMedia("(pointer: coarse)");
+  const hintText = coarse.matches ? "Tap a part · drag to pan" : hint.textContent;
+  const feelHint = () => tr(coarse.matches ? "Tap a finger to press its pad" : "Click a finger to press its pad");
+  // (the build's mouse hint is on screen until the first event repaints it: a touch screen gets its words at once)
+  if (coarse.matches) hint.textContent = tr(hintText);
 
   // ---------------------------------------------------------------- the view: home (from live.js) x the reader's zoom
   let homeVb = { x: 0, y: 0, w: o.W, h: o.H };
@@ -4185,7 +4243,7 @@ function createExplore(o) {
     if (id === hovered) return;
     hovered = id;
     if (id) stage.dataset.hover = ""; else delete stage.dataset.hover;
-    hint.textContent = id ? byId.get(id).title : (ALL.on ? allHint() : feel ? tr("Click a finger to press its pad") : tr(hintText));
+    hint.textContent = id ? byId.get(id).title : (ALL.on ? allHint() : feel ? feelHint() : tr(hintText));
     paintFloat();
     if (ALL.on) allPaint();
     if (label.id && !ALL.on) placeLabel();
@@ -4354,7 +4412,7 @@ function createExplore(o) {
   // ---------------------------------------------------------------- all labels (Fig 1's look)
   const ALL = { on: false, shown: false, els: [], form: "full", pick: null, open: false, waitOpen: false, pill: null, close: null, layout: null };
   const cardIds = cards.map((c) => c.id);
-  function allHint() { return tr(ALL.shown ? "Click a part or a card · Details tells more" : "Click the gripper to open it"); }
+  function allHint() { return tr(ALL.shown ? (coarse.matches ? "Tap a part or a card · Details tells more" : "Click a part or a card · Details tells more") : coarse.matches ? "Tap the gripper to open it" : "Click the gripper to open it"); }
   function allMode(arg) {
     const on = arg === "all";
     if (arg !== "all" && arg !== null && arg !== false && arg !== "none") throw new Error('labels: "all" or null');
@@ -4380,7 +4438,7 @@ function createExplore(o) {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "ft-reveal";
-      b.innerHTML = `<span class="ft-reveal-in"><span class="ft-reveal-label"><span class="ft-reveal-text">${tr("Click to open")}</span></span><span class="ft-reveal-arrow"><i></i></span></span>`;
+      b.innerHTML = `<span class="ft-reveal-in"><span class="ft-reveal-label"><span class="ft-reveal-text">${tr(coarse.matches ? "Tap to open" : "Click to open")}</span></span><span class="ft-reveal-arrow"><i></i></span></span>`;
       b.addEventListener("click", (e) => { e.stopPropagation(); openForLabels(); });
       overlay.appendChild(b);
       ALL.pill = b;
@@ -4751,7 +4809,7 @@ function createExplore(o) {
   function setFeel(on) {
     feel = on;
     if (on) stage.dataset.feel = ""; else delete stage.dataset.feel;
-    hint.textContent = feel ? tr("Click a finger to press its pad") : ALL.on ? allHint() : tr(hintText);
+    hint.textContent = feel ? feelHint() : ALL.on ? allHint() : tr(hintText);
   }
   function resize() { reserveGoal = ALL.on && ALL.shown ? allRoom() : reserveGoal; reserveNow = reserveGoal; apply(); relayout(); }
   function state() {
@@ -4775,9 +4833,9 @@ function createExplore(o) {
     parts.forEach((p, i) => { keys[i].textContent = p.title; });
     const vb = { out: "Zoom out", in: "Zoom in", reset: "Fit" };
     for (const b of bar.querySelectorAll("[data-v]")) b.setAttribute("aria-label", tr(vb[b.dataset.v]));
-    if (ALL.pill) ALL.pill.querySelector(".ft-reveal-text").textContent = tr("Click to open");
+    if (ALL.pill) ALL.pill.querySelector(".ft-reveal-text").textContent = tr(coarse.matches ? "Tap to open" : "Click to open");
     if (ALL.close) ALL.close.lastChild.textContent = tr("Close the gripper");
-    if (!hovered) hint.textContent = ALL.on ? allHint() : feel ? tr("Click a finger to press its pad") : tr(hintText);
+    if (!hovered) hint.textContent = ALL.on ? allHint() : feel ? feelHint() : tr(hintText);
     else hint.textContent = byId.get(hovered).title;
     if (label.id && !ALL.on) showLabel(byId.get(label.id));
     if (ALL.on && ALL.shown) {
@@ -4791,7 +4849,7 @@ function createExplore(o) {
     post({ type: "ft:parts", fig: "gripper", parts: parts.map(({ id, title, icon, short, lesson }) => ({ id, title, icon, short, lesson })) });
     if (picked) post({ type: "ft:pick", fig: "gripper", part: full(byId.get(picked)) });
   }
-  return { home, act, state, busy, resize, relang, allShown: () => ALL.on && ALL.shown, debug: () => ({ homeVb, view, reserveNow, reserveGoal, ALL: { on: ALL.on, shown: ALL.shown, form: ALL.form } }), anchorOf, sideOf, allLayout, pick, hover: (id) => setHover(id), details, cards: cardsBox, openForLabels };
+  return { home, act, state, busy, resize, relang, allShown: () => ALL.on && ALL.shown, debug: () => ({ homeVb, view, reserveNow, reserveGoal, ALL: { on: ALL.on, shown: ALL.shown, form: ALL.form } }), anchorOf, sideOf, allLayout, pick, hover: (id) => setHover(id), details, cards: cardsBox, openForLabels, hintText };
 }
 
 // Fig 5 · teleop mode (Lesson 2.2 "Grasp with your mouse"), the page half. Inlined after explore.js, before live.js;
@@ -5310,8 +5368,8 @@ function createTeleop(o) {
     T.from = { gap: o.gap() };
     T.phase = reduce ? 1 : Math.min(T.phase, 1);
     camera("table");
-    hint.textContent = tr(HINT);
-    stage.setAttribute("aria-label", tr(LABEL));
+    hint.textContent = tr(hintNow());
+    stage.setAttribute("aria-label", tr(labelNow()));
     kick();
   }
   function exit() {
@@ -5423,6 +5481,7 @@ function createTeleop(o) {
   const trAlong = (v) => translateAlong(P, v);
   let shadowKey = "";
   function draw() {
+    gripUi();
     if (!T.on) return;
     const op = T.dir === 0 ? 1 : smooth(T.phase);
     const g = [T.g.x, T.g.y, T.g.z];
@@ -5586,23 +5645,112 @@ function createTeleop(o) {
     return [(dx * cy - dy * cx) / det, (ax * dy - ay * dx) / det];
   }
   let downId = null;
+  let downTouch = false;
   let lastPt = null;
-  stage.addEventListener("pointermove", (e) => {
+  // Touch (a finger or a pen: no hover to aim with). The finger is the pointer as the mouse is (the fingertips' middle
+  // under it), but pressing never grips: a one-finger drag moves the gripper, fingers open; the Grip button on the
+  // figure (or a second finger, or Space) closes and opens them, and the drag keeps working while they are closed, so
+  // dragging up lifts. The drawing keeps every touch while the mode is on (touch-action: none, explore.css): a
+  // vertical drag lowers the gripper, it never scrolls the page.
+  const coarse = matchMedia("(pointer: coarse)");
+  let touchUI = !FILM.record && coarse.matches;
+  const gripBtn = document.createElement("button");
+  gripBtn.type = "button";
+  gripBtn.className = "tp-grip";
+  gripBtn.hidden = true;
+  gripBtn.innerHTML = `<span class="tp-grip-icon" aria-hidden="true"><svg viewBox="0 0 20 16"><path class="tp-grip-open" d="M3.5 2.5v11M16.5 2.5v11M6.5 8h3M13.5 8h-3M8 6.2 9.8 8 8 9.8M12 6.2 10.2 8 12 9.8"/><path class="tp-grip-shut" d="M8 2.5v11M12 2.5v11M3 8h2.6M17 8h-2.6"/></svg></span><span class="tp-grip-text"></span>`;
+  stage.appendChild(gripBtn);
+  // (a second finger's tap on it toggles in the drawing's pointerdown: a browser makes no click from that finger)
+  let gripTouchAt = -1e9;
+  gripBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (performance.now() - gripTouchAt < 800) return;
     if (!T.on || T.dir !== 0) return;
-    if (lastPt && Math.hypot(e.clientX - lastPt[0], e.clientY - lastPt[1]) < 3 && scripted()) return;
-    lastPt = [e.clientX, e.clientY];
-    const p = onRow(e.clientX, e.clientY);
-    if (!p) return;
     cancelScript();
+    setGrip(!T.grip);
+    say();
+    kick();
+  });
+  // (its own Space / Enter click it; the drawing's keydown would toggle the grip a second time)
+  gripBtn.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") e.stopPropagation(); });
+  let gripKey = "";
+  function gripUi() {
+    const show = T.on && T.dir >= 0 && touchUI;
+    if (gripBtn.hidden === show) gripBtn.hidden = !show;
+    if (!show) return;
+    const key = `${T.grip}|${I18N.lang}`;
+    if (key === gripKey) return;
+    gripKey = key;
+    gripBtn.toggleAttribute("data-on", T.grip);
+    gripBtn.lastElementChild.textContent = tr(T.grip ? "Let go" : "Grip");
+  }
+  function useTouch(on) {
+    if (FILM.record || touchUI === on) return;
+    touchUI = on;
+    stage.toggleAttribute("data-touch", on);
+    if (T.on) { hint.textContent = tr(hintNow()); stage.setAttribute("aria-label", tr(labelNow())); }
+    gripUi();
+  }
+  if (touchUI) stage.setAttribute("data-touch", "");
+  // (a figure taller than the screen, a phone held sideways: the button rises to stay at the bottom of the part of the
+  // drawing in sight, so the gripper and its button show together; seen from the top-level page's viewport)
+  if (typeof IntersectionObserver === "function" && !FILM.record) {
+    const io = new IntersectionObserver((es) => {
+      for (const e of es) {
+        // (+ 56 px where the bottom is cut: room for a fixed bar along the screen's bottom edge, a phone site's tab bar)
+        const hid = Math.max(0, e.boundingClientRect.bottom - e.intersectionRect.bottom);
+        const up = e.isIntersecting && hid > 1 ? Math.min(hid + 56, Math.max(0, e.boundingClientRect.height - 140)) : 0;
+        gripBtn.style.transform = up > 1 ? `translateY(${(-up).toFixed(0)}px)` : "";
+      }
+    }, { threshold: Array.from({ length: 51 }, (_, i) => i / 50) });
+    io.observe(stage);
+  }
+  coarse.addEventListener?.("change", () => useTouch(coarse.matches));
+  const aim = (e) => {
+    const p = onRow(e.clientX, e.clientY);
+    if (!p) return false;
     // the fingertips' middle under the pointer (the wheel's shift added to the height)
     T.raw.s = clamp(p[0], W.s[0], W.s[1]);
     T.raw.z = clamp(p[1] + T.zOff, W.z[0], W.z[1]);
+    return true;
+  };
+  stage.addEventListener("pointermove", (e) => {
+    if (!T.on || T.dir !== 0) return;
+    // a finger (or a pen) moves the gripper only while it is the one pressed on the drawing
+    // (a trackpad or mouse on a touch tablet goes the finger's way too: its words say drag, and tap Grip)
+    if ((e.pointerType !== "mouse" || (touchUI && coarse.matches)) && e.pointerId !== downId) return;
+    if (lastPt && Math.hypot(e.clientX - lastPt[0], e.clientY - lastPt[1]) < 3 && scripted()) return;
+    lastPt = [e.clientX, e.clientY];
+    if (!onRow(e.clientX, e.clientY)) return;
+    cancelScript();
+    aim(e);
     kick();
   });
   stage.addEventListener("pointerdown", (e) => {
     if (!T.on || T.dir !== 0 || e.button !== 0) return;
+    if (e.pointerType !== "mouse" && downId !== null && e.pointerId !== downId && e.target.closest?.(".tp-grip")) {
+      gripTouchAt = performance.now(); cancelScript(); setGrip(!T.grip); say(); kick(); return;
+    }
+    // (a new press on Grip with nothing held on the drawing: its own click toggles, however soon after)
+    if (downId === null && e.target.closest?.(".tp-grip")) gripTouchAt = -1e9;
     if (e.target.closest && e.target.closest(".ft-info, .ft-label, button")) return;
+    if (e.pointerType !== "mouse" || (touchUI && coarse.matches)) {
+      useTouch(true);
+      // a second finger while one is down: closes or opens the fingers
+      if (downId !== null && e.pointerId !== downId) { cancelScript(); setGrip(!T.grip); say(); kick(); return; }
+      downId = e.pointerId;
+      downTouch = true;
+      try { stage.setPointerCapture(e.pointerId); } catch {}
+      stage.focus({ preventScroll: true });
+      cancelScript();
+      lastPt = [e.clientX, e.clientY];
+      aim(e);
+      kick();
+      return;
+    }
+    useTouch(coarse.matches);
     downId = e.pointerId;
+    downTouch = false;
     try { stage.setPointerCapture(e.pointerId); } catch {}
     stage.focus({ preventScroll: true });
     cancelScript();
@@ -5613,6 +5761,8 @@ function createTeleop(o) {
   const up = (e) => {
     if (!T.on || downId === null || e.pointerId !== downId) return;
     downId = null;
+    // a finger lifted leaves the grip as it is (the Grip button opens it)
+    if (downTouch) { downTouch = false; kick(); return; }
     setGrip(false);
     kick();
   };
@@ -5661,6 +5811,11 @@ function createTeleop(o) {
   // (short: the hint and the readout share the card's bottom edge, down to an 800 px stage)
   const HINT = "Move: left/right · up/down = height · hold to grip";
   const LABEL = "A robot gripper over a cutting mat with a strawberry and a wooden cube in a row. Move the mouse left and right to slide the gripper along the row and up and down to raise and lower it (or use the arrow keys), and hold the mouse button or press Space to close the fingers; move up while holding to lift. Each finger's FlexiTac pad feels what it touches.";
+  // (on a touch screen: no hover, so the finger moves and the Grip button grips)
+  const HINT_TOUCH = "Drag to move · tap Grip to close";
+  const LABEL_TOUCH = "A robot gripper over a cutting mat with a strawberry and a wooden cube in a row. Drag a finger on the drawing to move the gripper: left and right along the row, up and down to raise and lower it. The Grip button (or a second finger) closes and opens the fingers; drag up while they are closed to lift. Each finger's FlexiTac pad feels what it touches.";
+  const hintNow = () => (touchUI ? HINT_TOUCH : HINT);
+  const labelNow = () => (touchUI ? LABEL_TOUCH : LABEL);
   function nearest() {
     let best = null;
     let bd = Infinity;
@@ -5792,8 +5947,10 @@ function createTeleop(o) {
     // the page's language changed (the lang act, live.js): while the mode is on, its hint and the drawing's label
     relang() {
       if (!T.on) return;
-      hint.textContent = tr(HINT);
-      stage.setAttribute("aria-label", tr(LABEL));
+      hint.textContent = tr(hintNow());
+      stage.setAttribute("aria-label", tr(labelNow()));
+      gripKey = "";
+      gripUi();
     },
     debug: () => ({ T, objs, touch, reads, pads, K }),
     // test hook: the client point (this document's CSS px) of a world point on the mat or anywhere
@@ -5822,14 +5979,15 @@ const readout = document.querySelector("[data-readout]");
 const status = document.querySelector("[data-live-region]");
 // the page's language (figures/i18n.mjs): the parts' words change in place; the build's fixed words (the corners, the
 // drawing's description, the page title) follow I18N.keep; the stage's label, the hint and the readout are the code's
-const STAGE_LABEL = stage.getAttribute("aria-label");
+// (on a touch screen: tap, and no Tab key)
+const STAGE_LABEL = !FILM.record && matchMedia("(pointer: coarse)").matches ? "A gripper with FlexiTac pads. Tap a part to label it." : stage.getAttribute("aria-label");
 const HINT0 = hint.textContent;
 I18N.parts(D.parts);
 I18N.parts(D.cards);
 for (const el of document.querySelectorAll('[data-corner="fig"], [data-corner="title"]')) I18N.keep(el);
 I18N.keep(svg, "aria-label");
 I18N.keep(document.querySelector("title"));
-if (I18N.zh) stage.setAttribute("aria-label", tr(STAGE_LABEL));
+if (I18N.zh || STAGE_LABEL !== stage.getAttribute("aria-label")) stage.setAttribute("aria-label", tr(STAGE_LABEL));
 const P = D.P;
 const reduce = !FILM.record && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const parentWin = window.parent !== window ? window.parent : null;
@@ -5871,14 +6029,65 @@ const moving = () => [S.gap, ...CH.map((k) => S[k]), S.press.amount].some((c) =>
 // ---------------------------------------------------------------- the camera: a pose is a viewBox box that must stay
 // in view (D.poses); in stage mode it is fitted to the drawing area's aspect, elsewhere to the authored card
 const base = { x: 0, y: 0, w: D.W, h: D.H };
+// The teleop table (Lesson 2.2) sits low in a drawing area taller than it needs (a portrait tablet's stage, the phone
+// card): the room left over goes above the mat, where the gripper goes on up, so it clears the corner title, and a band
+// under the mat stays free for the Grip button a touch screen shows (teleop.js). A wide stage (desktop, landscape
+// tablets) has no room left over: there the table is fitted exactly as before.
+const GRIP_BAND = 56;
+// The touch maps (mapsSvg) beside the gripper in the whole-gripper pose: where the drawing area is too narrow for them at
+// full size beside it (a phone, a portrait tablet), the gripper is fitted into the room a band on the right leaves, and
+// the maps take the band (cells as small as 3 px). Where they fit as they are (desktop, landscape tablets) nothing moves.
+// (booted: set once the page's explore and teleop exist, at the end of this script; the first camera is the plain one)
+let booted = false;
+const mapsComing = () => { if (!booted) return false; const c = S.usb; return (c.next ? c.next.to : c.to) > 0.5 && !(explore && explore.allShown()); };
+function mapsFitBeside(b, v, pw) {
+  const k = pw / v.w;
+  const left = (b.x - v.x) * k;
+  const right = (b.x + b.w - v.x) * k;
+  const need = Math.max(mapDims(MAP.cell).mw, kickerPx ? kickerPx.head : 0);
+  return pw - MAP.pad - need >= right + 12 || left - 28 - need >= MAP.pad - 0.5;
+}
+const mapsBand = (pw) => mapDims(clamp((0.42 * pw - 30) / 38.4, MAP.minCell, MAP.cell)).mw + 16 + MAP.pad;
 function poseBox(name) {
   const b = D.poses[name] || D.poses.all;
-  if (FILM.stage.active) return FILM.stage.fitViewBox({ x: b.x, y: b.y, w: b.w, h: b.h }, { pad: 0.06 });
+  if (FILM.stage.active) {
+    let v = FILM.stage.fitViewBox({ x: b.x, y: b.y, w: b.w, h: b.h }, { pad: 0.06 });
+    if (name === "all" && mapsComing()) {
+      const pw = FILM.stage.size().w;
+      if (pw > 0 && !mapsFitBeside(b, v, pw)) v = FILM.stage.fitViewBox({ x: b.x, y: b.y, w: b.w, h: b.h }, { pad: 0.06, reserve: { right: mapsBand(pw) } });
+    }
+    if (name === "table") {
+      const px = FILM.stage.size().h;
+      const want = Math.max(0.06 * v.h, px > 0 ? (GRIP_BAND * v.h) / px : 0);
+      const below = v.y + v.h - (b.y + b.h);
+      if (below > want + 0.5) v.y -= below - want;
+    }
+    return v;
+  }
   // the authored card: keep its aspect, fit the box with a small margin
-  const s = Math.max(b.w / (base.w * 0.92), b.h / (base.h * 0.92));
+  let s = Math.max(b.w / (base.w * 0.92), b.h / (base.h * 0.92));
+  if (name === "table" && FILM.embed) {
+    // (the band under the mat, in viewBox units at this zoom: GRIP_BAND CSS px of the card's drawing)
+    const px = svg.getBoundingClientRect().height;
+    const u = px > 0 ? base.h / px : 0;
+    if (u > 0 && 0.96 * base.h - GRIP_BAND * u > 0) s = Math.max(s, b.h / (0.96 * base.h - GRIP_BAND * u));
+    const w = base.w * s;
+    const h = base.h * s;
+    return { x: b.x + b.w / 2 - w / 2, y: b.y + b.h - h + GRIP_BAND * u * s + 0.02 * h, w, h };
+  }
   const w = base.w * s;
   const h = base.h * s;
-  return { x: b.x + b.w / 2 - w / 2, y: b.y + b.h / 2 - h / 2, w, h };
+  const v = { x: b.x + b.w / 2 - w / 2, y: b.y + b.h / 2 - h / 2, w, h };
+  if (name === "all" && mapsComing() && FILM.embed) {
+    const r = svg.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0 && !mapsFitBeside(b, v, r.width)) {
+      // (px per viewBox unit: the gripper in the room left of the band, as tall as it may be)
+      const room = r.width - mapsBand(r.width);
+      const k = Math.min((room * 0.92) / b.w, (r.height * 0.92) / b.h);
+      return { x: b.x + b.w / 2 - room / 2 / k, y: b.y + b.h / 2 - r.height / 2 / k, w: r.width / k, h: r.height / k };
+    }
+  }
+  return v;
 }
 let camFrom = poseBox("all");
 let camTo = camFrom;
@@ -5955,7 +6164,6 @@ function step(n) {
   S.seq = [];
   stepLabel(null);
   pressRelease(true);
-  camera(STEPS[n].pose);
   if (n === 1) { setStages(ORDER, [], null); gapTo(D.gap.rest, 1.2); }
   if (n === 2) { gapTo(D.gap.rest, 1.0); playStage("wrap"); }
   if (n === 3) { gapTo(D.gap.rest, 1.0); playStage("tail"); }
@@ -5975,6 +6183,8 @@ function step(n) {
     } else { tween(S.ffc, 1, 0); stepLabel("extender"); }
   }
   if (n === 5) { gapTo(D.gap.rest, 1.0); playStage("usb"); }
+  // (after the stages: the whole-gripper pose keeps room for the maps when the USB cables are going in)
+  camera(STEPS[n].pose);
   S.label = STEPS[n].say;
 }
 
@@ -6071,7 +6281,7 @@ function pressMarks(side) {
 // 12 x 32 frame coloured like Fig 1's map (viridis; 0 is a quiet neutral). Screen-sized (CSS px through the current
 // camera), on the right of the drawing, never over the gripper. A cell: drive line j from the fingertip end (left) to
 // the base (right), sense line i from top to bottom.
-const MAP = { cell: 5, gap: 1, pad: 14 };
+const MAP = { cell: 5, gap: 1, pad: 14, minCell: 3, fs: 10.5 };
 function viridis(v) {
   const c = D.viridis[Math.max(0, Math.min(32, Math.round(v * 32)))];
   return `rgb(${c[0]},${c[1]},${c[2]})`;
@@ -6093,62 +6303,131 @@ function kickerWidths(fs, s) {
   kickerPx = { line, head };
   return kickerPx;
 }
+// a mono text's width in CSS px at the maps' font size, from the measured kicker (CJK characters count about twice)
+const CJK = /[⺀-鿿＀-￯]/;
+const units = (t) => [...t].reduce((n, ch) => n + (CJK.test(ch) ? 1.7 : 1), 0);
+const textPx = (t, kw) => units(t) * (kw.head / Math.max(1, units(tr(KICKER))));
+// the maps at a cell size (CSS px): a cell's gap shrinks with it (1 px at the full 5 px)
+function mapDims(cell) {
+  const gap = cell >= MAP.cell ? MAP.gap : Math.max(0.6, cell / 5);
+  const cw = cell + gap;
+  return { cell, gap, cw, mw: 32 * cw - gap, mh: 12 * cw - gap };
+}
+// The panel (kicker, two maps, the legend) and where it goes: in the room right of the gripper (else left of it), never
+// over it. At full size first, as it always was (the kicker on one line, or wrapped with "SIMULATED" on its own line);
+// where the room is narrower (a phone, a portrait tablet: the camera keeps a band for it, poseBox) the maps shrink to as
+// small as 3 px cells, the kicker wraps word by word to the maps' width and a finger's "· USB 1" goes under its name.
+function mapsLayout(rw, rh, gr, kw) {
+  const fs = MAP.fs;
+  const fit = (w, sep) => Math.min(rw - MAP.pad - w, Math.max(gr.right + sep, rw - MAP.pad - w - 40));
+  // full size, the form it always had
+  const d5 = mapDims(MAP.cell);
+  let panelW = Math.max(d5.mw, kw.line);
+  let x0 = fit(panelW, 28);
+  let kick = null;
+  if (x0 >= gr.right + 28 - 0.5) kick = [[tr(KICKER), tr("· SIMULATED")]];
+  else {
+    panelW = Math.max(d5.mw, kw.head);
+    x0 = fit(panelW, 28);
+    if (x0 >= gr.right + 12) kick = [[tr(KICKER)], [null, tr("SIMULATED")]];
+    // (left of the gripper; outside the website, the standalone card and ?record, as it always was: there even where
+    // it comes close to the gripper)
+    else if (gr.left - 28 - panelW >= MAP.pad - 0.5 || !FILM.embed) { x0 = Math.max(MAP.pad, gr.left - 28 - panelW); kick = [[tr(KICKER)], [null, tr("SIMULATED")]]; }
+  }
+  if (kick) return { ...d5, x0, panelW, kick, split: false };
+  // smaller: the largest cell that fits beside the gripper (right, else left), 16 px off it, and in the drawing's height
+  const words = tr(KICKER).split(" ");
+  const longest = Math.max(...words.map((w) => textPx(w, kw)), textPx(tr("SIMULATED"), kw));
+  // the kicker, word by word to the panel's width; "SIMULATED" on its own line
+  const kickOf = (pw) => {
+    const lines = [];
+    let line = "";
+    for (const w of words) {
+      const t = line ? line + " " + w : w;
+      if (line && textPx(t, kw) > pw) { lines.push([line]); line = w; } else line = t;
+    }
+    if (line) lines.push([line]);
+    lines.push([null, tr("SIMULATED")]);
+    return lines;
+  };
+  const nameW = Math.max(...["LEFT FINGER", "RIGHT FINGER"].map((n) => fs * 1.25 + textPx(`${tr(n)} · ${tr("{n} lit", { n: 99 })}`, kw)));
+  const form = (d, w, x0) => { const kick = kickOf(w); const split = nameW > w; return { ...d, panelW: w, x0, kick, split, small: true, h: panelHeight(d.mh, kick.length, split, true) }; };
+  let pick = null;
+  for (let c = MAP.cell - 0.25; c >= MAP.minCell - 1e-6; c -= 0.25) {
+    const d = mapDims(c);
+    const w = Math.max(d.mw, longest);
+    let f = null;
+    if (rw - MAP.pad - w >= gr.right + 16) f = form(d, w, Math.min(rw - MAP.pad - w, Math.max(gr.right + 16, rw - MAP.pad - w - 24)));
+    else if (gr.left - 16 - w >= MAP.pad) f = form(d, w, gr.left - 16 - w);
+    if (f && f.h <= rh - 16) { pick = f; break; }
+    if (f && !pick) pick = f;
+  }
+  if (!pick) { const d = mapDims(MAP.minCell); const w = Math.max(d.mw, longest); pick = form(d, w, Math.max(MAP.pad, rw - MAP.pad - w)); }
+  if (pick.h > rh - 16) { const d = mapDims(MAP.minCell); pick = form(d, pick.panelW, pick.x0); }
+  return pick;
+}
+// the panel's height (CSS px): the kicker's lines, two maps under their names (a name and its "USB 1" on one line, or two)
+// (the small form spaces its rows a little tighter: 10 px between the maps, not 16)
+function panelHeight(mh, kickLines, split, small = false) {
+  const fs = MAP.fs;
+  const nameH = split ? fs + fs * 1.3 : fs;
+  return (small ? fs : fs * 1.3) + kickLines * fs * 1.3 + 2 * (nameH + 6 + mh) + (small ? 10 : 16) + fs + 8;
+}
 function mapsSvg(vb) {
   const show = clamp((S.usb.x - 0.9) / 0.1);
   if (show <= 0 || mapsHidden) return "";
   const r = svg.getBoundingClientRect();
   const s = r.width > 0 ? vb.w / r.width : 1;
-  const cw = MAP.cell + MAP.gap;
-  const mw = 32 * cw - MAP.gap;
-  const mh = 12 * cw - MAP.gap;
-  const fs = 10.5;
-  const blockH = fs + 6 + mh;
+  const fs = MAP.fs;
   // in the room right of the gripper, inside the drawing area's right inset (MAP.pad), vertically centred on the upper
-  // half. The kicker is wider than the maps: where the whole panel, kicker and all, cannot keep 28 px off the gripper,
-  // the kicker wraps ("SIMULATED" on a line of its own) and the panel is as wide as the maps again
+  // half (mapsLayout: the size and the side)
   const gr = gripperBox();
   const kw = kickerWidths(fs, s);
-  const fit = (w) => Math.min(r.width - MAP.pad - w, Math.max(gr.right + 28, r.width - MAP.pad - w - 40));
-  let wrap = false;
-  let panelW = Math.max(mw, kw.line);
-  let x0 = fit(panelW);
-  if (x0 < gr.right + 28 - 0.5) {
-    wrap = true;
-    panelW = Math.max(mw, kw.head);
-    x0 = fit(panelW);
-    if (x0 < gr.right + 12) x0 = Math.max(MAP.pad, gr.left - 28 - panelW); // no room on the right: on the left
-  }
-  const headH = wrap ? fs * 3.9 : fs * 2.6;
-  const panelH = headH + 2 * blockH + 16 + fs + 8;
-  const y0 = Math.max(MAP.pad + 18, Math.min(r.height - panelH - MAP.pad - 30, gr.top + 0.12 * (gr.bottom - gr.top)));
+  const L = mapsLayout(r.width, r.height, gr, kw);
+  const { cw, mw, mh, x0 } = L;
+  const lineH = fs * 1.3;
+  const headH = (L.small ? fs : fs * 1.3) + L.kick.length * lineH;
+  const nameH = L.split ? fs + lineH : fs;
+  const blockH = nameH + 6 + mh;
+  const mapGap = L.small ? 10 : 16;
+  const panelH = headH + 2 * blockH + mapGap + fs + 8;
+  // (the small form: anywhere from the drawing's top inset down to 8 px over its bottom; the view bar is on the left)
+  const y0 = L.small ? Math.max(8, Math.min(r.height - panelH - 8, gr.top + 0.12 * (gr.bottom - gr.top))) : Math.max(MAP.pad + 18, Math.min(r.height - panelH - MAP.pad - 30, gr.top + 0.12 * (gr.bottom - gr.top)));
   const X = (px) => (vb.x + px * s).toFixed(2);
   const Y = (py) => (vb.y + py * s).toFixed(2);
   const font = `style="font-size:${(fs * s).toFixed(2)}px"`;
   let out = `<g class="gr-maps" style="opacity:${show.toFixed(3)}">`;
-  if (wrap) out += `<text class="gr-map-kicker" x="${X(x0)}" y="${Y(y0 + fs)}" ${font}>${tr(KICKER)}</text><text class="gr-map-kicker" x="${X(x0)}" y="${Y(y0 + fs * 2.3)}" ${font}><tspan class="gr-map-muted">${tr("SIMULATED")}</tspan></text>`;
-  else out += `<text class="gr-map-kicker" x="${X(x0)}" y="${Y(y0 + fs)}" ${font}>${tr(KICKER)} <tspan class="gr-map-muted">${tr("· SIMULATED")}</tspan></text>`;
+  L.kick.forEach(([head, muted], k) => {
+    const y = y0 + fs + k * lineH;
+    const mutedT = muted ? `<tspan class="gr-map-muted">${muted}</tspan>` : "";
+    out += `<text class="gr-map-kicker" x="${X(x0)}" y="${Y(y)}" ${font}>${head ? head + (muted ? " " : "") : ""}${mutedT}</text>`;
+  });
   let y = y0 + headH;
   for (const [finger, name] of [["left", "LEFT FINGER"], ["right", "RIGHT FINGER"]]) {
     const fr = frameOf(finger);
     const lit = fr.values.filter((v) => v > 0).length;
+    const info = lit ? tr("{n} lit", { n: lit }) : "USB " + (finger === "left" ? "1" : "2");
     // the finger's colour key (its board's sticker, its cables' bands)
     out += `<rect class="gr-map-key-${finger === "left" ? "L" : "R"}" x="${X(x0)}" y="${Y(y + fs * 0.12)}" width="${(fs * 0.8 * s).toFixed(2)}" height="${(fs * 0.8 * s).toFixed(2)}" rx="${(1.5 * s).toFixed(2)}"/>`;
-    out += `<text class="gr-map-name" x="${X(x0 + fs * 1.25)}" y="${Y(y + fs)}" style="font-size:${(fs * s).toFixed(2)}px">${tr(name)}<tspan class="gr-map-muted"> · ${lit ? tr("{n} lit", { n: lit }) : "USB " + (finger === "left" ? "1" : "2")}</tspan></text>`;
-    const top = y + fs + 6;
+    if (L.split) {
+      out += `<text class="gr-map-name" x="${X(x0 + fs * 1.25)}" y="${Y(y + fs)}" ${font}>${tr(name)}</text>`;
+      out += `<text class="gr-map-muted" x="${X(x0 + fs * 1.25)}" y="${Y(y + fs + lineH)}" ${font}>${info}</text>`;
+    } else out += `<text class="gr-map-name" x="${X(x0 + fs * 1.25)}" y="${Y(y + fs)}" ${font}>${tr(name)}<tspan class="gr-map-muted"> · ${info}</tspan></text>`;
+    const top = y + nameH + 6;
     let cells = "";
     for (let i = 0; i < 12; i++) for (let j = 0; j < 32; j++) {
       const v = fr.values[i * 32 + j];
       const fill = v > 0 ? viridis(v) : "var(--gr-map-zero)";
-      cells += `<rect x="${X(x0 + j * cw)}" y="${Y(top + i * cw)}" width="${(MAP.cell * s).toFixed(2)}" height="${(MAP.cell * s).toFixed(2)}" rx="${(0.8 * s).toFixed(2)}" style="fill:${fill}"/>`;
+      cells += `<rect x="${X(x0 + j * cw)}" y="${Y(top + i * cw)}" width="${(L.cell * s).toFixed(2)}" height="${(L.cell * s).toFixed(2)}" rx="${(Math.min(0.8, L.cell * 0.16) * s).toFixed(2)}" style="fill:${fill}"/>`;
     }
     out += `<g class="gr-map" data-map="${finger}">${cells}</g>`;
-    y = top + mh + 16;
+    y = top + mh + mapGap;
   }
   // legend
   const ly = y + fs * 0.2;
   out += `<text class="gr-map-muted" x="${X(x0)}" y="${Y(ly + fs * 0.8)}" style="font-size:${(fs * 0.95 * s).toFixed(2)}px">${tr("light")}</text>`;
   const bx = x0 + fs * 3.4;
-  const bw = 64;
+  const bw = Math.max(24, Math.min(64, x0 + Math.max(mw, L.panelW) - bx - 6 - textPx(tr("firm"), kw) * 0.95));
   const stops = D.viridis.filter((_, i) => i % 4 === 0).map((c, i, a) => `<stop offset="${(i / (a.length - 1)).toFixed(3)}" stop-color="rgb(${c[0]},${c[1]},${c[2]})"/>`).join("");
   out += `<defs><linearGradient id="gr-map-legend" x1="0" x2="1" y1="0" y2="0">${stops}</linearGradient></defs>`;
   out += `<rect x="${X(bx)}" y="${Y(ly + fs * 0.2)}" width="${(bw * s).toFixed(2)}" height="${(4 * s).toFixed(2)}" rx="${(2 * s).toFixed(2)}" fill="url(#gr-map-legend)"/>`;
@@ -6264,9 +6543,37 @@ function draw() {
   const v = svg.viewBox.baseVal;
   const mk = `${v.x.toFixed(1)},${v.y.toFixed(1)},${v.width.toFixed(1)}|${q3(S.usb.x)}|${S.press.finger}:${q3(S.press.amount.x)}:${q3(S.press.sense)}:${q3(S.press.drive)}|${mapsHidden}|${Math.round(svg.getBoundingClientRect().width)}`;
   if (drawn.maps !== mk) { drawn.maps = mk; front.innerHTML = mapsSvg({ x: v.x, y: v.y, w: v.width, h: v.height }); }
-  readout.textContent = tele && tele.on ? tele.readoutText() : readoutText();
+  setReadout(tele && tele.on ? tele.readoutText() : readoutText());
   if (tele && tele.on) tele.say();
+  fitCorners();
 }
+// The bottom corners. The readout wraps inside the card, never past its left edge; where it and the hint would meet (a
+// narrow card, a long readout), the hint goes up over the readout (data-gr-stack, gripper.css), and stays there while the
+// card keeps its width, so a readout that changes length does not make the hint jump back and forth.
+const plate = document.querySelector(".iso-plate");
+let readNow = null;
+let cornerKey = "";
+let stackW = -1;
+function setReadout(text) {
+  if (text === readNow) return;
+  readNow = text;
+  readout.textContent = text;
+}
+function fitCorners() {
+  if (!plate || FILM.record) return;
+  const w = plate.clientWidth;
+  const key = `${hint.textContent}|${readNow}|${w}`;
+  if (key === cornerKey) return;
+  cornerKey = key;
+  if (w !== stackW) { stackW = w; plate.removeAttribute("data-gr-stack"); }
+  const rr = readout.getBoundingClientRect();
+  plate.style.setProperty("--gr-read-h", `${Math.round(rr.height)}px`);
+  if (plate.hasAttribute("data-gr-stack")) return;
+  const hr = hint.getBoundingClientRect();
+  if (!(rr.width > 0 && hr.width > 0)) return;
+  if (hr.top < rr.bottom - 0.5 && rr.top < hr.bottom - 0.5 && hr.right + 14 > rr.left) plate.setAttribute("data-gr-stack", "");
+}
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { stackW = -1; cornerKey = ""; fitCorners(); }, () => {});
 const front = svg.querySelector('[data-live="front"]');
 function readoutText() {
   if (S.press.finger && S.press.amount.x > 0.001) {
@@ -6447,7 +6754,8 @@ if (!FILM.record) {
 if (typeof createTeleop === "function" && D.teleop) {
   tele = createTeleop({
     svg, world, stage, D, P, hint, readout, status, reduce, kick, camera,
-    gap: () => S.gap.x, hintText: hint.textContent, label: stage.getAttribute("aria-label"),
+    // (the English label: teleop's exit says it in the page's language then, tr(o.label))
+    gap: () => S.gap.x, hintText: explore ? explore.hintText : HINT0, label: STAGE_LABEL,
     afterExit: () => { S.gap.x = S.gap.from = S.gap.to = D.gap.rest; S.gap.dur = 0; drawn = {}; },
   });
   window.__grTeleop = tele;
@@ -6459,6 +6767,8 @@ function setLang(l) {
 }
 // (the build's hint, before the code paints it: explore.js and teleop.js keep the English and paint it with tr)
 if (I18N.zh && hint.textContent === HINT0) hint.textContent = tr(HINT0);
+booted = true;
+if (!FILM.record) { camFrom = camTo = poseBox(S.cam.to); S.cam.t = 1; }
 I18N.on(() => {
   if (!(tele && tele.on)) stage.setAttribute("aria-label", tr(STAGE_LABEL));
   // (explore first: teleop's hint wins while the mode is on)

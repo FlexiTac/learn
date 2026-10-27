@@ -559,6 +559,31 @@
   grid-template-columns: auto minmax(0, 1fr);
   gap: 18px;
 }
+/* the side form (sim-points.ts sideForm: a phone on its side): the drawing left, the frame and its counts right, the
+   controls under both; no closing sentence (the step text says it) */
+.sp[data-side] {
+  grid-template-columns: minmax(0, 1fr) var(--sp-col, 300px);
+  grid-template-areas: "kick kick" "anim row" "ctl ctl";
+  column-gap: 16px;
+}
+.sp[data-side] > .sp-kicker {
+  grid-area: kick;
+}
+.sp[data-side] > .sp-anim {
+  grid-area: anim;
+  align-self: center;
+}
+.sp[data-side] > .sp-row {
+  grid-area: row;
+  grid-template-columns: minmax(0, 1fr);
+  align-self: center;
+}
+.sp[data-side] > .sp-ctl {
+  grid-area: ctl;
+}
+.sp[data-side] > .sp-line {
+  display: none;
+}
 .sp-mapbox {
   display: grid;
   gap: 4px;
@@ -705,6 +730,21 @@
 .sp[data-form="mini"] .sp-side {
   grid-template-columns: minmax(0, 1fr);
 }
+/* (no point under the object: the hint takes the whole row, in place of the "0" count beside it, so it wraps to the
+   readout's two lines and the card does not grow and shrink as the object comes and goes. A count that is not 0, the
+   tube still on the pad's edge, keeps its place and the hint waits) */
+.sp[data-form="medium"] .sp-side:has(.sp-hint):has(> .sp-count:not([data-some])) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.sp[data-form="medium"] .sp-side:has(.sp-hint) > .sp-count:not([data-some]) {
+  display: none;
+}
+.sp[data-form="medium"] .sp-count[data-some] ~ .sp-k > .sp-hint {
+  display: none;
+}
+.sp[data-form="medium"] .sp-side:has(.sp-hint) > .sp-count[data-some] {
+  align-self: start;
+}
 .sp[data-form="mini"] .sp-btn-t {
   display: none;
 }
@@ -715,5 +755,13 @@
   .sim .sp-btn,
   .sim .sp-chip {
     transition: none;
+  }
+}
+
+/* ---- a touch screen (all three cards): buttons and chips a finger can hit (36 px, they were 30) */
+@media (pointer: coarse) {
+  .sim .sp-btn,
+  .sim .sp-chip {
+    min-height: 36px;
   }
 }

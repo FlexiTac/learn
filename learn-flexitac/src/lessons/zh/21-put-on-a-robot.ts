@@ -61,7 +61,7 @@ export const zh: LessonZh = {
     },
     {
       title: "两块板，两根 USB 线",
-      text: `每块板有自己的 USB 线，所以电脑会得到两张触觉图：左和右。点击一根手指来按压它的传感垫，看它的触觉图亮起来。`,
+      text: `每块板有自己的 USB 线，所以电脑会得到两张触觉图：左和右。<span class="only-mouse">点击</span><span class="only-touch">轻点</span>一根手指来按压它的传感垫，看它的触觉图亮起来。`,
     },
   ],
   quiz: [

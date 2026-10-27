@@ -125,7 +125,8 @@ const listeners = new Set<(s: Saved) => void>();
 
 export function load(): Saved {
   if (cache) return cache;
-  let s: Saved = structuredClone(EMPTY);
+  // (a fresh copy: JSON, not structuredClone, which iOS Safari has only from 15.4 and would stop the whole site)
+  let s: Saved = JSON.parse(JSON.stringify(EMPTY)) as Saved;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {

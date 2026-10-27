@@ -14,7 +14,10 @@
 //                                                       the close-up's circle and the pad tag's anchor, frame px)
 //
 // Layout: the video on the left, the two maps on the right, sized so the video and the maps' block (labels, 32
-// rows, legend, caption) are the same height (they share the box as equals), both centred as one group. The maps
+// rows, legend, caption) are the same height (they share the box as equals), both centred as one group. A box under
+// 560 px wide (a phone, a 1024 px window's stage) stacks: the video on top, the two maps on their side (32 cells
+// across, the fingertip row on the left) side by side under it, the video smaller where the box has a height of its
+// own, so the arm and both maps are seen together. The maps
 // ("Left finger", "Right finger" = as seen in the video) are each drawn like the pad on its finger: 32 rows along the finger
 // with the fingertip row at the BOTTOM, 12 columns across, seen face-on from the strawberry (so the two maps mirror
 // each other, like the two pads facing each other). Colours as Lesson 1's touch map (Fig 1 feel mode): viridis from
@@ -212,8 +215,9 @@ export function mount(el: HTMLElement, ctx: WidgetCtx, opts: RobotGraspOpts = {}
   }
   root.innerHTML = `
     <div class="rg-row">
-    <div class="rg-media"${cover ? "" : ` role="img" aria-label="${S().label}" data-t-aria="label"`}>
-      <img class="rg-poster" alt="" decoding="async">
+    <div class="rg-media">
+      <img class="rg-poster" alt="" decoding="async">${cover ? "" : `
+      <div class="rg-alt" role="img" aria-label="${S().label}" data-t-aria="label"></div>`}
       <div class="rg-tag" aria-hidden="true" hidden><span class="rg-tag-card mono" data-t="tag">${S().tag}</span></div>${
         cover
           ? `
@@ -250,6 +254,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx, opts: RobotGraspOpts = {}
   let lut = lutFor([226, 226, 221]);
   let shown = -1;
   let cellPx = 10;
+  /** The stacked form draws the maps on their side (32 cells across, 12 down), side by side under the video. */
+  let sideways = false;
   let video: HTMLVideoElement | null = null;
   let userPaused = false;
   let onscreen = true;
@@ -297,13 +303,21 @@ export function mount(el: HTMLElement, ctx: WidgetCtx, opts: RobotGraspOpts = {}
       g.clearRect(0, 0, cv.width, cv.height);
       let lit = 0;
       for (let r = 0; r < rows; r++) {
-        const y = Math.round((rows - 1 - r) * p); // row 0 (the fingertip row) at the bottom
         for (let c = 0; c < cols; c++) {
           const q = v ? v[r * cols + c] : 0;
           if (q) lit++;
           g.fillStyle = lut[q];
-          const x = Math.round(c * p);
-          g.fillRect(x, y, Math.round((c + 1) * p) - x - gap, Math.round((rows - r) * p) - y - gap);
+          if (sideways) {
+            // on its side (the stacked form): a quarter turn clockwise, the fingertip row on the LEFT
+            const x = Math.round(r * p);
+            const y = Math.round(c * p);
+            g.fillRect(x, y, Math.round((r + 1) * p) - x - gap, Math.round((c + 1) * p) - y - gap);
+          } else {
+            // upright: row 0 (the fingertip row) at the bottom
+            const y = Math.round((rows - 1 - r) * p);
+            const x = Math.round(c * p);
+            g.fillRect(x, y, Math.round((c + 1) * p) - x - gap, Math.round((rows - r) * p) - y - gap);
+          }
         }
       }
       counts[k].textContent = lit ? S().lit.replace("{n}", String(lit)) : "\u00a0"; // (keeps its line: nothing jumps when touch starts)
@@ -314,57 +328,108 @@ export function mount(el: HTMLElement, ctx: WidgetCtx, opts: RobotGraspOpts = {}
   };
 
   // ---------------------------------------------------------------- layout: the video and the maps' block (each map
-  // 12 x 32 cells) side by side at the same height, centred as one group; the caption under both
-  function layout(textH = 132, refit = true) {
+  // 12 x 32 cells) side by side at the same height, centred as one group; the caption under both. A box under 560 px
+  // wide (a phone, a 1024 px window's stage, a narrow column): the video on top and the two maps on their side, side
+  // by side under it (a phone sees the arm and both maps on one screen, the steps bar under them); a box with a height
+  // of its own shrinks the video so the whole picture fits it.
+  /** The box's own height (px), or 0 when it takes the picture's (a phone's stacked stage: its height is auto). */
+  function boxHeight(): number {
+    if (cover) return el.clientHeight;
+    const d = root.style.display;
+    root.style.display = "none";
+    const h = el.clientHeight;
+    root.style.display = d;
+    return h > 40 ? h : 0;
+  }
+  function layout(textH = 132, refit = true, again = true) {
     const cs = getComputedStyle(root);
     const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
-    const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
     const W = Math.max(200, root.clientWidth - padX);
-    const givenH = el.clientHeight > 40 ? el.clientHeight - padY : 0;
-    // (the cover keeps its side-by-side form at any size: the home page shows it only on wide windows)
-    const narrow = !cover && W < 560;
+    // (the cover keeps its side-by-side form at any size: the home page shows it only on wide windows. Tested on the
+    // width less the side-by-side form's 20 px side padding: data-narrow's smaller padding would flip its own test)
+    const narrow = !cover && root.clientWidth - 40 < 560;
+    const was = root.hasAttribute("data-narrow");
     root.toggleAttribute("data-narrow", narrow);
+    // (data-narrow changes the padding read above: once more with the padding it has now, e.g. a phone turned upright,
+    // whose box's new size is the only resize the observer sees)
+    if (narrow !== was && again) return layout(textH, refit, false);
+    sideways = narrow;
+    // (a side-by-side box under 632 px: its maps are narrower than "Right finger", which would run past the box's edge;
+    // the finger names wrap to their maps' width instead, robot-grasp.css)
+    const wrap = !cover && !narrow && root.clientWidth - 40 < 592;
+    root.toggleAttribute("data-wrap", wrap);
+    const csN = getComputedStyle(root);
+    const padY = parseFloat(csN.paddingTop) + parseFloat(csN.paddingBottom);
+    const boxH = boxHeight();
+    const givenH = boxH > 40 ? boxH - padY : 0;
     const gap = cover ? Math.round(Math.min(22, Math.max(10, W * 0.03))) : Math.round(Math.min(40, Math.max(14, W * 0.028)));
-    const mapGap = cover ? Math.round(Math.min(14, Math.max(6, W * 0.016))) : Math.round(Math.min(26, Math.max(10, W * 0.016)));
+    let mapGap = cover ? Math.round(Math.min(14, Math.max(6, W * 0.016))) : Math.round(Math.min(26, Math.max(10, W * 0.016)));
     const rows = data?.meta.rows ?? 32;
     const cols = data?.meta.cols ?? 12;
     let H = 0;
+    // (the finger names over the maps: two maps side by side keep at least 12 px between their names)
+    const nameW = cover ? 0 : Math.max(...maps.map((m) => m.querySelector<HTMLElement>(".rg-fname")!.getBoundingClientRect().width));
+    const sizeCanvases = () => {
+      const dpr = Math.min(3, window.devicePixelRatio || 1);
+      const [w, h] = sideways ? [rows, cols] : [cols, rows];
+      for (const cv of canvases) {
+        cv.width = Math.round(w * cellPx * dpr);
+        cv.height = Math.round(h * cellPx * dpr);
+        cv.style.width = `${w * cellPx}px`;
+        cv.style.height = `${h * cellPx}px`;
+      }
+      side.style.setProperty("--rg-map-w", `${w * cellPx}px`);
+    };
+    root.style.setProperty("--rg-cap-w", `${Math.round(W)}px`);
     if (narrow) {
-      // stacked (a phone, a narrow column): video full width, maps under it
-      const vw = W;
-      const vh = vw / aspect;
+      // the maps on their side, side by side, as wide as the box allows (cells up to 9 px); the video above them at
+      // the box's width, or smaller where the box's own height would cut the picture
+      // (18 px or more between the two maps: one map's count never reads as the other's name, "48 lit Right finger";
+      // in a box with its own height, cells up to 7 px, so the video keeps more of it)
+      mapGap = Math.max(18, mapGap);
+      cellPx = Math.max(3, Math.min(givenH ? 7 : 9, Math.floor(((W - mapGap) / 2 / rows) * 4) / 4));
+      root.style.setProperty("--rg-map-gap", `${mapGap}px`);
+      root.toggleAttribute("data-tight", rows * cellPx < 150);
+      sizeCanvases();
+      let vw = W;
       media.style.width = `${vw}px`;
-      media.style.height = `${vh}px`;
-      cellPx = Math.max(4, Math.min(12, (W - mapGap) / 2 / cols));
-      root.style.setProperty("--rg-cap-w", `${Math.round(W)}px`);
+      media.style.height = `${vw / aspect}px`;
+      root.style.height = "";
+      if (givenH) {
+        const rest = root.getBoundingClientRect().height - padY - vw / aspect;
+        vw = Math.max(160, Math.min(W, (givenH - rest) * aspect));
+        media.style.width = `${Math.round(vw)}px`;
+        media.style.height = `${Math.round(vw / aspect)}px`;
+        root.style.height = `${boxH}px`;
+      }
     } else {
       // the caption runs under the whole widget, in one line where it fits
-      root.style.setProperty("--rg-cap-w", `${Math.round(W)}px`);
       const capH = cover ? 0 : cap.getBoundingClientRect().height + parseFloat(cs.rowGap || "0");
       // textH: the side panel's height besides the maps (kicker, labels, fingertip, legend, caption). The video and
       // the maps' block get the same height: vw = W - gaps - 2 cols c, and vw / aspect = rows c + textH, so
       // c = (W - gaps - aspect textH) / (2 cols + aspect rows); then both are capped by the box's height
       H = Math.max(240, givenH ? givenH - capH : Math.min(760, W * 0.62));
-      let cell = (W - gap - mapGap - aspect * textH) / (2 * cols + aspect * rows);
-      cell = Math.max(4, Math.min(cell, (H - textH) / rows));
-      cellPx = Math.max(4, Math.floor(cell * 4) / 4);
+      const cellFor = (mg: number) => {
+        let cell = (W - gap - mg - aspect * textH) / (2 * cols + aspect * rows);
+        cell = Math.max(4, Math.min(cell, (H - textH) / rows));
+        return Math.max(4, Math.floor(cell * 4) / 4);
+      };
+      cellPx = cellFor(mapGap);
+      // (names wider than their maps: more room between the maps, so "Left finger" and "Right finger" never touch)
+      if (!wrap && nameW > cols * cellPx - 4) {
+        mapGap = Math.ceil(Math.max(mapGap, nameW - cols * cellPx + 14));
+        cellPx = cellFor(mapGap);
+      }
       const vw = Math.min(W - gap - mapGap - 2 * cols * cellPx, H * aspect);
       media.style.width = `${Math.round(vw)}px`;
       media.style.height = `${Math.round(vw / aspect)}px`;
       root.style.setProperty("--rg-gap", `${gap}px`);
       root.style.height = givenH ? "" : `${Math.round(H + capH + padY)}px`;
+      root.style.setProperty("--rg-map-gap", `${mapGap}px`);
+      // a narrow map: its count goes under its name (the cover has no counts)
+      root.toggleAttribute("data-tight", !cover && cols * cellPx < 176);
+      sizeCanvases();
     }
-    root.style.setProperty("--rg-map-gap", `${mapGap}px`);
-    // a narrow map: its count goes under its name (the cover has no counts)
-    root.toggleAttribute("data-tight", !cover && cols * cellPx < 176);
-    const dpr = Math.min(3, window.devicePixelRatio || 1);
-    for (const cv of canvases) {
-      cv.width = Math.round(cols * cellPx * dpr);
-      cv.height = Math.round(rows * cellPx * dpr);
-      cv.style.width = `${cols * cellPx}px`;
-      cv.style.height = `${rows * cellPx}px`;
-    }
-    side.style.setProperty("--rg-map-w", `${cols * cellPx}px`);
     // measure the text around the maps once laid out: if it differs from what was assumed, fit once more with it
     if (!narrow && refit) {
       const real = side.getBoundingClientRect().height - rows * cellPx;
@@ -538,7 +603,21 @@ export function mount(el: HTMLElement, ctx: WidgetCtx, opts: RobotGraspOpts = {}
   });
 
   // ---------------------------------------------------------------- lifecycle
-  const ro = new ResizeObserver(() => layout());
+  // (on the next frame: a stacked picture sets its own box's height, which would notify this observer again within
+  // the same frame, "ResizeObserver loop completed with undelivered notifications"; and only when the box really
+  // changed size)
+  let roKey = "";
+  let roRaf = 0;
+  const ro = new ResizeObserver(() => {
+    const key = `${el.clientWidth}x${el.clientHeight}`;
+    if (key === roKey || roRaf) return;
+    roRaf = requestAnimationFrame(() => {
+      roRaf = 0;
+      if (destroyed) return;
+      layout();
+      roKey = `${el.clientWidth}x${el.clientHeight}`;
+    });
+  });
   ro.observe(el);
   const io = new IntersectionObserver((es) => {
     onscreen = es[es.length - 1].isIntersecting;
@@ -590,6 +669,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx, opts: RobotGraspOpts = {}
     destroy() {
       destroyed = true;
       if (raf) cancelAnimationFrame(raf);
+      if (roRaf) cancelAnimationFrame(roRaf);
       if (video) {
         if (vfc && "cancelVideoFrameCallback" in video) video.cancelVideoFrameCallback(vfc);
         video.pause();

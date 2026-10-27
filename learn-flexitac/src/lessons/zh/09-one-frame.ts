@@ -106,7 +106,7 @@ export const zh: LessonZh = {
   steps: [
     {
       title: "插上传感垫",
-      text: `两根扁平排线把传感垫接到读取板：${COLS} 条驱动线接 FPC2（在移位寄存器旁），${ROWS} 条感应线接 FPC1（在多路选择器旁）。点<b>演示一下</b>把它插上；再把鼠标移到排线上，点亮它的线。`,
+      text: `两根扁平排线把传感垫接到读取板：${COLS} 条驱动线接 FPC2（在移位寄存器旁），${ROWS} 条感应线接 FPC1（在多路选择器旁）。点<b>演示一下</b>把它插上；再<span class="only-mouse">把鼠标移到排线上</span><span class="only-touch">轻点排线</span>，点亮它的线。`,
     },
     {
       title: "扫描一帧",

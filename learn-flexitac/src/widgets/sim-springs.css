@@ -317,3 +317,30 @@
 .ss:not([data-form="large"])[data-mode="tap"] .ss-keys-drag {
   display: none;
 }
+
+/* ---- the side form (sim-springs.ts, sim-points.ts sideForm: a phone on its side): the drawing left, the readout and
+   the two maps right, the controls under both; no closing sentence (the step text says it) */
+.ss[data-side] {
+  grid-template-columns: minmax(0, 1fr) var(--ss-col, 300px);
+  grid-template-areas: "kick kick" "anim read" "anim maps" "ctl ctl";
+  column-gap: 16px;
+}
+.ss[data-side] > .sp-kicker {
+  grid-area: kick;
+}
+.ss[data-side] > .ss-anim {
+  grid-area: anim;
+  align-self: center;
+}
+.ss[data-side] > .ss-read {
+  grid-area: read;
+}
+.ss[data-side] > .ss-maps {
+  grid-area: maps;
+}
+.ss[data-side] > .sp-ctl {
+  grid-area: ctl;
+}
+.ss[data-side] > .sp-line {
+  display: none;
+}

@@ -134,7 +134,17 @@ export class FigureHost {
   /** Id we asked for with pick(); a matching ft:pick is reported as "host", anything else as "user". */
   private wantPick: string | null | undefined = undefined;
   private timer = 0;
+  /** The figure had keyboard focus when a reload began: it gets it back once the new page is ready. */
+  private refocus = false;
   private onMessage = (e: MessageEvent) => this.receive(e);
+  // (Firefox and Safari take focus off a frame made inert, to the page's body (load()): keys meanwhile reach nothing there
+  // either, and the figure gets it back once the new page is ready (setStatus), unless the learner clicks the page first)
+  private onPageKey = (e: KeyboardEvent) => {
+    if (this.status === "loading" && this.refocus && document.activeElement === document.body) swallowKey(e);
+  };
+  private onPagePointer = () => {
+    this.refocus = false;
+  };
 
   constructor(container: HTMLElement, fig: FigId, theme: Theme, opts: { title?: string; mode?: FigureMode; reveal?: boolean; lang?: Lang } = {}) {
     this.fig = fig;
@@ -150,8 +160,18 @@ export class FigureHost {
     this.iframe.title = opts.title ?? t(`fig.title.${fig}`);
     this.iframe.setAttribute("loading", "eager");
     window.addEventListener("message", this.onMessage);
+    window.addEventListener("keydown", this.onPageKey, true);
+    window.addEventListener("pointerdown", this.onPagePointer, true);
     // Safety net: if 'ft:ready' was posted before we listened (or got lost), ask again once the page has loaded.
     this.iframe.addEventListener("load", () => {
+      this.iframe.inert = false;
+      // (the new page takes keys: Firefox keeps a listener added to the frame's first about:blank window on the page
+      // that replaces it, load())
+      try {
+        this.iframe.contentWindow?.removeEventListener("keydown", swallowKey, true);
+      } catch {
+        /* a page from elsewhere */
+      }
       if (this.status !== "ready") this.iframe.contentWindow?.postMessage({ type: "ft:hello" }, "*");
     });
     container.append(this.iframe);
@@ -364,6 +384,8 @@ export class FigureHost {
 
   destroy(): void {
     window.removeEventListener("message", this.onMessage);
+    window.removeEventListener("keydown", this.onPageKey, true);
+    window.removeEventListener("pointerdown", this.onPagePointer, true);
     clearTimeout(this.timer);
     this.stateFns.clear();
     this.statusFns.clear();
@@ -388,6 +410,21 @@ export class FigureHost {
 
   private load(): void {
     this.setStatus("loading");
+    // (the page being replaced stays on screen until the new one arrives, e.g. a phone turned or the theme switched on a
+    // slow network; its picks are no longer heard (ft:pick waits for ft:ready), so it takes no taps meanwhile)
+    if (document.activeElement === this.iframe) this.refocus = true;
+    this.iframe.inert = true;
+    // (in Chrome inert does not move focus (Firefox and Safari: onPageKey): keys would still reach the outgoing page, e.g.
+    // Enter on a part's key. They reach nothing there, and focus stays in the figure for the new page; a page from
+    // elsewhere: the page holds focus meanwhile, and the figure gets it back once the new page has come)
+    try {
+      this.iframe.contentWindow?.addEventListener("keydown", swallowKey, true);
+    } catch {
+      if (document.activeElement === this.iframe) {
+        this.refocus = true;
+        this.iframe.blur();
+      }
+    }
     this.lastState = null;
     // a reloaded figure starts untouched: clear anything drawn from its frames
     if (this.lastTouch) {
@@ -445,7 +482,8 @@ export class FigureHost {
       // (a reserve band too: the reloaded figure lands in it at once, its first screen; and whether a card is in it)
       if (this.reserveRight && this.supports("reserve")) this.post({ name: "reserve", arg: { right: this.reserveArg() } });
       if (this.bandCardArg !== undefined && this.supports("bandcard")) this.post({ name: "bandcard", arg: this.bandCardArg });
-      const keep = this.wantPick !== undefined ? this.wantPick : (this.picked?.id ?? null);
+      // (a card picked for one of its parts (the figure's `via`): that part, so a page with no room for the cards names it)
+      const keep = this.wantPick !== undefined ? this.wantPick : (this.picked?.via ?? this.picked?.id ?? null);
       if (keep && this.supports("pick")) this.post({ name: "pick", arg: keep });
       // (a figure that came up in another language than the site's, e.g. one that missed ?lang=: switch it now)
       if (this.langAware && msg.lang !== this.lang && this.supports("lang")) this.post({ name: "lang", arg: this.lang });
@@ -453,10 +491,17 @@ export class FigureHost {
       this.parts = msg.parts.filter(isPart);
       for (const fn of this.partsFns) fn(this.parts);
     } else if (msg.type === "ft:pick") {
+      // (a page being replaced by a reload, e.g. a phone turned on its side, may still answer its own last resize: only
+      // the page that has said ft:ready speaks for the selection)
+      if (this.status !== "ready") return;
       const part = isPart(msg.part) ? (msg.part as FigPart) : null;
       const how: "user" | "host" = this.wantPick !== undefined && (part?.id ?? null) === this.wantPick ? "host" : "user";
       this.wantPick = undefined;
-      if ((part?.id ?? null) === (this.picked?.id ?? null) && part && this.picked && part.intro === this.picked.intro) return;
+      if ((part?.id ?? null) === (this.picked?.id ?? null) && part && this.picked && part.intro === this.picked.intro) {
+        // (the same part again: only its `via` may be new, the part a card was picked for this time)
+        this.picked = part;
+        return;
+      }
       if (!part && !this.picked) return;
       this.picked = part;
       for (const fn of this.pickFns) fn(part, how);
@@ -525,8 +570,30 @@ export class FigureHost {
 
   private setStatus(s: FigureStatus): void {
     this.status = s;
+    // (the new page said ft:ready, or never will: it takes taps again, also before its load event, e.g. a slow font)
+    if (s !== "loading") {
+      this.iframe.inert = false;
+      // (and keys, when the page still shown is the outgoing one, its successor never came (no-bridge): load())
+      try {
+        this.iframe.contentWindow?.removeEventListener("keydown", swallowKey, true);
+      } catch {
+        /* a page from elsewhere */
+      }
+    }
+    if (s !== "loading" && this.refocus) {
+      this.refocus = false;
+      if (document.activeElement === document.body) this.iframe.focus({ preventScroll: true });
+    }
     for (const fn of this.statusFns) fn(s);
   }
+}
+
+/** A key in a figure page that is being replaced: it does nothing (FigureHost.load); the browser's own keys (with Ctrl,
+ *  Alt or ⌘, or F1-F12) still work. */
+function swallowKey(e: KeyboardEvent): void {
+  if (e.ctrlKey || e.altKey || e.metaKey || /^F\d{1,2}$/.test(e.key)) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
 }
 
 /** Fig 1's expanded state in reveal mode: ft:state.reveal.open (or reveal itself when a build reports a plain boolean). */

@@ -77,6 +77,9 @@
 .ud-anim {
   border-radius: 6px;
   /* up/down drags on the unit press the tip; sideways still scrolls a scroller */
+  /* (WebKit / iOS Safari has no pinch-zoom value: the whole declaration would drop to auto there, and a vertical drag
+     would scroll the page instead of pressing; the plain value first is its fallback) */
+  touch-action: pan-x;
   touch-action: pan-x pinch-zoom;
 }
 .ud-anim:focus-visible {
@@ -546,4 +549,13 @@ mask .ud-knock-val {
 .ud.is-large .ud-line {
   font-size: clamp(14px, 2.7cqi, 15.5px);
   line-height: 1.5;
+}
+/* (Chinese: the kicker and the mini form's short tags no smaller than 11 px; CJK at 9-10 px is hard to read) */
+html:lang(zh) .ud-kicker:lang(zh),
+html:lang(zh) .ud.is-mini .ud-kicker:lang(zh) {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+html:lang(zh) .ud-lab-mini:lang(zh) {
+  font-size: 11px;
 }

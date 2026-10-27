@@ -111,7 +111,7 @@ one way to do it. The touch maps in step 5 are simulated (<span class="badge bad
     },
     {
       title: "Two boards, two USB",
-      text: "Each board has its own USB cable, so the computer gets two touch maps: left and right. Click a finger to press its pad and watch its map light up.",
+      text: `Each board has its own USB cable, so the computer gets two touch maps: left and right. <span class="only-mouse">Click</span><span class="only-touch">Tap</span> a finger to press its pad and watch its map light up.`,
       // the USB cables plug in and the two maps appear; a click on a finger presses its pad (feel mode); Show me presses
       // the left finger, then the right (momentary: never replayed after a theme switch)
       act: [{ name: "step", arg: 5 }, { name: "feel", arg: true }],

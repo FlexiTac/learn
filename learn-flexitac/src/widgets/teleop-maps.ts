@@ -14,6 +14,8 @@
 //            11 at the top; the force block on the right.
 //   "column" (a taller box) the maps stand up, fingertip at the BOTTOM, sense line 11 at the left; the force block under
 //            them.
+// A narrow box (a phone's stage, under 560 px) takes the row form with the force block under the maps (data-narrow):
+// the column form there was ~575 px tall and pushed the steps bar below the first screen; this is ~300.
 // The widget asks the split stage for its short row (the slot's data-row="short", src/styles/lesson.css), so the
 // teleop figure keeps most of the stage; opts.row = null leaves the row alone.
 //
@@ -23,6 +25,7 @@
 import { VIRIDIS_RGB } from "@shared/models/viridis.mjs";
 import { fill as fillVars, lang, strings } from "../i18n";
 import { paintText, setTextBeside } from "../i18n/paint";
+import { WIDE_QUERY } from "../state/layout";
 import type { WidgetCtx, WidgetInstance } from "../types";
 import "./teleop-maps.css";
 
@@ -278,13 +281,25 @@ export function mount(el: HTMLElement, ctx: WidgetCtx, opts: TeleopMapsOpts = {}
     const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
     const W = Math.max(160, root.clientWidth - padX);
     const H = el.clientHeight > 40 ? el.clientHeight - padY : 0;
-    const want = opts.form && opts.form !== "auto" ? opts.form : H && (H < 330 || W / H > 2.2) ? "row" : "column";
+    // narrow: only in the stacked layout (its slot takes the content's height; the wide layout's short row is fixed),
+    // tested on the width less .tm's own 20 px side padding: data-narrow's smaller padding would flip its own test
+    const narrow = root.clientWidth - 40 < 560 && !matchMedia(WIDE_QUERY).matches;
+    const want = opts.form && opts.form !== "auto" ? opts.form : narrow || (H && (H < 330 || W / H > 2.2)) ? "row" : "column";
     form = want;
     root.dataset.form = form;
+    const was = root.hasAttribute("data-narrow");
+    root.toggleAttribute("data-narrow", form === "row" && narrow);
+    // (data-narrow changes .tm's padding, read above: lay out again with the padding it has now, e.g. a phone turned
+    // on its side, whose slot's new size is the only resize the observer sees)
+    if (root.hasAttribute("data-narrow") !== was) return layout();
     const kick = 22; // the kicker line
     const cap = 22; // a map's caption
     const mapGap = 18;
-    if (form === "row") {
+    if (form === "row" && narrow) {
+      // two maps side by side across the whole box, the force block under them (its height is the content's)
+      cell = Math.max(3, Math.min(11, Math.floor(((W - mapGap - 8) / (2 * COLS)) * 4) / 4));
+      root.style.removeProperty("--tm-side-w");
+    } else if (form === "row") {
       // two maps side by side (32 x 12 cells each) and the force block (about 230 px) on the right
       const side = Math.min(260, Math.max(180, W * 0.24));
       const byW = (W - side - 2 * mapGap - 8) / (2 * COLS);

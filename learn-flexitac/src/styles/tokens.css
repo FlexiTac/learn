@@ -90,6 +90,13 @@
   --side-w: 76px;
   --bar-h: 62px;
   --gutter: clamp(16px, 2.2vw, 28px);
+  /* a notched phone on its side (index.html: viewport-fit=cover): the sensor housing and the rounded corners sit over
+     the left or the right edge. The sidebar takes the left inset (shell.css), the content's right gutter the right one;
+     0 everywhere else, so nothing moves there */
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --gutter-l: var(--gutter);
+  --gutter-r: max(var(--gutter), var(--safe-r));
 }
 
 @media (prefers-color-scheme: dark) {

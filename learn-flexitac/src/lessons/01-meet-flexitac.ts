@@ -107,7 +107,7 @@ the robot's CAD files, with simulated readings. The later lessons explain each p
     {
       title: "On a robot",
       // keep it to 2-3 lines in a 475-530 px text column (1366-1440 px windows): the bar takes its longest step's height
-      text: `Here FlexiTac is a skin on both fingers of a robot gripper. As the fingers close on a strawberry, each pad sends a ${ROWS} × ${COLS} picture of the touch, ${FRAME_HZ} times a second (right).`,
+      text: `Here FlexiTac is a skin on both fingers of a robot gripper. As the fingers close on a strawberry, each pad sends a ${ROWS} × ${COLS} picture of the touch (the two maps), ${FRAME_HZ} times a second.`,
       // the lesson opens here: the robot grasp loop and its two live touch maps fill the stage (src/widgets/robot-grasp.ts,
       // illustrative); the figure waits underneath in step 2's pose (figure.initial), so no acts here
       start: true,
@@ -124,7 +124,7 @@ the robot's CAD files, with simulated readings. The later lessons explain each p
     },
     {
       title: "Take it apart",
-      text: "How does it do that? Click the sensor to take it apart: it is a stack of five thin layers. Then pick any layer to read what it does.",
+      text: `How does it do that? <span class="only-mouse">Click</span><span class="only-touch">Tap</span> the sensor to take it apart: it is a stack of five thin layers. Then pick any layer to read what it does.`,
       // back to the closed pad with its "Click to expand" hint; Show me takes it apart. labels "all": once it is apart,
       // every part is labelled at once (figures/EMBED.md "Fig 1", All labels: the five layers on the left, top to
       // bottom, the two gold-finger rows on the right); the figure makes room for them now, while the pad is closed

@@ -148,6 +148,8 @@ export interface FigPart {
   /** The lesson that teaches this part: its order number in the course (1-14; Fig 1-3) or its section number as text
    *  ("2.1"; Fig 5). */
   lesson?: number | string;
+  /** A card's ft:pick: the part it was picked for (Fig 3's all-labels mode), asked for again after a reload. */
+  via?: string;
 }
 
 /** Which badge a fact carries. Anything not read straight from the sources must carry one. */

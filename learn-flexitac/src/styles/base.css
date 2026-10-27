@@ -15,6 +15,7 @@ body {
   color: var(--text);
   font: 15px/1.55 var(--sans);
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh; /* (before dvh: Safari 15.4, Chrome 108) */
   min-height: 100dvh;
 }
 [hidden] {
@@ -369,5 +370,44 @@ a.chip:hover {
   }
   .is-flash {
     animation: none;
+  }
+}
+
+/* Words that depend on the input (lesson texts): "click" / "hover" with a mouse, "tap" / "drag" on a touch screen.
+   A text carries both, <span class="only-mouse">…</span><span class="only-touch">…</span>, and one shows. */
+.only-touch {
+  display: none;
+}
+@media (pointer: coarse) {
+  .only-mouse {
+    display: none;
+  }
+  .only-touch {
+    display: inline;
+  }
+}
+
+/* forced colours (Windows contrast themes): backgrounds and tints give way to the system's colours, so the states drawn
+   with them (the current step, the current lesson, the open tab, a pressed toggle) are marked with the system's
+   highlight instead: a ring just inside each one's edge (outside it, the ring was cut by the lesson strip's and the
+   photo row's scrolling boxes and by the tab row, and ran onto the next chip or tab), and not while it has keyboard
+   focus, so the focus ring (base :focus-visible, outside the edge) still shows on it; the current page in the side /
+   bottom bar keeps its own bar, in the highlight (a ring there would touch the labels of a 320 px phone's bar) */
+@media (forced-colors: active) {
+  .step-dot.is-current:not(:focus-visible),
+  .strip-card.is-current:not(:focus-visible),
+  .tab.is-active:not(:focus-visible),
+  [aria-pressed="true"]:not(:focus-visible) {
+    outline: 2px solid Highlight;
+    outline-offset: -4px;
+  }
+  /* (a step dot can be ~11 px wide on a 320 px window: its ring on its edge, clear of the digit) */
+  .step-dot.is-current:not(:focus-visible) {
+    outline-offset: -2px;
+  }
+  /* (:root: above shell.css's own rule for the bar, which sets its background later in the cascade) */
+  :root .side-nav a.is-active::before {
+    forced-color-adjust: none;
+    background: Highlight;
   }
 }

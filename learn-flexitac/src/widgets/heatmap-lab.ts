@@ -393,6 +393,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   ro.observe(root.querySelector(".w-hlab-strip")!);
 
   // ------------------------------------------------------------------ the loop (FRAME_HZ simulated frames per second)
+  /** Reduced motion: how long the stream runs after a change (ms). */
+  const SETTLE_MS = 700;
   let raf = 0;
   let last = 0;
   let acc = 0;
@@ -418,8 +420,23 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     draw();
     schedule();
   }
+  // reduced motion: the stream runs only for a moment after something changes (a finger, a knob, a recalibration:
+  // long enough for the press to ease in and the EMA to settle), then holds its last picture, noise and all, still;
+  // otherwise it runs while the lab is on screen
+  const reduced = ctx.reducedMotion();
+  let activeUntil = 0;
+  const poke = (ms = SETTLE_MS) => {
+    if (!reduced) return;
+    activeUntil = Math.max(activeUntil, performance.now() + ms);
+    schedule();
+  };
   function schedule() {
-    if (!raf && visible && !document.hidden) raf = requestAnimationFrame(loop);
+    if (raf || !visible || document.hidden) return;
+    if (reduced && performance.now() > activeUntil) {
+      last = 0;
+      return;
+    }
+    raf = requestAnimationFrame(loop);
   }
   const io = new IntersectionObserver((es) => {
     visible = es.some((e) => e.isIntersecting);
@@ -450,18 +467,23 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     const p = cellOf(e);
     fingers.set(e.pointerId, { ...p, on: true, press: fingers.get(e.pointerId)?.press ?? 0 });
     setInspect(p.r, p.c);
+    poke();
     e.preventDefault();
   });
   big.addEventListener("pointermove", (e) => {
     const p = cellOf(e);
     const f = fingers.get(e.pointerId);
-    if (f?.on) Object.assign(f, p);
+    if (f?.on) {
+      Object.assign(f, p);
+      poke();
+    }
     if (f?.on || e.pointerType === "mouse") setInspect(p.r, p.c);
     if (!raf) draw();
   });
   const lift = (e: PointerEvent) => {
     const f = fingers.get(e.pointerId);
     if (f) f.on = false;
+    poke();
   };
   big.addEventListener("pointerup", lift);
   big.addEventListener("pointercancel", lift);
@@ -475,10 +497,14 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       if (!e.repeat) kb.on = true;
     } else return;
     e.preventDefault();
+    poke();
     if (!raf) draw();
   });
   big.addEventListener("keyup", (e) => {
-    if (e.key === " ") kb.on = false;
+    if (e.key === " ") {
+      kb.on = false;
+      poke();
+    }
   });
   big.setAttribute("aria-label", fill(S().bigAria, V));
 
@@ -508,11 +534,13 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       knobs[k as keyof typeof knobs] = Number(inp.value);
       inp.nextElementSibling!.textContent = fmtKnob(k, Number(inp.value));
       apply();
+      poke();
       if (!raf) draw();
     });
   syncInputs();
   root.querySelector(".w-hlab-recal")!.addEventListener("click", () => {
     calibrateNow();
+    poke();
     if (!raf) draw();
   });
 
@@ -539,6 +567,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   });
 
   fit();
+  // (reduced motion: the first second, so the baseline is taken and the first picture settles)
+  poke(1200);
   schedule();
 
 
@@ -570,6 +600,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       if (Number.isFinite(p.alpha)) knobs.alpha = p.alpha;
       apply();
       syncInputs();
+      poke();
       draw();
       return say(p);
     },

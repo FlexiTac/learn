@@ -34,7 +34,12 @@
 // demo.ts): W < 200 "mini" (a phone's band: the 3D 2 × 2 with S/D names only, V as a text row, the map, a short
 // caption, icon buttons); 200 <= W < 400 "full" (the circuit under the 2 × 2, V as a text row under the drawing, the
 // map beside the caption); W >= 400 "large" (the meter's reading box in the drawing when it fits, the map's cells with
-// their values). Both name the chips twice: their job ("drive", "pick one") and the board's part ("shift registers",
+// their values). The circuit's labels keep their size while the 2 × 2 shrinks, so where its scale would fall under
+// S_NARROW (a card under ~330 px: a tablet's band, a zoomed page) the full form draws the 2 × 2 alone, as the mini form
+// does; in a small circuit D2's level goes right of its wire and the chip's job left of D1's switch (splitOf), and the
+// selector moves right of both (selDxOf). A phone's band in the host's last form gets the free height beside the pad
+// as data-max-h and drops, in order, V's row (the buttons then stand beside the map), the reading count and the 3D
+// 2 × 2 until it fits (TIGHT_LEVELS, grid-demo.css [data-tight]). Both name the chips twice: their job ("drive", "pick one") and the board's part ("shift registers",
 // "multiplexer"), so this step hands over to step 3's. The drawing's scale is the largest that fits the width (capped),
 // and, when the card (or an ancestor) carries data-max-h="<px>", also the card's height. Its type and symbols grow with
 // the card (TYPE_K: the svg is drawn W / k wide and shown W wide, so its 9.5 px labels show at 11.4 px and more; the
@@ -104,8 +109,8 @@ const S = strings(
     name: "Four touch spots",
     ill: "Illustrative",
     animAria: "Two top strips over two bottom strips: four touch spots, read one at a time. Left and right arrow keys step one reading.",
-    legendLong: '<b>S</b> top strip · sense line <span class="gd-sep" aria-hidden="true">·</span> <b>D</b> bottom strip · drive line',
-    legendShort: '<b>S</b> = top strip (sense) <span class="gd-sep" aria-hidden="true">·</span> <b>D</b> = bottom strip (drive)',
+    legendLong: '<span class="gd-term"><b>S</b> top strip · sense line</span> <span class="gd-sep" aria-hidden="true">·</span> <span class="gd-term"><b>D</b> bottom strip · drive line</span>',
+    legendShort: '<span class="gd-term"><b>S</b> = top strip (sense)</span> <span class="gd-sep" aria-hidden="true">·</span> <span class="gd-term"><b>D</b> = bottom strip (drive)</span>',
     mapAria: "Touch map, one cell per touch spot. Press a cell to press or release that spot.",
     per: "1 picture = 4 readings",
     pause: "Pause",
@@ -161,8 +166,8 @@ const S = strings(
     name: "四个触摸点",
     ill: "示意",
     animAria: "两条上层铜条叠在两条下层铜条上：四个触摸点，一次读一个。用左右方向键一次走一个读数。",
-    legendLong: '<b>S</b> 上层铜条 · 感应线 <span class="gd-sep" aria-hidden="true">·</span> <b>D</b> 下层铜条 · 驱动线',
-    legendShort: '<b>S</b> = 上层铜条（感应） <span class="gd-sep" aria-hidden="true">·</span> <b>D</b> = 下层铜条（驱动）',
+    legendLong: '<span class="gd-term"><b>S</b> 上层铜条 · 感应线</span> <span class="gd-sep" aria-hidden="true">·</span> <span class="gd-term"><b>D</b> 下层铜条 · 驱动线</span>',
+    legendShort: '<span class="gd-term"><b>S</b> = 上层铜条（感应）</span> <span class="gd-sep" aria-hidden="true">·</span> <span class="gd-term"><b>D</b> = 下层铜条（驱动）</span>',
     mapAria: "触觉图，每个格子是一个触摸点。点一个格子，按下或松开那个点。",
     per: "1 张图 = 4 个读数",
     pause: "暂停",
@@ -293,6 +298,17 @@ const CHIP_H = 46;
 /** A compact card's drawing never shrinks under this scale (its own units): below it the circuit's labels would crowd
  *  the 2 × 2. A card still too tall then is the host's next form (short). */
 const S_FLOOR = 0.8;
+/** The circuit's labels keep their own size (TYPE_K) while the 2 × 2 shrinks: under this scale they would no longer fit
+ *  round it (a card under ~330 px wide: a tablet's band, a zoomed page), and the drawing is the 2 × 2 alone, as a
+ *  phone's (the step's text and the caption name the drive and pick-one chips). */
+const S_NARROW = 0.55;
+/** A phone's band (src/ui/demo.ts gives the card the free height beside the pad): the levels the mini form drops
+ *  through to fit it (grid-demo.css [data-tight]), and the least height its 3D 2 × 2 keeps before it goes. */
+const TIGHT_LEVELS = 3;
+/** The drawing width (px) under which a card in the host's last form may drop to its tight levels (a phone's band, a
+ *  phone on its side's ~330 px card, a zoomed page's ~250 px card; never a desktop's large card). */
+const TIGHT_W = 360;
+const MIN_DRAW = 46;
 const Z_V0 = TB + G0;
 const Z_V1 = Z_V0 + VT;
 const Z_TB = Z_V1 + G0;
@@ -611,20 +627,37 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
   } | null = null;
   let builtKey = "";
 
-  /** The selector chip's offset right of the top strips' ends at scale s: 10, or more where its names ("pick one",
-   *  "multiplexer", left of it) would otherwise reach over D2's front end (a small drawing). */
-  const selDxOf = (s: number, ln: number, wPick: number) => 10 + Math.max(0, sxOf(XD[1] + HS, ln) * s + 8 + wPick + 15 - (sxOf(ln, YS[1]) * s + 10));
+  /** In a small drawing the two drive lines' wires come close: where a drive line's level ("5 V" / "0 V") would no
+   *  longer fit between them, D2's goes right of its wire (D1's stays left of its own); where the chip's job ("drive")
+   *  would no longer fit between the two switches, it goes left of D1's switch, inside the chip (which widens for it). */
+  const splitOf = (s: number, ln: number, w: Widths) => {
+    const gap = (sxOf(XD[1], ln) - sxOf(XD[0], ln)) * s;
+    return { tags: gap < w.wLvl + 9, drive: gap < w.wDrive + 24 };
+  };
   /** The drive chip's left and right edges at scale s (from the 2 × 2's centre): 14 past the bottom strips' wires, or
-   *  wider where its board name ("shift registers", under its rail) needs it. */
-  const chipXOf = (s: number, ln: number, wSub: number) => {
+   *  wider where its board name ("shift registers", under its rail) or its job, left of D1's switch, needs it. */
+  const chipXOf = (s: number, ln: number, w: Widths) => {
     const a = sxOf(XD[0], ln) * s;
     const b = sxOf(XD[1], ln) * s;
-    const half = Math.max((b - a) / 2 + 14, wSub / 2 + 8);
+    let half = Math.max((b - a) / 2 + 14, w.wSub / 2 + 8);
+    if (splitOf(s, ln, w).drive) half = Math.max(half, (b - a) / 2 + 6 + w.wDrive + 6);
     return [(a + b) / 2 - half, (a + b) / 2 + half];
+  };
+  /** The selector chip's offset right of the top strips' ends at scale s: 10, or more where its names ("pick one",
+   *  "multiplexer", left of it) would otherwise reach over D2's front end, the drive chip's corner (level with them in
+   *  a small drawing) or D2's level where it went right of its wire. */
+  const selDxOf = (s: number, ln: number, w: Widths) => {
+    let need = sxOf(XD[1] + HS, ln) * s + 8;
+    const ySel = syOf(ln, YS[1], Z_TB + TT / 2) * s + 24;
+    const yU = syOf(XD[1] + HS, ln, 0) * s;
+    const [top, bot] = [ySel - 6, ySel + 14 + 6];
+    if (bot > yU + 26) need = Math.max(need, chipXOf(s, ln, w)[1] + 6);
+    if (splitOf(s, ln, w).tags && bot > yU + 17 - 6 && top < yU + 17 + 6) need = Math.max(need, sxOf(XD[1], ln) * s + 5 + w.wLvl + 6);
+    return 10 + Math.max(0, need + w.wPick + 15 - (sxOf(ln, YS[1]) * s + 10));
   };
   /** The drawing's extents (px from the 2 × 2's centre) at scale s for a plan, and its labels' widths. */
   type Plan = "mini" | "narrow" | "wide";
-  type Widths = { bare: boolean; velo: boolean; wSub: number; wS: number; wVelo: number; w5: number; wPick: number; wBox: number; wR1: number; wGnd: number; wA0: number };
+  type Widths = { bare: boolean; velo: boolean; wSub: number; wS: number; wVelo: number; w5: number; wPick: number; wBox: number; wR1: number; wGnd: number; wA0: number; wLvl: number; wDrive: number };
   const extentOf = (s: number, plan: Plan, w: Widths) => {
     const { ln, lf } = lensOf(plan);
     const xS2L = sxOf(-lf, YS[1]); // S2's free end (the leftmost strip end)
@@ -643,13 +676,13 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
     } else {
       // the drive chip under the bottom strips' front ends (its board name under its rail), its +5 V terminal left of
       // it (label under it: narrow), "Velostat" left of the sheet (wide)
-      const cx0 = chipXOf(s, ln, w.wSub)[0];
+      const cx0 = chipXOf(s, ln, w)[0];
       lefts.push(plan === "wide" || w.velo ? cx0 - 12 - 4 - 6 - w.w5 : cx0 - 18 - Math.max(4, w.w5 / 2 + 1));
       if (plan === "wide" || w.velo) lefts.push(sxOf(-HV, HV) * s - 6 - w.wVelo);
       const yBox = yD2 * s + 26;
       bottom = Math.max(bottom, yBox + CHIP_H + 1);
       // the selector under the top strips' right ends, A0 -> R1 -> GND under it, the meter right of R1
-      const dx = selDxOf(s, ln, w.wPick);
+      const dx = selDxOf(s, ln, w);
       const xS1c = xS1R * s + dx;
       const xS2c = sxOf(ln, YS[1]) * s + dx;
       const xm = (xS1c + xS2c) / 2;
@@ -665,12 +698,13 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
   /** Build the drawing for a width Wr (px shown; and the host's compact / short; a height budget for the drawing in px
    *  shown, or 0). The drawing is laid out W = Wr / k wide (TYPE_K) and shown Wr wide: every length below is in its
    *  own units (labels, chips, offsets), scaled by k on screen. */
-  const build = (Wr: number, short: boolean, maxDrawHr: number, sFloor = 0) => {
+  const build = (Wr: number, short: boolean, maxDrawHr: number, sFloor = 0, miniOk = false) => {
     svg.replaceChildren();
     A = null;
     if (Wr < 56) return;
     const mini = Wr < 200;
-    const large = Wr >= 400;
+    // (from the width less the base form's 14 px side padding: is-large's own 16 px would flip the test it came from)
+    const large = root.clientWidth - 28 >= 400;
     const k = TYPE_K(Wr);
     const W = Wr / k;
     const maxDrawH = maxDrawHr / k;
@@ -688,11 +722,13 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
       wR1: Math.max(wLab(["10 kΩ"]), Math.ceil(textWidth("gd-lab gd-lab-strong", ["R1"], 10))),
       wGnd: wLab(["GND"]),
       wA0: wLab(["A0"]),
+      wLvl: Math.ceil(textWidth("gd-level is-on", ["5 V", "0 V"], 9.5)),
+      wDrive: Math.ceil(textWidth("gd-chip-t", [S().drive], 9.5)),
     };
     const sMax = mini ? (short ? 0.5 : 0.8) : short ? 1.05 : 2.15;
     // (tall: the height is no limit, for the scale the width alone allows)
-    const fit = (plan: Plan, tall = false) => {
-      let s = sMax;
+    const fit = (plan: Plan, tall = false, top = sMax) => {
+      let s = top;
       for (; s > 0.3; s -= 0.01) {
         const e = extentOf(s, plan, w);
         if (e.right - e.left > W - 6) continue;
@@ -711,7 +747,10 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
       const bare = fit("narrow");
       w.velo = bare.s <= F.s / 0.92;
       if (!w.velo) F = bare;
+      if (fit("narrow", true).s < S_NARROW) F = fit("mini", false, short ? 0.7 : 1);
     }
+    // (a tight level's budget that the circuit's labels keep the drawing over: the 2 × 2 alone, as a phone's band)
+    if (miniOk && maxDrawH && F.plan !== "mini" && F.bottom - F.top + 5 > maxDrawH) F = fit("mini", false, short ? 0.7 : 1);
     const { s, plan } = F;
     const ux = Math.round(3 - F.left + (W - 6 - (F.right - F.left)) / 2);
     const uy = Math.round(-F.top + 2);
@@ -725,7 +764,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
     // (a line's halo and the current's dots keep to the drawing's scale)
     svg.style.setProperty("--gd-halo-w", f1(Math.max(3, Math.min(6, 3.4 * s))));
     svg.style.setProperty("--gd-dot-w", f1(Math.max(1.8, Math.min(2.4, 1.6 * s))));
-    root.classList.toggle("is-mini", plan === "mini");
+    root.classList.toggle("is-mini", mini);
     root.classList.toggle("is-large", large);
     root.classList.toggle("has-box", plan === "wide");
 
@@ -757,7 +796,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
       // the drive chip: two switches from a +5 V rail up to the bottom strips' front ends
       // (under the strips' ends: each drive line's name and level, stacked left of its wire, then the chip)
       const yBox = Math.round(yUnit + 26);
-      const [x0, x1] = chipXOf(s, ln, w.wSub).map((x) => ux + x);
+      const [x0, x1] = chipXOf(s, ln, w).map((x) => ux + x);
+      const split = splitOf(s, ln, w);
       const yUp = yBox + 8;
       const swLen = 14;
       const yLo = yUp + swLen;
@@ -775,7 +815,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
       const rail = svgEl("g", { class: "gd-dimmable" }, gW);
       svgEl("path", { class: "gd-wire", d: `M${f1(xT)} ${yRail}H${f1(dEnd[1][0])}` }, rail);
       // the selector chip under the top strips' right ends, its output A0 -> R1 -> GND, the meter across R1
-      const selDx = selDxOf(s, ln, w.wPick);
+      const selDx = selDxOf(s, ln, w);
       const xS = sEnd.map((e) => e[0] + selDx);
       const ySel = Math.round(sEnd[1][1] + 24);
       const xm = (xS[0] + xS[1]) / 2;
@@ -836,13 +876,14 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
       }
       // labels: the chips (their job, and the board's names for them), +5 V, the levels on the drive lines, A0, R1, GND
       const xMid = (dEnd[0][0] + dEnd[1][0]) / 2;
-      lab(xMid, yBox + 13, S().drive, "middle", "gd-chip-t");
+      if (split.drive) lab(dEnd[0][0] - 6, yBox + 13, S().drive, "end", "gd-chip-t");
+      else lab(xMid, yBox + 13, S().drive, "middle", "gd-chip-t");
       lab(xMid, yRail + 10.5, S().shift, "middle", "gd-chip-sub");
       lab(xS[1] - 9 - 6, ySel + 2, S().pick, "end", "gd-chip-t");
       lab(xS[1] - 9 - 6, ySel + 14, S().mux, "end", "gd-chip-sub");
       if (side5) lab(xT - 6, yRail, "+5 V", "end");
       else lab(xT - 3, yRail + 13, "+5 V", "middle");
-      const tags = dEnd.map((e) => lab(e[0] - 5, yUnit + 17, "", "end", "gd-level"));
+      const tags = dEnd.map((e, k) => (split.tags && k === 1 ? lab(e[0] + 5, yUnit + 17, "", "start", "gd-level") : lab(e[0] - 5, yUnit + 17, "", "end", "gd-level")));
       lab(xm - 7, yA, "A0", "end");
       lab(xm - 9, (yR0 + yR1) / 2 - 6, "R1", "end", "gd-lab gd-lab-strong");
       lab(xm - 9, (yR0 + yR1) / 2 + 6, "10 kΩ", "end");
@@ -1481,15 +1522,52 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
     const key = `${W}${compact ? " c" : ""}${shortF ? " s" : ""} ${maxH}`;
     if (key === builtKey) return;
     builtKey = key;
-    build(W, shortF && !maxH, 0);
-    lastCap = lastCells = "";
-    liveKey = "-";
-    paint();
+    delete root.dataset.tight;
+    const rebuild = (short: boolean, maxDrawHr: number, sFloor = 0, miniOk = false) => {
+      build(W, short, maxDrawHr, sFloor, miniOk);
+      lastCap = lastCells = "";
+      liveKey = "-";
+      paint();
+    };
+    rebuild(shortF && !maxH, 0);
+    const box = card ?? el;
+    // (the card's whole height: once the host caps it (max-height, overflow-y auto) its box stops at the cap)
+    const boxH = () => box.offsetHeight + Math.max(0, box.scrollHeight - box.clientHeight);
+    // (a phone's band, or a card under ~330 px with the 2 × 2 alone (a zoomed page), in the host's last form: first the
+    // plain short form, its drawing at the short scale)
+    const tightOk = maxH > 0 && shortF && W < TIGHT_W;
+    if (tightOk && boxH() > maxH) rebuild(true, 0);
+    if (tightOk && boxH() > maxH) {
+      // a phone's band, the host's last form, still too tall for the free height beside the pad (the steps bar is
+      // right under it): the card gives up, in this order, until it fits: V as its own row (the caption gives the
+      // volts; the buttons move beside the map), the reading count (the map shows the picture filling), then the 3D
+      // 2 × 2 itself (the figure marks the same scan on its own block); the drawing shrinks to the room left at each
+      // level, down to MIN_DRAW px
+      for (let lv = 1; lv <= TIGHT_LEVELS; lv++) {
+        root.dataset.tight = String(lv);
+        rebuild(true, 0);
+        const over = boxH() - maxH;
+        if (over <= 0) break;
+        // (the last level shrinks too, below the floor if it must: the levels above only hide things on a mini card,
+        // and a card that came back at full size here hid its map and buttons below its capped height)
+        if (anim.offsetHeight - over >= MIN_DRAW || (lv === TIGHT_LEVELS && anim.offsetHeight > 0)) {
+          const budget = anim.offsetHeight - over;
+          rebuild(true, budget, 0.34);
+          if (boxH() <= maxH) break;
+          // (the last level that keeps the drawing: one the circuit's labels hold over its budget is the 2 × 2 alone, a
+          // px or two under the budget for the rounding)
+          if (lv === TIGHT_LEVELS - 1) {
+            rebuild(true, budget - 2, 0.34, true);
+            if (boxH() <= maxH) break;
+          }
+        }
+      }
+      return;
+    }
     if (maxH) {
       // the drawing gives up the height the rest of the card needs under the budget; in the full form it gives up
       // at most a fifth of its scale (then the card is too tall, and the host drops the closing line: compact)
-      const box = card ?? el;
-      const over = box.offsetHeight - maxH;
+      const over = boxH() - maxH;
       if (over > 0) {
         const s0 = A ? A.s : 1;
         build(W, false, Math.max(80, anim.offsetHeight - over), compact ? S_FLOOR : s0 * 0.8);
@@ -1499,8 +1577,16 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
       }
     }
   };
-  const ro = new ResizeObserver((entries) => relayout(entries[entries.length - 1].contentRect.width));
-  ro.observe(anim);
+  // (the drawing's width is the card's content width: measured on the card's content, as the tightest phone form hides
+  // the drawing)
+  const contentW = () => {
+    const cs = getComputedStyle(root);
+    return root.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  };
+  const ro = new ResizeObserver(() => {
+    if (root.isConnected && root.clientWidth > 0) relayout(contentW());
+  });
+  ro.observe(root);
 
   const onVis = () => {
     visible = !document.hidden;
@@ -1520,7 +1606,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
     paintPlay();
     builtKey = "";
     lastCap = lastCells = "";
-    if (root.isConnected) relayout(anim.getBoundingClientRect().width);
+    if (root.isConnected) relayout(contentW());
     paint();
   });
 
@@ -1529,7 +1615,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
 
   return {
     layout() {
-      if (root.isConnected) relayout(anim.getBoundingClientRect().width);
+      if (root.isConnected) relayout(contentW());
     },
     destroy() {
       offLang();

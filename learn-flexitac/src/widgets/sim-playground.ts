@@ -15,9 +15,12 @@
 // on the screen's frame rate; seek(t) replays it from 0 for reviews (deterministic, the real-style noise included).
 // Reduced motion: no loop; the object holds its press (the frames after 40 steps, recomputed on every change).
 // The loop stops while the tab is hidden or the card is off screen.
-// Forms from the drawing's width W: large (W >= 470: sliders in three columns, full labels), medium (three columns,
+// Forms from the drawing's width W: large (W >= 470: sliders in three columns, full labels), medium (two columns,
 // short labels, icon buttons), mini (W < 300: two columns). Under a height budget (data-max-h) the drawing shrinks;
-// the host's compact form drops the closing sentence.
+// the host's compact form drops the closing sentence. A short, wide window with no height given (a phone on its side,
+// sim-points.ts sideForm) takes the side form: the drawing beside the maps, the controls under the drawing, the knobs
+// under both, no taller than the window. Each slider is named by its long name (aria-labelledby) and its value with
+// its unit (aria-valuetext).
 // ILLUSTRATIVE: touchsim's chosen constants (k_n 0.6 N/mm, k_d 0.012 N·s/mm, 125 counts/N; the viewer's threshold 15
 // and noise scale 60 are the real ones), not measurements.
 import { DEFAULTS, PRESETS, READOUT, TAXELS, createReadout, createTouch, type Readout, type Shape } from "@shared/models/touchsim.mjs";
@@ -42,6 +45,7 @@ import {
   parseColor,
   placeObject,
   range,
+  sideForm,
   svgEl,
   viridisCss,
   viridisLut,
@@ -85,7 +89,7 @@ const STR = strings(
     line: "Turn the knobs and watch the two frames: the spring and the threshold decide how many points light; the top point always reads 1; noise only shows up in the real-style frame.",
     quiet: "top {top} &lt; {thr} → <b>÷ 60</b>",
     loud: "top {top} → <b>÷ {top}</b>",
-    stat: "<b>{lit}</b> lit · {div}",
+    stat: '<span class="sg-nw"><b>{lit}</b> lit</span><span class="sg-dot"> · </span><span class="sg-nw">{div}</span>',
     total: "<b>{n} N</b> total · press {mm} mm",
     unit_counts: "counts",
   },
@@ -119,7 +123,7 @@ const STR = strings(
     line: "调一调旋钮，看两帧的变化：弹簧和阈值决定有多少个点亮起；最大的那个点读数总是 1；噪声只出现在类真实的那一帧里。",
     quiet: "最大 {top} &lt; {thr} → <b>÷ 60</b>",
     loud: "最大 {top} → <b>÷ {top}</b>",
-    stat: "<b>{lit}</b> 个亮起 · {div}",
+    stat: '<span class="sg-nw"><b>{lit}</b> 个亮起</span><span class="sg-dot"> · </span><span class="sg-nw">{div}</span>',
     total: "总计 <b>{n} N</b> · 按压 {mm} mm",
     unit_counts: "计数",
   },
@@ -185,7 +189,9 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimPlaygroundInstance {
   const T = STR();
   const sliders = SLIDERS.map(
     (s) =>
-      `<label class="sg-sl" data-k="${s.key}"><span class="sg-sl-name"><span class="sg-long" data-t="name_${s.key}">${T[`name_${s.key}`]}</span><span class="sg-short" data-t="short_${s.key}">${T[`short_${s.key}`]}</span></span><output class="sg-sl-v mono"></output><input type="range" min="${s.min}" max="${s.max}" step="${s.step}"></label>`,
+      // (the input comes before the value's <output> in the label, so the label labels the slider, not the output; and
+      // the slider is named by the long name, read even while the short one shows, and its value with its unit)
+      `<label class="sg-sl" data-k="${s.key}"><span class="sg-sl-name"><span class="sg-long" id="${uid}-n-${s.key}" data-t="name_${s.key}">${T[`name_${s.key}`]}</span><span class="sg-short" data-t="short_${s.key}">${T[`short_${s.key}`]}</span></span><input type="range" min="${s.min}" max="${s.max}" step="${s.step}" aria-labelledby="${uid}-n-${s.key}"><output class="sg-sl-v mono" aria-hidden="true"></output></label>`,
   ).join("");
   root.innerHTML = `
     <p class="sp-kicker mono"><i class="sg-key" aria-hidden="true"></i><span class="sp-name" data-t="name">${T.name}</span><span class="sp-sep" aria-hidden="true">·</span><span class="sp-ill" title="${T.illTip}" data-t-title="illTip" data-t="ill">${T.ill}</span></p>
@@ -551,9 +557,19 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimPlaygroundInstance {
     if (W < 60) return;
     const maxH = Number(root.closest<HTMLElement>("[data-max-h]")?.dataset.maxH) || 0;
     const compact = Boolean(root.closest("[data-compact]"));
-    const key = `${W} ${maxH} ${compact}`;
+    // a wide card in a short window with no height from the host (a phone on its side: the stage takes the card's
+    // height): the drawing and the maps side by side, the controls under the maps, so the maps and the knobs that
+    // change them are on the screen together
+    const sideW = Math.round(root.clientWidth);
+    const side = sideForm(maxH, sideW);
+    const key = `${W} ${maxH} ${compact} ${side} ${sideW}`;
     if (key === builtKey) return;
     builtKey = key;
+    root.toggleAttribute("data-side", side);
+    if (side) {
+      sideLayout();
+      return;
+    }
     form = W >= 470 ? "large" : W >= 300 ? "medium" : "mini";
     root.dataset.form = form;
     const mw = (W - 14) / 2;
@@ -573,8 +589,37 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimPlaygroundInstance {
       }
     }
   };
+  /** The side form: the drawing on the left (as tall as the window allows), the maps, the rule and the controls on the
+   *  right, the knobs in three columns under both. */
+  const sideLayout = () => {
+    form = "large";
+    root.dataset.form = form;
+    const cs = getComputedStyle(root);
+    const inner = root.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const colW = Math.floor((inner - 16) * 0.48);
+    const drawW = Math.floor(inner - 16 - colW);
+    const cell = Math.max(3, Math.min(8, Math.floor((colW - 14 - 1) / 2 / 32)));
+    mapS.size(cell);
+    mapR.size(cell);
+    root.style.setProperty("--sg-mapw", `${mapS.width}px`);
+    root.style.setProperty("--sg-col", `${colW}px`);
+    build(drawW, 0);
+    dotCode.fill(-1);
+    paint();
+    // (the card no taller than the window: the drawing gives up the height, down to ~100 px)
+    const card = root.closest<HTMLElement>(".demo-card") ?? root;
+    const over = card.offsetHeight - (window.innerHeight - 24);
+    if (over > 0) {
+      build(drawW, Math.max(100, anim.offsetHeight - over), 0.3);
+      dotCode.fill(-1);
+      paint();
+    }
+  };
   const ro = new ResizeObserver(() => relayout());
   ro.observe(anim);
+  // (the side form depends on the window's height too)
+  const onWin = () => relayout();
+  window.addEventListener("resize", onWin);
   const onVis = () => {
     visible = !document.hidden;
     run();
@@ -627,6 +672,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimPlaygroundInstance {
       io.disconnect();
       offTheme();
       offLang();
+      window.removeEventListener("resize", onWin);
       document.removeEventListener("visibilitychange", onVis);
       root.remove();
     },

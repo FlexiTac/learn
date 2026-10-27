@@ -35,8 +35,11 @@
 //     speeds (Slow · Fast · Real) in a column beside the drawing, two label rows, the label column "4 shift registers /
 //     → 32 drive lines / Bottom FPC", A0's volts, the full cross-section), medium (190-470 px: a narrow side column with
 //     one speed button that cycles, the shift registers' label run up their side, the cross-section as the cut with
-//     one line per layer beside it) and mini (a phone's band, under 190 px: no title, the touch map alone, marked with
-//     the picked column and the powered row, the counters under it, the cross-section as a thin labelled strip).
+//     one line per layer beside it) and mini (a card under MEDIUM_MIN, 330 px: no title, the touch map alone on its
+//     side, 32 squares across (sense line i = row i from the top, drive line j = column j: the scan reads line by
+//     line), marked with the picked row and the powered column, the counters under it, the cross-section as a thin
+//     labelled strip; in a phone's band, under 190 px (data-band), its type is smaller and it drops the rate line,
+//     then the strip, to fit the free height the host gives it).
 //     The height budget is layout(maxH) / fit(maxH) when the host passes one, else a px max-height on the card, else
 //     about the card's width × 1.06 + 70 px (at most 700; a mini card: ~2.9 × its width). The drawing's pitch is the
 //     largest that fits it; when it would get too small (large < 8 px, else < 5.5 px) the card drops, in this order,
@@ -71,6 +74,9 @@ const CHIP_OUT = 8; // a 74HC595 has 8 outputs
 const CHIPS = DRIVE / CHIP_OUT; // 4 shift registers
 const MUX_CH = (getFact("sensor.muxChannels").value as number[])[1] + 1; // a 16-channel multiplexer (channels 4-15 used)
 const fmtInt = (n: number) => n.toLocaleString("en-US");
+/** Under this card width the medium form's plan, its labels and its side column no longer fit side by side (1024 px
+ *  windows, tablets, a zoomed page): the card takes the mini form (the map alone over the counters). */
+const MEDIUM_MIN = 330;
 
 /** The scan order. "sense-outer" is the firmware's (shared/models/scan.mjs): pick a sense line, power the drive lines
  *  one at a time, then the next sense line. "drive-outer" (power a drive line, listen to every sense line) would make
@@ -447,6 +453,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
     <p class="wp-note" data-t="note">${T("note")}</p>`;
   el.append(root);
   const plan = root.querySelector<HTMLElement>(".wp-plan")!;
+  /** The mini map's label size (pad-demo.css): a phone's band (data-band) 10 px, else 11 px. */
+  const miniFs = () => (root.hasAttribute("data-band") ? 10 : 11);
   const svg = root.querySelector<SVGSVGElement>(".wp-svg")!;
   const main = root.querySelector<HTMLElement>(".wp-main")!;
   const side = root.querySelector<HTMLElement>(".wp-side")!;
@@ -589,17 +597,25 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
     W: number;
     H: number;
     fs: number; // label font size
+    /** The mini map on its side (a short phone band): drawn upright in its own units (mx = gy = 0) inside a group turned
+     *  a quarter turn clockwise and moved to (ox, oy): sense line i is row i from the top, drive line j column j from
+     *  the left, so the scan reads like text, line by line. */
+    rot: boolean;
+    ox: number;
+    oy: number;
   };
   /** The plan's geometry at pitch c for a form (mini: the map alone). `lw` = the room left of the shift registers for
    *  their label (large: a column; medium: the label run up their side). */
-  const geo = (form: Form, c: number, lw: number): P => {
-    // (label sizes as pad-demo.css: at least 11 px outside the phone's mini form)
-    const fsz = form === "mini" ? 9 : 11;
+  const geo = (form: Form, c: number, lw: number, rot = false): P => {
+    // (label sizes as pad-demo.css: at least 11 px outside a phone's band)
+    const fsz = form === "mini" ? miniFs() : 11;
     const lh = fsz + 3.5;
     if (form === "mini") {
       const gy = Math.ceil(lh + 3);
       const gx = 3;
-      return { form, c, gx, gy, mx: gx, chipX: 0, chipW: 0, muxX0: 0, muxX1: 0, muxY0: 0, muxY1: 0, px: 0, py: 0, ax: 0, W: Math.ceil(gx + SENSE * c + 3), H: Math.ceil(gy + DRIVE * c + 3), fs: fsz };
+      const none = { chipX: 0, chipW: 0, muxX0: 0, muxX1: 0, muxY0: 0, muxY1: 0, px: 0, py: 0, ax: 0, fs: fsz };
+      if (rot) return { form, c, gx: 0, gy: 0, mx: 0, ...none, W: Math.ceil(gx + DRIVE * c + 3), H: Math.ceil(gy + SENSE * c + 3), rot, ox: gx, oy: gy };
+      return { form, c, gx, gy, mx: gx, ...none, W: Math.ceil(gx + SENSE * c + 3), H: Math.ceil(gy + DRIVE * c + 3), rot, ox: 0, oy: 0 };
     }
     const chipW = clampN(2.2 * c, 12, 24);
     const stub = clampN(1.5 * c, 6, 14);
@@ -633,6 +649,9 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
       W: Math.ceil(mx + SENSE * c + 2),
       H: Math.ceil(muxY1 + 5 + rows * lh),
       fs: fsz,
+      rot: false,
+      ox: 0,
+      oy: 0,
     };
   };
 
@@ -780,24 +799,28 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
       const yl = g.muxY1 + 4 + lh / 2;
       const muxT = [T("mux1"), T("mux2"), T("mux3"), T("mux4")];
       lab(g.muxX0, yl, muxT.find((t) => g.muxX0 + textWidth("wp-lab", [t], g.fs) <= W) ?? muxT[muxT.length - 1], "start");
+    } else if (g.rot) {
+      lab(W / 2, (g.oy - 3) / 2 + 0.5, T("touchMap"), "middle", "wp-lab wp-lab-strong");
     } else {
       lab(gx + (SENSE * c) / 2, (gy - 3) / 2 + 0.5, T("touchMap"), "middle", "wp-lab wp-lab-strong");
     }
+    // (the map on its side: everything on it is drawn upright in its own units, in a group turned a quarter turn)
+    const layer = g.rot ? svgEl("g", { transform: `translate(${f1(g.ox)} ${f1(g.oy)}) matrix(0 1 -1 0 ${f1(DRIVE * c)} 0)` }, svg) : svg;
     // ---- the touch map: one square per crossing, level with it (row 31 − j from the top)
-    const gmap = svgEl("g", { class: "wp-map" }, svg);
+    const gmap = svgEl("g", { class: "wp-map" }, layer);
     const cells: SVGRectElement[] = [];
     const rr = f1(Math.min(1.6, c / 5));
     for (let s = 0; s < SENSE; s++)
       for (let d = 0; d < DRIVE; d++) {
         cells[vi(s, d)] = svgEl("rect", { x: f1(mx + s * c + 0.5), y: f1(gy + (DRIVE - 1 - d) * c + 0.5), width: f1(c - 1), height: f1(c - 1), rx: rr }, gmap);
       }
-    const mapFoot = svgEl("ellipse", { class: "wp-mapfoot", rx: f1(FOOT_RX * c), ry: f1(FOOT_RY * c) }, svg);
+    const mapFoot = svgEl("ellipse", { class: "wp-mapfoot", rx: f1(FOOT_RX * c), ry: f1(FOOT_RY * c) }, layer);
     if (mini) {
       // the picked column and the powered row, marked on the map itself
-      colMark = svgEl("rect", { class: "wp-mark-s", width: f1(c + 1), height: f1(DRIVE * c + 1), y: f1(gy - 0.5), rx: 1.5 }, svg);
-      rowMark = svgEl("rect", { class: "wp-mark-d", width: f1(SENSE * c + 1), height: f1(c + 1), x: f1(mx - 0.5), rx: 1.5 }, svg);
+      colMark = svgEl("rect", { class: "wp-mark-s", width: f1(c + 1), height: f1(DRIVE * c + 1), y: f1(gy - 0.5), rx: 1.5 }, layer);
+      rowMark = svgEl("rect", { class: "wp-mark-d", width: f1(SENSE * c + 1), height: f1(c + 1), x: f1(mx - 0.5), rx: 1.5 }, layer);
     }
-    const cell = svgEl("rect", { class: "wp-cell", width: f1(c + 1), height: f1(c + 1), rx: 1.5 }, svg);
+    const cell = svgEl("rect", { class: "wp-cell", width: f1(c + 1), height: f1(c + 1), rx: 1.5 }, layer);
     if (!mini) {
       ring = svgEl("circle", { class: "wp-ring", r: f1(Math.max(3.4, 0.5 * c + 1)) }, svg);
       dot = svgEl("circle", { class: "wp-dot", r: f1(Math.max(1.6, 0.28 * c)) }, svg);
@@ -1012,14 +1035,22 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
     lastKey = key;
     const cs = getComputedStyle(root);
     const inner = cardW - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    form = cardW < 190 ? "mini" : inner >= 470 ? "large" : "medium";
+    // (the medium form's plan, its labels and its side column need ~330 px: a narrower card takes the mini form, its
+    // type a phone's only in a phone's band)
+    form = cardW < MEDIUM_MIN ? "mini" : inner >= 470 ? "large" : "medium";
     root.dataset.form = form;
+    root.toggleAttribute("data-band", cardW < 190);
     // what the card may drop to give the drawing room, in order (see the header)
     // (the card's title says what the step's title says: it goes before the cross-section shrinks)
-    type Step = { line: boolean; sec: "pref" | "min" | "strip"; note: boolean; title: boolean };
+    // (mini: the map on its side (as wide as the card: 32 squares across), then without the rate line, then without the
+    // cross-section's strip: the step's text gives the layers)
+    type Step = { line: boolean; sec: "pref" | "min" | "strip" | "none"; note: boolean; title: boolean; rot?: boolean; rate?: boolean };
+    const strip: Step = { line: false, sec: "strip", note: false, title: false, rate: true };
     const steps: Step[] =
-      form === "mini" || short
-        ? [{ line: false, sec: "strip", note: false, title: form !== "mini" }]
+      form === "mini"
+        ? [{ ...strip, rot: true }, { ...strip, rot: true, rate: false }, { ...strip, sec: "none", rot: true, rate: false }]
+        : short
+        ? [{ line: false, sec: "strip", note: false, title: true }]
         : [
             { line: !compact, sec: "pref", note: true, title: true },
             { line: false, sec: "pref", note: true, title: true },
@@ -1028,9 +1059,12 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
             { line: false, sec: "min", note: false, title: false },
             { line: false, sec: "strip", note: false, title: false },
           ];
-    const cGood = form === "large" ? 8 : 5.5;
-    const cMin = form === "large" ? 5 : 3.5;
+    const cGood0 = form === "large" ? 8 : 5.5;
+    const cMin0 = form === "large" ? 5 : 3.5;
     const cMax = form === "large" ? 13 : form === "medium" ? 11 : 10;
+    // (the map on its side is as wide as the band: its squares may be smaller, 32 of them across ~100 px)
+    const cGoodOf = (st: Step) => (st.rot ? 2.8 : cGood0);
+    const cMinOf = (st: Step) => (st.rot ? 2.4 : cMin0);
     const drive = [T("chips"), T("toDrive"), T("botFpc")];
     const lwCol = form === "large" ? textWidth("wp-lab wp-lab-strong", drive, 11) + 9 : 0;
     const rotFull = T("rotFull");
@@ -1040,15 +1074,30 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
     type Pick = { c: number; lw: number; rot: string; step: Step };
     let pick: Pick | null = null;
     let fallback: Pick | null = null;
-    for (const st of steps) {
+    const apply = (st: Step) => {
       root.toggleAttribute("data-noline", !st.line);
       root.toggleAttribute("data-nonote", !st.note);
       root.toggleAttribute("data-notitle", !st.title);
-      // the cross-section first (its width is the card's), then what is left for the plan
+      root.toggleAttribute("data-nosec", st.sec === "none");
+      root.toggleAttribute("data-norate", st.rate === false);
+    };
+    const secOf = (st: Step) => {
+      if (st.sec === "none") {
+        secSvg.replaceChildren();
+        secOn = [];
+        return 0;
+      }
       const secW = Math.floor(secBox.getBoundingClientRect().width) || Math.floor(inner);
       const level: SecLevel = st.sec === "strip" ? "strip" : form === "large" ? "full" : "mid";
       const Hs = st.sec === "strip" ? (form === "mini" ? 60 : 72) : st.sec === "min" ? (form === "large" ? 120 : 86) : form === "large" ? clampN(0.21 * B, 126, 172) : clampN(0.21 * B, 90, 132);
-      buildSection(secW, Hs, level);
+      return buildSection(secW, Hs, level);
+    };
+    for (const st of steps) {
+      apply(st);
+      // the cross-section first (its width is the card's), then what is left for the plan
+      secOf(st);
+      const cGood = cGoodOf(st);
+      const cMin = cMinOf(st);
       // measure everything but the plan (drawn empty): beside the side column (large, medium) or above it (mini)
       svg.replaceChildren();
       svg.setAttribute("width", "0");
@@ -1067,7 +1116,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
           rot = wRotFull <= DRIVE * c - 8 ? rotFull : wRotShort <= DRIVE * c - 8 ? rotShort : "";
           lw = rot ? 15 : 2;
         }
-        const g = geo(form, c, lw);
+        const g = geo(form, c, lw, st.rot);
         if (g.W <= availW && g.H <= availH) {
           best = { c, lw, rot, step: st };
           break;
@@ -1080,18 +1129,14 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
       }
       if (best && sideOk && (!fallback || best.c > fallback.c)) fallback = best;
     }
-    pick = pick ?? fallback ?? { c: cMin, lw: form === "large" ? lwCol : 2, rot: "", step: steps[steps.length - 1] };
+    const last = steps[steps.length - 1];
+    pick = pick ?? fallback ?? { c: cMinOf(last), lw: form === "large" ? lwCol : 2, rot: "", step: last };
     // (re-apply the chosen step: the loop may have gone past it)
     const st = pick.step;
-    root.toggleAttribute("data-noline", !st.line);
-    root.toggleAttribute("data-nonote", !st.note);
-    root.toggleAttribute("data-notitle", !st.title);
-    const secW = Math.floor(secBox.getBoundingClientRect().width) || Math.floor(inner);
-    const level: SecLevel = st.sec === "strip" ? "strip" : form === "large" ? "full" : "mid";
-    const Hs = st.sec === "strip" ? (form === "mini" ? 60 : 72) : st.sec === "min" ? (form === "large" ? 120 : 86) : form === "large" ? clampN(0.21 * B, 126, 172) : clampN(0.21 * B, 90, 132);
-    const E = buildSection(secW, Hs, level);
+    apply(st);
+    const E = secOf(st);
     root.dataset.e = String(E);
-    buildPlan(geo(form, pick.c, pick.lw), { drive, rot: pick.rot });
+    buildPlan(geo(form, pick.c, pick.lw, st.rot), { drive, rot: pick.rot });
     root.dataset.c = pick.c.toFixed(2);
     render(true);
   };
@@ -1369,9 +1414,10 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
   const fromPointer = (e: PointerEvent): [number, number] | null => {
     if (!A) return null;
     const b = svg.getBoundingClientRect();
-    const x = e.clientX - b.left;
-    const y = e.clientY - b.top;
     const g = A.g;
+    let x = e.clientX - b.left;
+    let y = e.clientY - b.top;
+    if (g.rot) [x, y] = [y - g.oy, DRIVE * g.c - (x - g.ox)];
     const inY = y >= g.gy - g.c && y <= g.gy + (DRIVE + 1) * g.c;
     const d = DRIVE - 1 - ((y - g.gy) / g.c - 0.5);
     for (const x0 of g.form === "mini" ? [g.mx] : [g.gx, g.mx]) {
@@ -1402,8 +1448,12 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): PadDemoInstance {
   svg.addEventListener("pointerup", endDrag);
   svg.addEventListener("pointercancel", endDrag);
   plan.addEventListener("keydown", (e) => {
-    const dx = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
-    const dy = e.key === "ArrowUp" ? 1 : e.key === "ArrowDown" ? -1 : 0;
+    const h = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    const v = e.key === "ArrowUp" ? 1 : e.key === "ArrowDown" ? -1 : 0;
+    // (the map on its side: right / left move along the drive lines, down / up across the sense lines)
+    const side = Boolean(A?.g.rot);
+    const dx = side ? -v : h;
+    const dy = side ? h : v;
     if (dx || dy) {
       e.preventDefault();
       moveFinger(ts + dx, td + dy, false);

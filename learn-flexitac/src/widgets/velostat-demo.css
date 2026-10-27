@@ -47,6 +47,9 @@
   height: clamp(76px, 30cqw, 100px);
   cursor: ns-resize;
   /* up/down drags press the tip; sideways still scrolls a scroller */
+  /* (WebKit / iOS Safari has no pinch-zoom value: the whole declaration would drop to auto there, and a vertical drag
+     would scroll the page instead of pressing; the plain value first is its fallback) */
+  touch-action: pan-x;
   touch-action: pan-x pinch-zoom;
 }
 .vd-svg {
@@ -293,4 +296,9 @@
 }
 .vd-arrow {
   color: var(--muted);
+}
+/* (Chinese: the kicker no smaller than 11 px; CJK at 10 px is hard to read) */
+html:lang(zh) .vd-kicker:lang(zh) {
+  font-size: 11px;
+  letter-spacing: 0.04em;
 }

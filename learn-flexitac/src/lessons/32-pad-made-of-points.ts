@@ -49,7 +49,7 @@ same way: a 12 × 32 lattice at 2 mm on the pad's face.</p>`,
     {
       title: "384 points",
       // keep every text to 2-3 lines in a 475-530 px column (1366-1440 px windows)
-      text: `To the simulator, the pad is just ${ROWS} × ${COLS} = ${TAXELS} points on the finger's face, 2 mm apart. Move the ball over it and hold the button: the points inside it light up.`,
+      text: `To the simulator, the pad is just ${ROWS} × ${COLS} = ${TAXELS} points on the finger's face, 2 mm apart. <span class="only-mouse">Move the ball over it and hold the button</span><span class="only-touch">Press and hold on it, and drag to move the ball</span>: the points inside it light up.`,
       start: true,
       widgetView: { object: "ball", bent: false, order: false },
     },

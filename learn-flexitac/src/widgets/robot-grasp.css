@@ -64,7 +64,8 @@
   background: var(--rg-stage);
 }
 .rg-media > .rg-poster,
-.rg-media > .rg-video {
+.rg-media > .rg-video,
+.rg-media > .rg-alt {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -269,6 +270,10 @@
   align-items: flex-start;
   gap: 0;
 }
+/* (robot-grasp.ts data-wrap: a side-by-side box too narrow for the names on one line) */
+.rg[data-wrap] .rg-fname {
+  white-space: normal;
+}
 .rg[data-error] .rg-maps {
   opacity: 0.4;
 }
@@ -281,7 +286,17 @@
 }
 .rg[data-narrow] .rg-row {
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+}
+/* (its maps on their side, robot-grasp.ts: the fingertip row on the left) */
+.rg[data-narrow] .rg-side {
+  gap: 8px;
+}
+.rg[data-narrow] .rg-tip {
+  justify-self: start;
+}
+.rg[data-narrow] .rg-tip::before {
+  content: "\2190\00a0";
 }
 @media (prefers-reduced-motion: reduce) {
   .rg-play,
@@ -341,4 +356,11 @@
   fill: none;
   stroke: var(--rg-ring);
   opacity: var(--rg-ring-a);
+}
+/* (a touch screen: the play / pause button a finger can hit, 36 px) */
+@media (pointer: coarse) {
+  .rg-play {
+    width: 36px;
+    height: 36px;
+  }
 }

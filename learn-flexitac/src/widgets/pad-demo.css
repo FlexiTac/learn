@@ -130,6 +130,9 @@
   justify-content: center;
   border-radius: 6px;
   /* drags on the pad or the map move the fingertip; the page can still scroll sideways and zoom */
+  /* (WebKit / iOS Safari has no pinch-zoom value: the whole declaration would drop to auto there, and a vertical drag
+     would scroll the page instead of pressing; the plain value first is its fallback) */
+  touch-action: pan-y;
   touch-action: pan-y pinch-zoom;
 }
 .wp-plan:focus-visible {
@@ -154,7 +157,10 @@
   fill: var(--muted);
 }
 .wp[data-form="mini"] .wp-svg .wp-lab {
-  font-size: 9px;
+  font-size: 11px;
+}
+.wp[data-form="mini"][data-band] .wp-svg .wp-lab {
+  font-size: 10px;
 }
 .wp-lab-strong {
   fill: var(--ink);
@@ -537,9 +543,6 @@
 .wp[data-form="medium"] .wp-btn {
   padding: 0 8px;
 }
-.wp[data-form="mini"] .wp-rate {
-  font-size: 9.5px;
-}
 .wp[data-form="medium"] .wp-r1,
 .wp[data-form="mini"] .wp-r1 {
   display: grid;
@@ -558,15 +561,18 @@
   gap: 8px;
 }
 
-/* the mini form (a phone's band): the map, the counters in two short rows, a play button and one speed button */
+/* the mini form (a card under ~330 px; its smaller type only in a phone's band, data-band): the map, the counters in
+   short rows, a play button and one speed button */
 .wp[data-form="mini"] {
   gap: 6px;
+}
+.wp[data-form="mini"][data-band] {
   padding: 9px 10px 10px;
 }
 .wp[data-form="mini"] .wp-title {
   display: none;
 }
-.wp[data-form="mini"] .wp-kicker {
+.wp[data-form="mini"][data-band] .wp-kicker {
   padding-right: 20px;
   font-size: 9.5px;
   letter-spacing: 0.05em;
@@ -575,7 +581,7 @@
 .wp[data-form="mini"] .wp-sep {
   display: none;
 }
-.wp[data-form="mini"] .wp-ill {
+.wp[data-form="mini"][data-band] .wp-ill {
   flex-basis: 100%;
 }
 .wp[data-form="mini"] .wp-side {
@@ -603,11 +609,17 @@
   display: inline;
 }
 .wp[data-form="mini"] .wp-k {
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.02em;
   text-transform: none;
 }
+.wp[data-form="mini"][data-band] .wp-k {
+  font-size: 9.5px;
+}
 .wp[data-form="mini"] .wp-v {
+  font-size: 12px;
+}
+.wp[data-form="mini"][data-band] .wp-v {
   font-size: 11px;
 }
 .wp[data-form="mini"] .wp-c-a,
@@ -622,20 +634,34 @@
 .wp[data-form="mini"] .wp-cycle {
   display: inline-flex;
 }
-.wp[data-form="mini"] .wp-btn {
-  height: 24px;
+.wp[data-form="mini"][data-band] .wp-btn {
+  height: 28px;
+  min-width: 32px;
+  justify-content: center;
   padding: 0 7px;
-  font-size: 10px;
+  font-size: 10.5px;
 }
 .wp[data-form="mini"] .wp-btn span {
   display: none;
 }
-.wp[data-form="mini"] .wp-cycle,
-.wp[data-form="mini"] .wp-btn[hidden] + .wp-cycle {
+.wp[data-form="mini"][data-band] .wp-cycle,
+.wp[data-form="mini"][data-band] .wp-btn[hidden] + .wp-cycle {
+  font-size: 10.5px;
+}
+.wp[data-form="mini"][data-band] .wp-rate {
   font-size: 10px;
 }
-.wp[data-form="mini"] .wp-rate {
-  font-size: 9px;
+/* (Chinese in a phone's band: no smaller than 11 px; the layout drops a line instead, pad-demo.ts) */
+html:lang(zh) .wp[data-form="mini"][data-band] :is(.wp-kicker, .wp-k, .wp-rate, .wp-btn):lang(zh) {
+  font-size: 11px;
+}
+html:lang(zh) .wp[data-form="mini"][data-band] .wp-svg .wp-lab:lang(zh) {
+  font-size: 11px;
+}
+/* (what the mini form drops in a phone's short band, pad-demo.ts: the rate line, then the cross-section's strip) */
+.wp[data-norate] .wp-rate,
+.wp[data-nosec] .wp-sec {
+  display: none;
 }
 
 /* ---- the sentence (a compact card drops it: .demo-extra) and what the layout drops for room */
@@ -677,8 +703,11 @@
 .wp-sec-svg[data-level="strip"] .wp-lab-sm {
   font-size: 9px;
 }
-.wp[data-form="mini"] .wp-sec .wp-lab-sm {
-  font-size: 8.5px;
+.wp[data-form="mini"][data-band] .wp-sec .wp-lab-sm {
+  font-size: 9.5px;
+}
+html:lang(zh) .wp[data-form="mini"][data-band] .wp-sec .wp-lab-sm:lang(zh) {
+  font-size: 10.5px;
 }
 .wp-sec .wp-lab-sm.wp-lab-strong {
   font-family: var(--mono);
@@ -775,5 +804,15 @@
 @media (prefers-reduced-motion: reduce) {
   .wp-cu {
     transition: none;
+  }
+}
+/* (a touch screen, a card wider than a phone's band: buttons a finger can hit, 34 px) */
+@media (pointer: coarse) {
+  .wp:not([data-band]) .wp-btn {
+    height: 34px;
+  }
+  .wp:not([data-band]) .wp-seg button {
+    padding-top: 11px;
+    padding-bottom: 11px;
   }
 }

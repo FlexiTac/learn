@@ -260,6 +260,22 @@
 .tm[data-form="column"] .tm-grid {
   margin-bottom: 14px;
 }
+/* ---- a narrow box (a phone's stage): the row form's maps side by side across it, the force block under them */
+.tm[data-narrow] {
+  padding: 10px 12px 12px;
+}
+.tm[data-narrow] .tm-body {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 22px;
+}
+.tm[data-narrow] .tm-maps {
+  justify-content: center;
+}
+.tm[data-narrow] .tm-side {
+  width: 100%;
+  max-width: none;
+}
 /* a narrow map: its count goes under its name */
 .tm[data-tight] .tm-map figcaption {
   flex-direction: column;

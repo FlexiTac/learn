@@ -357,6 +357,10 @@
 .gd-legend b {
   color: var(--ink);
 }
+/* (each key's term stays on one line: the key breaks between the two, never inside "(drive)") */
+.gd-term {
+  white-space: nowrap;
+}
 /* (the long key in the large form; a shorter one fits a ~340 px card on one line) */
 .gd-legend-long,
 .gd.is-large .gd-legend-short {
@@ -564,6 +568,12 @@
 .gd:not(.is-large) .gd-keys-click {
   display: none;
 }
+/* (the arrow keys' hint is for a keyboard: not on a touch screen) */
+@media (pointer: coarse) {
+  .gd-keys {
+    display: none;
+  }
+}
 .gd.is-reduced .gd-play {
   display: none;
 }
@@ -662,6 +672,60 @@
 .gd.is-mini .gd-btn {
   padding: 0 8px;
 }
+/* a phone's band too short for the mini form (grid-demo.ts, TIGHT_LEVELS): V as its own row goes first (the caption
+   gives the volts), and the play / step buttons stand beside the map instead of under it; then the reading count;
+   then the 3D 2 × 2 (the figure marks the same scan on its own block) */
+.gd[data-tight] {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "kick kick" "anim anim" "map ctl" "side side";
+  column-gap: 8px;
+}
+.gd[data-tight] .gd-kicker {
+  grid-area: kick;
+}
+.gd[data-tight] .gd-anim {
+  grid-area: anim;
+}
+.gd[data-tight] .gd-row {
+  display: contents;
+}
+.gd[data-tight] .gd-mapbox {
+  grid-area: map;
+  justify-self: center;
+}
+.gd[data-tight] .gd-side {
+  grid-area: side;
+}
+.gd[data-tight] .gd-ctl {
+  grid-area: ctl;
+  flex-direction: column;
+  justify-content: center;
+}
+.gd[data-tight] .gd-volts {
+  display: none;
+}
+.gd[data-tight] .gd-map {
+  --gd-cell: clamp(22px, calc((100cqw - 74px) / 2), 30px);
+}
+.gd[data-tight="2"] .gd-count,
+.gd[data-tight="3"] .gd-count,
+.gd[data-tight="3"] .gd-anim {
+  display: none;
+}
+/* a card under ~250 px that is not a phone's band (a zoomed page): the map over its caption, as the mini form, so the
+   caption keeps a readable line length */
+@container (max-width: 236px) {
+  .gd:not(.is-mini) .gd-row {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 6px;
+  }
+  .gd:not(.is-mini) .gd-side {
+    justify-items: center;
+    text-align: center;
+    width: 100%;
+  }
+}
 /* a narrow card (not mini): the kicker on two lines, as the unit card's */
 @container (max-width: 246px) {
   .gd-kicker .gd-sep {
@@ -707,5 +771,16 @@
   .gd-cell,
   .gd-cell-ring {
     transition: none;
+  }
+}
+/* (Chinese in a phone's band: the kicker and the reading count no smaller than 11 px) */
+html:lang(zh) .gd.is-mini :is(.gd-kicker, .gd-count):lang(zh) {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+/* (a touch screen, a card wider than a phone's band: buttons a finger can hit, 36 px) */
+@media (pointer: coarse) {
+  .demo-card:not([data-narrow]) .gd-btn {
+    min-height: 36px;
   }
 }

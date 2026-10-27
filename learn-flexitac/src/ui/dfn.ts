@@ -57,12 +57,27 @@ function ensureTip(): HTMLElement {
   return tip;
 }
 
+let safeProbe: HTMLElement | null = null;
+/** The notch / rounded-corner insets on the left and right (a notched phone on its side; 0 everywhere else), in px:
+ *  the tip keeps clear of them (tokens.css --safe-l / --safe-r). */
+function safeX(): [number, number] {
+  if (!safeProbe) {
+    safeProbe = document.createElement("div");
+    safeProbe.setAttribute("aria-hidden", "true");
+    safeProbe.style.cssText = "position:fixed;top:0;height:0;left:var(--safe-l,0px);right:var(--safe-r,0px);visibility:hidden;pointer-events:none";
+    document.body.append(safeProbe);
+  }
+  const b = safeProbe.getBoundingClientRect();
+  return [Math.max(0, b.left), Math.max(0, document.documentElement.clientWidth - b.right)];
+}
+
 function place(el: HTMLElement) {
   const t = ensureTip();
   const r = el.getBoundingClientRect();
-  const w = Math.min(300, window.innerWidth - 24);
+  const [sl, sr] = safeX();
+  const w = Math.min(300, window.innerWidth - 24 - sl - sr);
   t.style.width = `${w}px`;
-  const left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left));
+  const left = Math.max(12 + sl, Math.min(window.innerWidth - w - 12 - sr, r.left));
   t.style.left = `${left}px`;
   const below = r.bottom + 6;
   t.style.top = `${below}px`;

@@ -5,5 +5,7 @@
 
 /** Inline style that sets --lc for lesson n, for use in template strings: `<a style="${lc(3)}">`. */
 export function lc(n: number): string {
-  return `--lc:var(--ft-lesson-${Math.min(14, Math.max(1, Math.round(n)))})`;
+  const k = Math.min(14, Math.max(1, Math.round(n)));
+  // (--lc-soft: the tint for a browser without color-mix(), explore.css)
+  return `--lc:var(--ft-lesson-${k});--lc-soft:var(--ft-lesson-${k}-soft)`;
 }

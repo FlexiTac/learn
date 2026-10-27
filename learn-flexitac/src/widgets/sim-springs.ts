@@ -30,7 +30,7 @@ import { fill, strings } from "../i18n";
 import { paintText, setTextBeside } from "../i18n/paint";
 import type { WidgetCtx, WidgetInstance } from "../types";
 import { h } from "../ui/dom";
-import { PadMap, clamp01, cssVar, f1, lerp, makeCam, parseColor, pathOf, range, setAttr, svgEl, viridisCss, viridisLut, wave, type Pt, type RGB } from "./sim-points";
+import { PadMap, clamp01, cssVar, f1, lerp, makeCam, parseColor, pathOf, range, setAttr, sideForm, svgEl, viridisCss, viridisLut, wave, type Pt, type RGB } from "./sim-points";
 import "./sim-springs.css";
 
 const KN = DEFAULTS.kn;
@@ -723,34 +723,51 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimSpringsInstance {
   // ------------------------------------------------------------------ layout
   const relayout = () => {
     if (!root.isConnected) return;
-    const W = Math.round(anim.getBoundingClientRect().width);
+    let W = Math.round(anim.getBoundingClientRect().width);
     if (W < 60) return;
     const maxH = Number(root.closest<HTMLElement>("[data-max-h]")?.dataset.maxH) || 0;
     const compact = Boolean(root.closest("[data-compact]"));
-    const key = `${W} ${maxH} ${compact}`;
+    // the side form (a phone on its side, sim-points.ts sideForm): the drawing left; the readout and the two maps right
+    const cardW = root.clientWidth;
+    const sideOn = sideForm(maxH, cardW);
+    const key = `${W} ${maxH} ${compact} ${sideOn} ${sideOn ? `${cardW}x${window.innerHeight}` : ""}`;
     if (key === builtKey) return;
     builtKey = key;
+    root.toggleAttribute("data-side", sideOn);
+    let colW = 0;
+    if (sideOn) {
+      const cs = getComputedStyle(root);
+      const inner = cardW - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      colW = Math.floor((inner - 16) * 0.48);
+      W = Math.floor(inner - 16 - colW);
+      root.style.setProperty("--ss-col", `${colW}px`);
+    }
     form = W >= 470 ? "large" : W >= 300 ? "medium" : "mini";
     root.dataset.form = form;
-    // the two maps side by side: each half the width less the gap
-    const mw = (W - 14) / 2;
+    // the two maps side by side: each half the width (the side form: its column's) less the gap
+    const mw = ((sideOn ? colW : W) - 14) / 2;
     const cell = Math.max(3, Math.min(12, Math.floor((mw - 1) / 32)));
     mapD.size(cell);
     mapF.size(cell);
     root.style.setProperty("--ss-mapw", `${mapD.width}px`);
     build(W, 0);
     paint();
-    if (maxH) {
+    // (the side form: no taller than the window)
+    const budget = maxH || (sideOn ? window.innerHeight - 24 : 0);
+    if (budget) {
       const card = root.closest<HTMLElement>(".demo-card") ?? el;
-      const over = card.offsetHeight - maxH;
+      const over = card.offsetHeight - budget;
       if (over > 0) {
-        build(W, Math.max(120, anim.offsetHeight - over));
+        build(W, Math.max(sideOn ? 100 : 120, anim.offsetHeight - over));
         paint();
       }
     }
   };
   const ro = new ResizeObserver(() => relayout());
   ro.observe(anim);
+  // (the side form depends on the window's height too)
+  const onWin = () => relayout();
+  window.addEventListener("resize", onWin);
   const onVis = () => {
     visible = !document.hidden;
     run();
@@ -794,6 +811,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): SimSpringsInstance {
       io.disconnect();
       offTheme();
       offLang();
+      window.removeEventListener("resize", onWin);
       document.removeEventListener("visibilitychange", onVis);
       root.remove();
     },

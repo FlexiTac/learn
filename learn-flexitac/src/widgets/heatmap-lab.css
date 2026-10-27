@@ -164,3 +164,10 @@
     width: 100%;
   }
 }
+/* (a touch screen: a slider a finger can catch; the negative margins keep the rows where they were) */
+@media (pointer: coarse) {
+  .w-hlab-ctl input {
+    height: 30px;
+    margin: -7px 0;
+  }
+}

@@ -265,3 +265,10 @@
     grid-column: 1 / -1;
   }
 }
+/* (a touch screen: a slider a finger can catch; the negative margins keep the rows where they were) */
+@media (pointer: coarse) {
+  .w-adc-slider input {
+    height: 30px;
+    margin: -7px 0;
+  }
+}

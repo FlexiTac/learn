@@ -218,7 +218,7 @@ void loop() {
   steps: [
     {
       title: "Plug in the pad",
-      text: `Two flat cables join the pad to the board: its ${COLS} drive lines to FPC2, by the shift registers, and its ${ROWS} sense lines to FPC1, by the multiplexer. <b>Show&nbsp;me</b> plugs it in; then hover a cable to light its lines.`,
+      text: `Two flat cables join the pad to the board: its ${COLS} drive lines to FPC2, by the shift registers, and its ${ROWS} sense lines to FPC1, by the multiplexer. <b>Show&nbsp;me</b> plugs it in; then <span class="only-mouse">hover</span><span class="only-touch">tap</span> a cable to light its lines.`,
       // the lesson opens here (figure.initial is this pose: the board alone, the Nano up), as lessons 1-3 open on their
       // first step; Show me plays the plug-in
       start: true,

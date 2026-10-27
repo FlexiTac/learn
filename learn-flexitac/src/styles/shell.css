@@ -1,8 +1,9 @@
 /* ---------------------------------------------------------------- app grid */
 .app {
   display: grid;
-  grid-template-columns: var(--side-w) minmax(0, 1fr);
+  grid-template-columns: calc(var(--side-w) + var(--safe-l)) minmax(0, 1fr);
   grid-template-rows: auto 1fr;
+  min-height: 100vh; /* (before dvh: Safari 15.4, Chrome 108) */
   min-height: 100dvh;
 }
 .outlet {
@@ -17,12 +18,13 @@
   grid-column: 1;
   position: sticky;
   top: 0;
+  height: 100vh;
   height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 18px;
-  padding: calc(16px + env(safe-area-inset-top, 0px)) 0 16px;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 0 16px var(--safe-l);
   background: var(--card);
   border-right: 1px solid var(--line);
   z-index: 20;
@@ -156,7 +158,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: calc(16px + env(safe-area-inset-top, 0px)) var(--gutter) 14px;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) var(--gutter-r) 14px var(--gutter-l);
   min-width: 0;
 }
 .brand {
@@ -287,7 +289,11 @@
 }
 
 /* ---------------------------------------------------------------- phone: bottom bar */
-@media (max-width: 600px) {
+@media (max-width: 600.98px) {
+  /* no sidebar on the left: the content takes a left inset too (a small phone on its side, e.g. 568 x 320) */
+  :root {
+    --gutter-l: max(var(--gutter), var(--safe-l));
+  }
   .app {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr;
@@ -304,7 +310,7 @@
     left: 0;
     right: 0;
     height: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px));
-    padding: 0 8px env(safe-area-inset-bottom, 0px);
+    padding: 0 max(8px, var(--safe-r)) env(safe-area-inset-bottom, 0px) max(8px, var(--safe-l));
     flex-direction: row;
     border-right: 0;
     border-top: 1px solid var(--line);
@@ -385,5 +391,43 @@
 @media (min-width: 601px) and (max-width: 860px) {
   .spec-card {
     display: none;
+  }
+}
+/* a phone on its side (wider than 600 px, at most 500 px tall: 844 x 390, 932 x 430, ~340 px tall with Safari's bars):
+   the sidebar's logo and six items (~465 px) do not fit, and the language and theme switches fell off the bottom. No
+   logo (Home is the first item), tighter items (~300 px in all), and the bar scrolls if a window is shorter still. */
+@media (min-width: 601px) and (max-height: 500px) {
+  .sidebar {
+    gap: 0;
+    padding-top: calc(8px + env(safe-area-inset-top, 0px));
+    padding-bottom: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .side-logo {
+    display: none;
+  }
+  .side-nav {
+    margin: 0;
+    gap: 2px;
+  }
+  .side-nav a,
+  .lang-toggle,
+  .theme-toggle {
+    gap: 1px;
+    padding: 5px 0 4px;
+  }
+  .side-nav .icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+/* very wide windows: the top bar lines up with the lesson, which stops growing at 2560 px (lesson.css) */
+@media (min-width: 2200px) {
+  .topbar {
+    width: 100%;
+    max-width: 2560px;
+    margin-inline: auto;
   }
 }

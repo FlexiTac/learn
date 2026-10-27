@@ -415,11 +415,11 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
 
   /** Build the drawing for a width; `compact` (the host's short-stage mode, src/ui/demo.ts) also makes it shorter: a
    *  smaller unit and a shorter R1. `large`: the large form (see the header), `budget` the height it fills (0: its own). */
-  const build = (W: number, compact: boolean, large: boolean, budget: number) => {
+  const build = (W: number, compact: boolean, large: boolean, budget: number, forceMini = false): { s: number; sW: number } | null => {
     svg.replaceChildren();
     A = null;
     // a phone's band (a card under ~172 px): the mini form, the unit over a mini loop, its R and V as text under it
-    const mini = !large && W < 150;
+    const mini = forceMini || (!large && W < 150);
     root.classList.toggle("is-mini", mini);
     if (W < 90) return null;
     const Z = large ? largeSizes(largeK(W)) : BASE;
@@ -764,6 +764,23 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     hr.addEventListener("pointerup", onUp);
     hr.addEventListener("pointercancel", onLeave);
 
+    // (a card too narrow for the unit and its labels even at the smallest scale, ~185-216 px beside the pad in a 480-650
+    // px window: the labels would run past the card's edges, which cut them (more than a 1 px nick); the mini form, whose
+    // short labels fit. Not in the host's short form, its last try in a short band (a 640 x 360 phone on its side): the
+    // mini form, taller, would not fit there either and the card would be capped, its V row cut in half)
+    const box = !mini && !large && !root.closest("[data-short]") ? el.closest<HTMLElement>(".demo-card") : null;
+    if (box) {
+      let bb: DOMRect | null = null;
+      try {
+        bb = svg.getBBox();
+      } catch {
+        bb = null; // (not rendered)
+      }
+      const sx = svg.getBoundingClientRect().left;
+      const br = box.getBoundingClientRect();
+      if (bb && bb.width && (sx + bb.x < br.left + box.clientLeft - 1.5 || sx + bb.x + bb.width > br.right - box.clientLeft + 1.5))
+        return build(W, compact, large, budget, true);
+    }
     // (the large form: the scale it got, and the one its width alone allows its plan, so relayout can give it more
     // height)
     const got = { s, sW: large && budget > 0 ? fit(plan, true).s : s };
@@ -975,7 +992,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     const W = Math.round(anim.getBoundingClientRect().width);
     const compact = Boolean(root.closest("[data-compact]"));
     const budget = large ? budgetOf() : 0;
-    const key = `${W}${compact ? " compact" : ""}${large ? ` large ${budget}` : ""}`;
+    const key = `${W}${compact ? " compact" : ""}${root.closest("[data-short]") ? " short" : ""}${large ? ` large ${budget}` : ""}`;
     if (key === builtKey) {
       root.classList.toggle("no-sub", subOff);
       return;

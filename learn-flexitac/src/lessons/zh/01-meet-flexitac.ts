@@ -37,7 +37,7 @@ export const zh: LessonZh = {
   steps: [
     {
       title: "装在机器人上",
-      text: `这里，FlexiTac 像皮肤一样贴在机器人夹爪的两根手指上。手指合拢夹住草莓时，每块传感垫每秒 ${FRAME_HZ} 次发出一幅 ${ROWS} × ${COLS} 的触觉图像（右侧）。`,
+      text: `这里，FlexiTac 像皮肤一样贴在机器人夹爪的两根手指上。手指合拢夹住草莓时，每块传感垫每秒 ${FRAME_HZ} 次发出一幅 ${ROWS} × ${COLS} 的触觉图像（即两张触觉图）。`,
     },
     {
       title: "感受一下",
@@ -45,7 +45,7 @@ export const zh: LessonZh = {
     },
     {
       title: "拆开看看",
-      text: "它是怎么做到的？点击传感器把它拆开：它由五层薄片叠成。然后点任意一层，看看它起什么作用。",
+      text: `它是怎么做到的？<span class="only-mouse">点击</span><span class="only-touch">轻点</span>传感器把它拆开：它由五层薄片叠成。然后点任意一层，看看它起什么作用。`,
     },
   ],
   quiz: [

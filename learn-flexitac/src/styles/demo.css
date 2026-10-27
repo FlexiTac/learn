@@ -26,7 +26,17 @@
   opacity: 0;
   pointer-events: none;
 }
-/* the lesson's colour across the top, like the stage's own band */
+/* the lesson's colour across the top, like the stage's own band (a card held to its free height, demo.ts: painted as
+   its background, so it runs over the scrollbar's gutter to the rounded corner) */
+.demo-card[data-capped] {
+  background: linear-gradient(var(--accent), var(--accent)) 0 0 / 100% 2px no-repeat, var(--face);
+}
+.demo-card[data-capped]::before {
+  position: sticky;
+  z-index: 2;
+  display: block;
+  margin-bottom: -2px;
+}
 .demo-card::before {
   content: "";
   position: absolute;

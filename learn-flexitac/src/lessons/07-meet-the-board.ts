@@ -125,7 +125,7 @@ It limits ghosting but does not remove it.</p>`,
       title: "The reading board",
       // keep every step text to 3 lines in the text column at 1366-1440 px windows: the bar takes its longest step's
       // height, and the figure keeps the rest
-      text: `This board reads the pad: it checks all ${TAXELS} crossings and sends them to your computer over USB, ${nb(`${FRAME_HZ} times`)} a second. Click the board to lift the Nano and see its parts.`,
+      text: `This board reads the pad: it checks all ${TAXELS} crossings and sends them to your computer over USB, ${nb(`${FRAME_HZ} times`)} a second. <span class="only-mouse">Click</span><span class="only-touch">Tap</span> the board to lift the Nano and see its parts.`,
       // the lesson opens here (figure.initial is this pose): the board closed and the hint. Show me lifts the Nano;
       // the learner's own click on the board does the same and counts (src/ui/steps.ts)
       start: true,
@@ -134,7 +134,7 @@ It limits ghosting but does not remove it.</p>`,
     },
     {
       title: "Two paths",
-      text: `<b>Drive:</b> D2 and D3 → shift registers U2–U5 → FPC2 → the ${COLS} drive lines. <b>Sense:</b> the ${ROWS} sense lines → FPC1 → multiplexer U6 → A0, with R1. Click a card for its details.`,
+      text: `<b>Drive:</b> D2 and D3 → shift registers U2–U5 → FPC2 → the ${COLS} drive lines. <b>Sense:</b> the ${ROWS} sense lines → FPC1 → multiplexer U6 → A0, with R1. <span class="only-mouse">Click a card for its details.</span><span class="only-touch">Tap a part for its details.</span>`,
       // the Nano up, every card shown (no scan: that is lesson 4)
       act: { name: "lift" },
     },
