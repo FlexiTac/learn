@@ -291,8 +291,8 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
         : h(
             "div",
             { class: "stage-empty" },
-            `<span class="stage-empty-icon">${icon(lesson.id === "build-your-own" ? "photo" : lesson.features[0].icon)}</span>
-             <p class="mono">${lesson.id === "build-your-own" ? t("stage.buildMedia") : t("stage.noFigure")}</p>
+            `<span class="stage-empty-icon">${icon(lesson.id === "build-your-own" ? "photo" : lesson.id === "real-robot" ? "film" : lesson.features[0].icon)}</span>
+             <p class="mono">${lesson.id === "build-your-own" ? t("stage.buildMedia") : lesson.id === "real-robot" ? t("stage.realRobot") : t("stage.noFigure")}</p>
              <p>${esc(L.features.map((f) => f.title).join(" · "))}</p>`,
           ),
     );

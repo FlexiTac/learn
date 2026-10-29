@@ -20,11 +20,33 @@ export function figThumb(fig: string, alt = ""): string {
   return pair(fig, alt);
 }
 
-/** Lessons whose picture is the same in both themes (5 the heatmap, 6 the build footage). */
-const ONE_THEME = new Set([5, 6]);
+/** Each lesson's picture, by its id: the files are named for the lesson's place in the course when they were made
+ *  (public/thumbs/L<nn>, scripts/thumbs.mjs and scripts/covers.mjs), and the course has been re-ordered since (2026-10-29),
+ *  so the id picks the file. A path starting with "media/" is a two-theme still from public (<path>-{light,dark}.webp). */
+const THUMB: Record<string, string> = {
+  "meet-flexitac": "L01",
+  "the-sandwich": "L02",
+  "meet-the-board": "L03",
+  "one-frame": "L04",
+  "bytes-to-touch": "L05",
+  "build-your-own": "L06",
+  "put-on-a-robot": "L07",
+  // the 1.6 placeholder (real robot footage to come): the "what comes next" sketch, until the video gives it a frame
+  "real-robot": "media/covers/next",
+  "why-simulate-touch": "L09",
+  "pad-made-of-points": "L10",
+  "how-deep-how-hard": "L11",
+  "sim-playground": "L12",
+};
+
+/** Lesson pictures that are the same in both themes (the heatmap, the build footage). */
+const ONE_THEME = new Set(["L05", "L06"]);
 
 export function thumbFor(l: Lesson, alt = ""): string {
-  const name = `L${String(l.n).padStart(2, "0")}`;
-  if (ONE_THEME.has(l.n)) return `<img class="thumb thumb-any" src="${base}thumbs/${name}.webp" alt="${alt}" loading="lazy" decoding="async">`;
+  const name = THUMB[l.id] ?? `L${String(l.n).padStart(2, "0")}`;
+  if (name.startsWith("media/"))
+    return `<img class="thumb thumb-light" src="${base}${name}-light.webp" alt="${alt}" loading="lazy" decoding="async">` +
+      `<img class="thumb thumb-dark" src="${base}${name}-dark.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">`;
+  if (ONE_THEME.has(name)) return `<img class="thumb thumb-any" src="${base}thumbs/${name}.webp" alt="${alt}" loading="lazy" decoding="async">`;
   return pair(lang() === "zh" && ZH_THUMBS.has(name) ? `${name}-zh` : name, alt);
 }

@@ -220,7 +220,7 @@ const fpcThick = getFact("fpc_top.thickness").value as number;
 
 export const lesson: Lesson = {
   id: "build-your-own",
-  n: 6,
+  n: 4,
   title: `Build your own in ~${BUILD_MIN} minutes`,
   kicker: "Use it",
   lede: `Order two flexible circuits and a small board, then build the pad by hand: laminate, add Velostat, seal, connect. Once the parts are on your desk it takes about ${BUILD_MIN} minutes. Then flash the Nano, and fix the picture if it looks wrong.`,
@@ -259,7 +259,7 @@ build checklist, <b>Flash</b> and <b>Fix</b>, go with the two sections below.</p
 
 ${h3("Flash the firmware")}
 <p>To <dfn title="copy a program into a microcontroller's memory">flash</dfn> the Nano means to copy the
-<dfn>firmware</dfn>, the scanning program of Lesson 1.4, into its memory over USB. You do it once; the Nano keeps
+<dfn>firmware</dfn>, the scanning program of Lesson 2.2, into its memory over USB. You do it once; the Nano keeps
 the program when unplugged and starts scanning as soon as it gets power. Four settings must match your pad and your
 viewer:</p>
 <ul>

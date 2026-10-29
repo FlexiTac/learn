@@ -252,7 +252,7 @@ export const GLOSSARY_ZH: Record<string, TermZh> = {
     def: `零件一个接一个地连在一起，同一股电流依次流过每一个。触觉像素（taxel）和读取板上的 ${R1 / 1000} kΩ 电阻就是串联的。`,
   },
   "arduino-cli": {
-    def: "Arduino 的命令行工具，不打开 IDE 也能编译和上传程序。第 1.6 课里的路线 A（<code>flexitac-flash</code>）需要先装好它。",
+    def: "Arduino 的命令行工具，不打开 IDE 也能编译和上传程序。第 1.4 课里的路线 A（<code>flexitac-flash</code>）需要先装好它。",
   },
   // Section 2 and 3 (2026-10-25)
   teleoperation: {

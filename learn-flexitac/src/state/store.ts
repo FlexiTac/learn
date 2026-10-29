@@ -49,6 +49,8 @@ export const MOVED: Record<string, string> = {
   // 2026-10-25: set aside for now (Section 3 "Train with it" is coming soon)
   "make-sim-feel-real": "how-deep-how-hard",
   "real-sim-real": "why-simulate-touch",
+  // 2026-10-29: "Grasp with your mouse" became the last four steps of "Put FlexiTac on a robot" (Lesson 1.5)
+  "grasp-with-your-mouse": "put-on-a-robot",
 };
 
 /** Saved progress under lessons that were merged into another one moves there, once per revision (idsRev), in order.
@@ -60,8 +62,12 @@ export const MOVED: Record<string, string> = {
  *  Revision 2 (2026-10-25): pick-one-crossing -> meet-the-board (2 steps: The reading board, Two paths). Done stays
  *  done. Steps: having met the board (its step 1 lifted the Nano and named the chips) counts as step 1; all five counts
  *  as both. Quiz: its questions 1 and 2 (pins for 32 drive lines, which chip drives line 20) are meet-the-board's 1 and
- *  2; its 3 and 4 (a sense line's channel in binary, why add 4) are one-frame's 5 and 6, where the scanning went. */
-const IDS_REV = 2;
+ *  2; its 3 and 4 (a sense line's channel in binary, why add 4) are one-frame's 5 and 6, where the scanning went.
+ *  Revision 3 (2026-10-29): grasp-with-your-mouse -> put-on-a-robot, whose steps are its own 5 then grasp's 4 (Reach,
+ *  Close, Lift, Try another shape), counted as a prefix: grasp's steps count only on top of all five mounting steps.
+ *  Done stays done (put-on-a-robot's own flag; grasp alone does not finish the longer lesson). Quiz: grasp's three
+ *  questions are put-on-a-robot's 4th to 6th (an answer already there is kept). */
+const IDS_REV = 3;
 
 const count = (s: Saved, id: string) => (typeof s.steps[id] === "number" && Number.isFinite(s.steps[id]) ? Math.floor(s.steps[id]) : 0);
 const answer = (a: (number | null)[] | undefined, i: number) => (Array.isArray(a) && typeof a[i] === "number" ? a[i] : null);
@@ -112,6 +118,19 @@ function migrateIds(s: Saved): boolean {
     // (its saved tab: "code" has no tab in the new lesson, which then opens on its Overview)
     const tab = s.tab?.[from];
     if (tab && s.tab && !s.tab[meet]) s.tab[meet] = tab;
+  }
+  if (have < 3) {
+    const from = "grasp-with-your-mouse";
+    const to = "put-on-a-robot";
+    const g = count(s, from);
+    if (g > 0 && count(s, to) >= 5) s.steps[to] = Math.max(count(s, to), 5 + Math.min(g, 4));
+    const gq = s.quiz[from];
+    if (Array.isArray(gq) && [0, 1, 2].some((i) => answer(gq, i) !== null)) {
+      const q = Array.isArray(s.quiz[to]) ? [...s.quiz[to]] : [];
+      while (q.length < 6) q.push(null);
+      for (let i = 0; i < 3; i++) if (answer(q, 3 + i) === null) q[3 + i] = answer(gq, i);
+      s.quiz[to] = q;
+    }
   }
   s.idsRev = IDS_REV;
   return true;

@@ -10,7 +10,7 @@ export type FigId = "pad" | "crossing" | "board" | "gripper";
 export type Theme = "light" | "dark";
 /** A home card's looping cover (views/home.ts LOOPS): "pad" = Fig 1's feel mode, "board" = Fig 3 scanning a press
  *  (Lesson 1.4 "Press it"), "useit" = the real sensor and its live heatmap. */
-export type CoverLoop = "pad" | "board" | "useit";
+export type CoverLoop = "pad" | "board" | "useit" | "gripper";
 
 /** One figure action, sent to the iframe as {type:'ft:act', name, arg}. Names per figure:
  *  pad      explode | collapse | select(layerId|index) | deselect | step(1-4) | plan | iso | touch({r,c} | [Xmm,Ymm]) | release

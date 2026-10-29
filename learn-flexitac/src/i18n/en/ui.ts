@@ -79,6 +79,7 @@ export const UI_EN = {
   "stage.failed": "Picture failed to load: {msg}",
   "stage.buildMedia": "Build photos and footage coming",
   "stage.noFigure": "No figure for this lesson",
+  "stage.realRobot": "Real robot footage coming",
   "run.drawsFrom": "the {name} draws this from step {n} ({title})",
   "run.hidden": "the {name} is hidden in this step",
   "run.nothing": "nothing to run in this lesson",

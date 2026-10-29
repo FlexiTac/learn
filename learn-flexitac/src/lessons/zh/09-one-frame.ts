@@ -39,7 +39,7 @@ export const zh: LessonZh = {
     { title: `${FRAME_HZ} 帧/秒`, text: `每 ${FRAME_MS} ms 一幅完整图像，经 USB 发送` },
   ],
   overview: `
-<p><b>插上传感垫。</b>两根扁平排线把传感垫接到你在第 1.3 课认识的读取板（reading board）上：底层 FPC 的 ${COLS} 条驱动线接到 FPC2，在移位寄存器（shift register）旁边；顶层 FPC 的 ${ROWS} 条感应线接到 FPC1，在多路选择器（multiplexer，简称 mux）旁边。第 1.2 课的 2 × 2 卡片和 ${ROWS} × ${COLS} 卡片画出了这条规则：给一条驱动线通电，监听一条感应线，读数就属于它们相遇的那一个交叉点（crossing）。这里，同样的规则在真实的芯片里运行。读取板正在监听的感应线在传感垫上发青绿色的光，正在通电的驱动线发粉色的光，每个读数落进传感垫旁边那张图的一个方格里。像这样轮流来，让几根线按先后顺序为许多交叉点服务，叫作<a href="#/glossary/time-multiplexing"><dfn data-term="time-multiplexing">分时复用（time multiplexing）</dfn></a>。</p>
+<p><b>插上传感垫。</b>两根扁平排线把传感垫接到你在第 2.1 课认识的读取板（reading board）上：底层 FPC 的 ${COLS} 条驱动线接到 FPC2，在移位寄存器（shift register）旁边；顶层 FPC 的 ${ROWS} 条感应线接到 FPC1，在多路选择器（multiplexer，简称 mux）旁边。第 1.2 课的 2 × 2 卡片和 ${ROWS} × ${COLS} 卡片画出了这条规则：给一条驱动线通电，监听一条感应线，读数就属于它们相遇的那一个交叉点（crossing）。这里，同样的规则在真实的芯片里运行。读取板正在监听的感应线在传感垫上发青绿色的光，正在通电的驱动线发粉色的光，每个读数落进传感垫旁边那张图的一个方格里。像这样轮流来，让几根线按先后顺序为许多交叉点服务，叫作<a href="#/glossary/time-multiplexing"><dfn data-term="time-multiplexing">分时复用（time multiplexing）</dfn></a>。</p>
 
 <p><b>给一条驱动线通电：一个“走动的 1”。</b>D2（数据）和 D3（时钟）控制那串移位寄存器 U2 到 U5。每当 D3 从 LOW 变成 HIGH（这一刻叫<dfn data-term="rising-edge">上升沿（rising edge）</dfn>），所有的位都往后挪一个盒子，第一个盒子则装进 D2 上的值。每个芯片里还有第二排盒子，叫<dfn data-term="output-latch">输出锁存器（output latch）</dfn>，它把这些位复制到芯片的 8 个输出引脚上。固件先放进一个 1，然后一直送 0，于是这个孤零零的 1 每来一个时钟就沿着驱动线走一条，就像一排人依次传递一只水桶。有一个细节：D3 同时驱动移位时钟和锁存时钟，所以输出显示的是<b>晚一个时钟</b>的盒子内容。第一个时钟把 1 放进盒子；第二个时钟才让驱动线 1 变成 HIGH。</p>
 
@@ -57,7 +57,7 @@ export const zh: LessonZh = {
 
 <p><b>别的版本，别的帧大小。</b>硬件仓库里还有一个 ${repo16.rows} 行的固件，它会读取多路选择器的每一个通道：2 + ${repo16.rows} × ${COLS} = ${REPO16_BYTES} 字节。电脑期望的帧大小必须和读取板发送的一致，否则帧就对不齐。在代码卡片里试试：把 <code>ROW_COUNT</code> 设为 ${repo16.rows}，偏移量设为 ${repo16.muxOffset}。</p>`,
   wiring: {
-    intro: `一帧期间，Nano 的每个引脚在做什么，以及 ${FRAME_BYTES} 个字节里每个字节从哪里来（字节从 1 开始数）。第 1.3 课的“接线”栏列出了读取板上的每一处连接。`,
+    intro: `一帧期间，Nano 的每个引脚在做什么，以及 ${FRAME_BYTES} 个字节里每个字节从哪里来（字节从 1 开始数）。第 2.1 课的“接线”栏列出了读取板上的每一处连接。`,
     rows: [
       { to: "U2 SER（数据输入）", note: "每条感应线开始时为 HIGH，持续一个时钟（放进那个 1）；其余时间为 LOW。" },
       { to: "U2–U5 的 SRCLK + RCLK", note: `每条感应线 ${PER_ROW} 拍：2 拍用来放入并锁存那个 1，然后每条驱动线一拍。输出比移位级晚一拍。` },

@@ -20,7 +20,11 @@ import { lesson as l12 } from "./12-build-your-own";
 // 2026-10-25 (PLAN-section2-3.md v0.2.2): Section 2 "On a robot" (2.1-2.2, Fig 5 gripper) and Section 3 "In simulation"
 // (3.1-3.6, the in-browser touch engine shared/models/touchsim.mjs and its cards, src/widgets/sim-*.ts).
 import { lesson as l21 } from "./21-put-on-a-robot";
-import { lesson as l22 } from "./22-grasp-with-your-mouse";
+// 2026-10-29 (user): the course is re-cut. Section 1 is the pad, using it and putting it on a robot (1.1-1.6): "Grasp with
+// your mouse" became the last steps of "Put FlexiTac on a robot" (1.5; its file is in ./_retired) and 1.6 is a placeholder
+// for real robot footage. Section 2 is the reading board (2.1 Meet the reading board, 2.2 One frame). Section 3 is as it
+// was. Lesson numbers follow their place (lessonNo), so the numbers in the lessons' texts were updated with it.
+import { lesson as l23 } from "./23-real-robot";
 import { lesson as l31 } from "./31-why-simulate-touch";
 import { lesson as l32 } from "./32-pad-made-of-points";
 import { lesson as l33 } from "./33-how-deep-how-hard";
@@ -29,19 +33,18 @@ import { lesson as l33 } from "./33-how-deep-how-hard";
 // lessons still in the course (src/state/store.ts MOVED).
 import { lesson as l36 } from "./36-sim-playground";
 
-export const LESSONS: Lesson[] = [l01, l02, l07, l09, l11, l12, l21, l22, l31, l32, l33, l36];
+export const LESSONS: Lesson[] = [l01, l02, l11, l12, l21, l23, l07, l09, l31, l32, l33, l36];
 
 export const byId = (id: string): Lesson | undefined => LESSONS.find((l) => l.id === id);
 
-/** The course: three sections of three chapters each (2026-10-25, PLAN-section2-3.md §4). Each chapter is one home card
- *  with a cover picture taken from its own figure or widget, and one group in the lesson list. Section 2's third chapter
- *  has no lessons yet ("Coming next"), and so has Section 3's ("Train with it": calibration and real -> sim -> real,
- *  coming soon). */
+/** The course (2026-10-29): Section 1 in three chapters, Section 2 in one, Section 3 in three. Each chapter is one home
+ *  card with a cover picture taken from its own figure or widget, and one group in the lesson list. Section 3's third
+ *  chapter has no lessons yet ("Train with it": calibration and real -> sim -> real, coming soon). */
 export const SECTIONS: Section[] = [
   {
     n: 1,
     title: "The sensor",
-    blurb: "The pad and its reading board: how they work and how to build your own.",
+    blurb: "The pad: how it works, how to see its touch, how to build your own and how to put it on a robot.",
     chapters: [
       {
         title: "The pad",
@@ -51,46 +54,32 @@ export const SECTIONS: Section[] = [
         alt: "A fingertip presses the FlexiTac pad and its touch map lights up.",
       },
       {
-        title: "The board",
-        lessons: ["meet-the-board", "one-frame"],
-        text: "Lift the Arduino and meet every part of the reading board, then plug in the pad and watch it read a whole frame, row by row.",
-        cover: { loop: "board" },
-        alt: "The pad plugged into the reading board by two flat cables. A fingertip presses it while the board scans its lines, one at a time.",
-      },
-      {
         title: "Use it",
         lessons: ["bytes-to-touch", "build-your-own"],
         text: "Watch a live heatmap follow your finger, build your own pad in about 3 minutes, and fix it when the picture looks wrong.",
         cover: { loop: "useit" },
         alt: "A finger presses a real FlexiTac pad and a live heatmap follows it on a screen.",
       },
+      {
+        title: "On a robot",
+        lessons: ["put-on-a-robot", "real-robot"],
+        text: "Tape a pad onto each finger of a robot gripper and cable it up, then drive the gripper with your mouse and feel what it grasps.",
+        cover: { loop: "gripper" },
+        alt: "A robot gripper with a FlexiTac pad on each finger: flat cables run from the pads to two reading boards, and the gripper closes and opens.",
+      },
     ],
   },
   {
     n: 2,
-    title: "On a robot",
-    blurb: "Mount FlexiTac on a robot gripper, wire it up and feel what it feels.",
+    title: "The reading board",
+    blurb: "The small board that reads the pad: its parts, and how it reads a whole frame, row by row.",
     chapters: [
       {
-        title: "Mount it",
-        lessons: ["put-on-a-robot"],
-        text: "Tape a pad onto each soft finger, wrap its tails round the side to the back and cable it to one board per finger.",
-        cover: { still: "mount" },
-        alt: "A robot gripper with a FlexiTac pad taped on each finger, flat cables running to two reading boards.",
-      },
-      {
-        title: "Grasp with touch",
-        lessons: ["grasp-with-your-mouse"],
-        text: "Drive the gripper with your mouse, pick up a strawberry or a cube, and watch both fingers' touch maps.",
-        cover: { still: "grasp" },
-        alt: "The gripper holds a strawberry up, and the two fingers' touch maps show where it presses.",
-      },
-      {
-        title: "Coming next",
-        lessons: [],
-        text: "Touch as 3D points, recording it with the camera and the robot's joints, and policies that use touch.",
-        cover: { still: "next" },
-        alt: "A sketch of what comes next: the two pads' touch spots as points in 3D around a grasped tube.",
+        title: "The board",
+        lessons: ["meet-the-board", "one-frame"],
+        text: "Lift the Arduino and meet every part of the reading board, then plug in the pad and watch it read a whole frame, row by row.",
+        cover: { loop: "board" },
+        alt: "The pad plugged into the reading board by two flat cables. A fingertip presses it while the board scans its lines, one at a time.",
       },
     ],
   },
@@ -156,6 +145,16 @@ export function chapterRange(c: Chapter): string {
   const ls = chapterLessons(c);
   if (!ls.length) return "";
   return ls.length === 1 ? t("lesson.no", { no: lessonNo(ls[0]) }) : t("lessons.range", { from: lessonNo(ls[0]), to: lessonNo(ls[ls.length - 1]) });
+}
+
+/** The lesson a figure's part names (FigPart.lesson, "Taught in Lesson N" in the detail window). The figures were built
+ *  against the course of 2026-10-25 (figures/<fig>/parts.mjs): a number is the lesson's place in that course (Fig 1-3),
+ *  a string its number then ("2.1", Fig 5). They keep those, so they are read through that course's order here. */
+const FIGURE_COURSE = ["meet-flexitac", "the-sandwich", "meet-the-board", "one-frame", "bytes-to-touch", "build-your-own", "put-on-a-robot", "put-on-a-robot", "why-simulate-touch", "pad-made-of-points", "how-deep-how-hard", "sim-playground"];
+const FIGURE_NOS: Record<string, string> = { "2.1": "put-on-a-robot", "2.2": "put-on-a-robot" };
+export function lessonForPart(ref: number | string | undefined): Lesson | undefined {
+  if (typeof ref === "string") return FIGURE_NOS[ref] ? byId(FIGURE_NOS[ref]) : byNo(ref);
+  return ref ? byId(FIGURE_COURSE[ref - 1] ?? "") : undefined;
 }
 
 export function neighbours(l: Lesson): { prev?: Lesson; next?: Lesson } {

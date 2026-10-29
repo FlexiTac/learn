@@ -79,7 +79,7 @@ ${h3("第一次点亮")}
 <p>用 USB 线把 Nano 接到电脑，启动查看器，捏一捏传感垫：应该有一个亮点跟着你的手指走。新买的 Nano 里是空的，所以第一次要先装上扫描程序。制作清单的最后两张卡片<b>烧录</b>和<b>排错</b>，分别对应下面两节。</p>
 
 ${h3("烧录固件")}
-<p><dfn data-term="flash">烧录（flash）</dfn> Nano，就是通过 USB 把<dfn data-term="firmware">固件（firmware）</dfn>，也就是第 1.4 课里的扫描程序，复制到它的存储器里。只需要做一次：拔掉电源后程序还在，Nano 一通电就开始扫描。有四个设置必须和你的传感垫、查看器一致：</p>
+<p><dfn data-term="flash">烧录（flash）</dfn> Nano，就是通过 USB 把<dfn data-term="firmware">固件（firmware）</dfn>，也就是第 2.2 课里的扫描程序，复制到它的存储器里。只需要做一次：拔掉电源后程序还在，Nano 一通电就开始扫描。有四个设置必须和你的传感垫、查看器一致：</p>
 <ul>
   <li><code>ROW_COUNT ${ROWS}</code>：要读多少条感应线（sense line）。固件把感应线叫作 <i>rows</i>，即“行”。</li>
   <li><code>COLUMN_COUNT ${COLS}</code>：要读多少条驱动线（drive line），即“列”（<i>columns</i>）。</li>

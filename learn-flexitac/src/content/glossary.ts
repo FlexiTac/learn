@@ -372,7 +372,7 @@ export const GLOSSARY: Term[] = [
     term: "Teleoperation",
     aka: "teleop",
     def: "Driving a robot yourself from a distance, with a mouse, a joystick or a second \"leader\" arm. Recorded teleoperation runs are the demos a robot first learns from.",
-    lesson: "grasp-with-your-mouse",
+    lesson: "put-on-a-robot",
   },
   {
     id: "sim-to-real",

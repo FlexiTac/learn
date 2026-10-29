@@ -10,7 +10,7 @@
 // The part's own words (title, intro, facts) come from the figure, in the figure's language (a figure that switches
 // language re-sends ft:pick, which re-renders the window); the window's chrome follows the site (relabel()).
 import { loc, t } from "../i18n";
-import { byNo, LESSONS, lessonNo } from "../lessons";
+import { lessonForPart, lessonNo } from "../lessons";
 import type { FigPart, Lesson } from "../types";
 import type { FigureHost } from "../figure/FigureHost";
 import { badge, sourceChips } from "./bits";
@@ -40,8 +40,9 @@ export function detailsWindow(panel: HTMLElement, figure: FigureHost, lesson: Le
   let hideTimer = 0;
 
   const render = (part: FigPart) => {
-    // Fig 1-3 name the lesson by its place in the course (1-14), Fig 5 by its shown number ("2.1")
-    const target = typeof part.lesson === "string" ? byNo(part.lesson) : part.lesson ? LESSONS[part.lesson - 1] : undefined;
+    // Fig 1-3 name the lesson by its place in the course, Fig 5 by its shown number ("2.1"), both as the figures were
+    // built (src/lessons/index.ts lessonForPart)
+    const target = lessonForPart(part.lesson);
     const facts = (part.facts ?? []).slice(0, 4);
     el.innerHTML = `
       <header class="det-head">

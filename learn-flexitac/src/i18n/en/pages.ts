@@ -12,7 +12,7 @@ export const PAGES_EN = {
   "home.kw.flexible": "Flexible",
   "home.kw.flexibleTip": "Thin and bendable: it goes onto rigid jaws and soft fingers alike",
   "home.stack":
-    "This course walks the full stack, one hands-on lesson at a time: <b>the sensor</b> and its reading board, then <b>on a robot</b>, then <b>in simulation</b>.",
+    "This course walks the full stack, one hands-on lesson at a time: <b>the sensor</b>, how to use it and put it <b>on a robot</b>, then <b>its reading board</b>, then <b>in simulation</b>.",
   "home.figAria":
     "On a robot: a robot gripper with a FlexiTac pad on each finger picks up a strawberry, and the two pads' touch maps light up (illustrative). Open lesson {no}",
   "home.figCap": "Lesson {no} · On a robot · illustrative",
@@ -24,12 +24,12 @@ export const PAGES_EN = {
   // ------------------------------------------------------------------ about (src/views/about.ts)
   "about.title": "About this course",
   "about.lede":
-    'Learn FlexiTac explains the <a href="{site}" target="_blank" rel="noopener noreferrer">FlexiTac</a> tactile sensor and its reading board for undergraduate and high-school students, with live figures you can take apart: the sensor itself (Section 1), FlexiTac on a robot\'s fingers (Section 2) and how a simulator can feel like it (Section 3).',
+    'Learn FlexiTac explains the <a href="{site}" target="_blank" rel="noopener noreferrer">FlexiTac</a> tactile sensor and its reading board for undergraduate and high-school students, with live figures you can take apart: the sensor itself, how to use it and FlexiTac on a robot\'s fingers (Section 1), the reading board (Section 2) and how a simulator can feel like it (Section 3).',
   "about.numbers.title": "Where the numbers come from",
   "about.numbers.p1":
     'Every number on this site is read from one shared data folder that the figures and the explainer video also use. That folder is extracted from the project\'s own files: the FPC and board Gerbers, the BOM and pick-and-place files, the schematic, the firmware, the hardware guide and the <a href="{paper}" target="_blank" rel="noopener noreferrer">paper</a>. The grey chips next to each spec name its source.',
   "about.numbers.p2":
-    "No force measurements exist for the sensor, so Section 1's pressure curves are <i>illustrative</i> and never shown in newtons. Sections 2 and 3 run a small touch simulation in your browser: its forces are in newtons, but every one of them is <i>illustrative</i> too, from numbers chosen for teaching. How FlexiTac is mounted on the robot follows the FlexiTac team's own build (their photos); the parts drawn only for this example are marked <i>proposed</i>.",
+    "No force measurements exist for the sensor, so the pressure curves are <i>illustrative</i> and never shown in newtons. The robot lesson (1.5) and Section 3 run a small touch simulation in your browser: its forces are in newtons, but every one of them is <i>illustrative</i> too, from numbers chosen for teaching. How FlexiTac is mounted on the robot follows the FlexiTac team's own build (their photos); the parts drawn only for this example are marked <i>proposed</i>.",
   "about.credits.title": "Credits and licences",
   "about.credits.hw":
     'FlexiTac hardware: <a href="{hwRepo}" target="_blank" rel="noopener noreferrer">FlexiTac hardware repository</a> (CC BY-NC 4.0).',

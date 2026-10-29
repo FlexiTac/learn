@@ -1,3 +1,4 @@
+// RETIRED 2026-10-29: merged into src/lessons/21-put-on-a-robot.ts (Lesson 1.5, its steps 6-9); kept for reference, not in the course.
 // Chinese for src/lessons/22-grasp-with-your-mouse.ts (docs/i18n.md; words per docs/i18n-terms-zh.md). An empty slot shows the English.
 import { COLS, ROWS } from "@shared/data/constants.mjs";
 import type { LessonZh } from "../../i18n/localize";

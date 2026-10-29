@@ -1,4 +1,6 @@
 // Chinese for src/lessons/21-put-on-a-robot.ts (docs/i18n.md; words per docs/i18n-terms-zh.md). An empty slot shows the English.
+// 2026-10-29: steps 6-9, the last three quiz questions and the teleop specs came from "Grasp with your mouse" (its old
+// Chinese is in src/lessons/_retired/zh-22-grasp-with-your-mouse.ts).
 import { COLS, FRAME_HZ, ROWS } from "@shared/data/constants.mjs";
 import type { LessonZh } from "../../i18n/localize";
 
@@ -7,12 +9,12 @@ const TAXELS = ROWS * COLS;
 export const zh: LessonZh = {
   id: "put-on-a-robot",
   title: "把 FlexiTac 装到机器人上",
-  kicker: "安装",
-  lede: `两块传感垫、两块读取板、两根 USB 线。看 FlexiTac 怎样装到夹爪的手指上，它的触觉又怎样传到电脑。`,
+  kicker: "在机器人上",
+  lede: `两块传感垫、两块读取板、两根 USB 线：看 FlexiTac 怎样装到夹爪的手指上，它的触觉又怎样传到电脑。然后自己操控夹爪，感受它抓住的东西。`,
   features: [
-    { title: "贴上去", text: "聚酰亚胺胶带把传感垫固定住，绕过指尖贴到背面" },
-    { title: "尾线绕到背面", text: "从传感垫侧面伸出，绕过手指侧面到背面" },
+    { title: "贴上去", text: "聚酰亚胺胶带把传感垫固定住，尾线绕过手指折到背面" },
     { title: "每根手指一块板", text: "两块板、两根 USB 线、两张触觉图" },
+    { title: "用鼠标抓取", text: "拿起一颗草莓或一个立方体，同时看两张触觉图" },
   ],
   overview: `
 <p><b>触觉放在哪里。</b>夹爪用手指的平面去接触物体，所以传感垫就贴在那里：每根手指的夹持面上贴一块 FlexiTac 传感垫。这台夹爪装的是柔软的鳍形软指（fin-shaped finger），它们会弯曲着包住抓住的东西，让传感垫有更多面积接触物体。</p>
@@ -24,7 +26,11 @@ export const zh: LessonZh = {
 </ul>
 <p><b>为什么每根手指一块板？</b>每块板正好读一块传感垫（${ROWS} × ${COLS} = ${TAXELS} 个触摸点），所以两块传感垫从不共用导线，也不用互相等待：各自每秒发送 ${FRAME_HZ} 帧（frame）。排线很短，只需跟着手指滑动，不用经过机器人的任何关节。但它们仍要留出余量，让手指能完全张开和合拢，而不会拉扯排线。</p>
 <p><b>其他夹爪。</b>这只是一个例子。同样的三个步骤也适用于平行平爪、ALOHA 和 xArm 的夹爪以及 LeRobot 机械臂：把传感垫贴在夹持面上，把尾线插进转接板，再用排线连到读取板。要换的只是承载手指的支架。</p>
-<p class="aside">安装方式参照 FlexiTac 团队自己的实物（他们的照片）。机器人是装有 UMI 软指的 reBot-DevArm。手指支架和板托是专为这台夹爪画的（<span class="badge badge-proposed">建议做法</span>），只是其中一种方案。第 5 步里的触觉图是仿真出来的（<span class="badge badge-illustrative">示意</span>）。</p>`,
+<p><b>轮到你来操控（第 6–9 步）。</b>指尖跟着鼠标走：左右移动鼠标，夹爪就沿着切割垫上的一排物体滑动；上下移动鼠标，夹爪就升高或降低。按住鼠标按键，手指合拢；松开，手指张开。夹住东西后把鼠标往上移，它就被带起来了。靠近物体时，夹爪会自动对准它，一条虚线标出指尖将落下的位置；张开的手指降到足够低、围住物体时，物体会发光。（键盘也可以：方向键移动和升降，空格键夹紧；滚轮也能升降。）<span class="only-touch">在触摸屏上，在图上拖动来移动夹爪，轻点<b>夹住</b>合拢手指，轻点<b>松开</b>张开。</span></p>
+<p><b>触觉图显示什么。</b>夹爪下方是两块传感垫的触觉图，左手指和右手指，各 ${ROWS} × ${COLS} 个方格：正是两块读取板会发送的数据。某个触摸点被按压时，对应的方格就亮起来；按得越重，方格越亮。旁边的条形图是总的夹紧力，上面有一个标记，表示这个物体被提起之前需要多大的夹紧力。</p>
+<p><b>形状留下图案。</b>草莓压出一片圆形的区域，立方体的棱压出一条沿着手指的线。如果抓偏了，一开始只有一根手指碰到物体：一张图亮了，另一张还是暗的，物体会被推着走，直到另一根手指也碰到它。</p>
+<p><b>为什么这很重要。</b>机器人看到这些图，就知道自己是不是真的抓住了东西、东西夹在手指间的哪个位置、夹得有多紧，即使摄像头看不到手指也一样。</p>
+<p class="aside">安装方式参照 FlexiTac 团队自己的实物（他们的照片）。机器人是装有 UMI 软指的 reBot-DevArm。手指支架和板托是专为这台夹爪画的（<span class="badge badge-proposed">建议做法</span>），只是其中一种方案。从第 5 步开始的触觉图都是在你的浏览器里仿真出来的（<span class="badge badge-illustrative">示意</span>）：每块传感垫是 ${TAXELS} 个点，被物体的形状按压，每个点下面有一个小弹簧，再用真实查看器缩放一帧（frame）所用的同一条规则。<a href="#/lesson/why-simulate-touch">第 3 部分</a>会一步一步拆解这个模型。</p>`,
   specs: [
     // Touch spots per pad | 384 taxels (fact sensor.taxels)
     { label: "每块传感垫的触摸点" },
@@ -41,6 +47,18 @@ export const zh: LessonZh = {
     // 0–100 mm
     { label: "夹爪开合范围" },
     { label: "支架和板托", value: "为这台夹爪绘制" },
+    // the teleop steps (6-9)
+    { label: "夹紧力", value: "每块传感垫最大 5 N", note: "手指合拢在这里停下：即本模型中电机的堵转力" },
+    // k_n = 0.6 N/mm
+    { label: "每个点的弹簧" },
+    // k_d = 0.012 N·s/mm
+    { label: "每个点的阻尼器" },
+    { label: "摩擦", note: "夹紧力 × μ 托得住物体的重量时，物体就能被提起" },
+    { label: "物体", value: "草莓 20&nbsp;g · 立方体 28&nbsp;mm，14&nbsp;g" },
+    // 15 counts (fact host.threshold)
+    { label: "噪声阈值", note: "真实查看器的规则，这里也用：更小的读数算作 0" },
+    // 60 counts (fact host.noiseScale)
+    { label: "安静帧缩放值", note: "一帧的最大值低于阈值时，就除以这个数" },
   ],
   steps: [
     {
@@ -63,6 +81,22 @@ export const zh: LessonZh = {
       title: "两块板，两根 USB 线",
       text: `每块板有自己的 USB 线，所以电脑会得到两张触觉图：左和右。<span class="only-mouse">点击</span><span class="only-touch">轻点</span>一根手指来按压它的传感垫，看它的触觉图亮起来。`,
     },
+    {
+      title: "轮到你：靠近",
+      text: `<span class="only-mouse">移动鼠标</span><span class="only-touch">在图上拖动</span>：左右移动让夹爪沿着这排物体滑动，上下移动让它升降。把张开的手指降下来围住草莓，或者点“演示一下”。`,
+    },
+    {
+      title: "合拢",
+      text: `<span class="only-mouse">按住鼠标按键</span><span class="only-touch">轻点<b>夹住</b></span>，手指就会合拢。两张图在传感垫接触草莓的地方亮起来；夹得越紧，就越亮。`,
+    },
+    {
+      title: "提起",
+      text: `<span class="only-mouse">继续按住，把鼠标往上移。</span><span class="only-touch">保持夹住，往上拖动。</span>夹紧力够大，草莓就会被一起带起来。条形图标出了需要的夹紧力。`,
+    },
+    {
+      title: "换个形状试试",
+      text: `松开，再去抓立方体。它的棱留下不同的图案：沿着手指的一条线，而不是一片。抓偏一点，就只有一侧会亮。`,
+    },
   ],
   quiz: [
     {
@@ -79,9 +113,24 @@ export const zh: LessonZh = {
       choices: ["让手指能完全张开和合拢，而不拉扯排线", "让信号更强", "因为短排线传不了 32 条线", "给读取板散热"],
       why: `手指会来回滑动，读取板却固定在电机旁边。那圈余量吸收了距离的变化，所以排线永远不会被拉紧。`,
     },
+    {
+      q: "你把草莓夹得更紧。触觉图上会怎样？",
+      choices: ["图变暗了", "被碰到的方格变得更亮", "出现更多行", "没有变化"],
+      why: `每个方格的颜色表示它的触摸点被按得多重：夹得越紧，读数越亮。`,
+    },
+    {
+      q: "你抓偏了立方体，只有左边的图亮了。为什么？",
+      choices: ["右边的传感垫坏了", "到目前为止只有左边的传感垫碰到了立方体", "右边的读取板没插好", "立方体只会显示在一侧"],
+      why: `左手指先碰到立方体并推着它走；等右手指也碰到它，右边的图才会亮。`,
+    },
+    {
+      q: "立方体的棱在传感垫上留下什么图案？",
+      choices: ["一片圆形区域", "沿着手指的一条线", "一个圆环", "所有方格同时亮"],
+      why: `立方体转了一个角度，让一条竖直的棱碰到每块传感垫：触摸点沿着手指排成一条细线。`,
+    },
   ],
   parts: {
-    intro: `本课给一台两指夹爪加上的东西（传感垫和读取板就是第 1 部分里的那些）。`,
+    intro: `本课给一台两指夹爪加上的东西：传感垫就是第 1.1–1.4 课里的那块，读取板则在第 2 部分里细讲。`,
     rows: [
       { name: "FlexiTac 传感垫", note: "每根手指的夹持面上一块。" },
       { name: "单面聚酰亚胺胶带", qty: "几条", note: "把每块传感垫压平；每条胶带盖过传感垫，绕过指尖，贴到背面。" },

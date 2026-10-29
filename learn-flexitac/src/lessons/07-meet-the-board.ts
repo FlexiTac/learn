@@ -22,7 +22,7 @@ const nb = (t: string) => t.replace(/ /g, "&nbsp;");
 
 export const lesson: Lesson = {
   id: "meet-the-board",
-  n: 3,
+  n: 7,
   title: "Meet the reading board",
   kicker: "The board",
   lede: `The small board that reads the pad. Lift its Arduino Nano and every part gets a label: what it is, and the one job it does.`,
@@ -84,7 +84,7 @@ floating. That drains much of the current that could sneak through other pressed
 pressed (<dfn title="a false reading at a crossing nobody pressed, caused by current sneaking through other pressed taxels">ghosting</dfn>).
 It limits ghosting but does not remove it.</p>`,
   wiring: {
-    intro: "How the parts are joined. All but the cable mapping come from the board schematic and its copper traces. Lesson 1.4 shows what travels on each wire during a frame.",
+    intro: "How the parts are joined. All but the cable mapping come from the board schematic and its copper traces. Lesson 2.2 shows what travels on each wire during a frame.",
     rows: [
       { from: "Nano D2", to: "U2 SER (data in)", note: "The data pin: the 1 or 0 that goes into the first shift register." },
       { from: "Nano D3", to: "SRCLK + RCLK of U2–U5", note: "The clock: one wire ticks all four chips at once." },

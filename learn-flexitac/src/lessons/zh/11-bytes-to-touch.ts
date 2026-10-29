@@ -26,7 +26,7 @@ export const zh: LessonZh = {
 <p><b>4 · 归一化。</b><dfn data-term="normalise">归一化（normalise）</dfn>就是把数值重新缩放到 0 到 1 之间。查看器把整帧除以其中最强的值（峰值，peak）。如果连峰值都低于阈值，说明其实没有东西在按，于是改为除以 ${NOISE_SCALE}，让残留的数值保持暗淡。有一点出人意料：因为这一步，轻按和重按都会达到最亮。<b>热力图（heatmap）显示的是你按在哪里，而不是按得多重。</b></p>
 <p><b>5 · 平滑与上色。</b>每幅新图像都会和上一幅混合：<code>shown = ${ALPHA} × new + ${(1 - ALPHA).toFixed(1)} × previous</code>。这叫<dfn data-term="ema">指数移动平均（EMA）</dfn>；权重 ${ALPHA} 叫作 alpha。alpha 越小，图像越平稳，但反应越慢。最后，每个 0–1 的值从 <dfn data-term="viridis">viridis 色图（colour map）</dfn>里取一个颜色：从深紫经过青绿到黄色。色盲的人也能看清，印成灰度也能分辨。</p>
 <p class="aside">试一试：把<b>阈值</b>设为 0，然后抬起手指，噪声会让整块传感垫都亮起来。再按住一个点，点击<b>重新校准</b>：松手之后，那个点就“失灵”了。这个实验室是<span class="badge badge-illustrative">示意</span>：按压力度和噪声是虚构的旋钮，但字节之后的每一步都是查看器的真实代码。</p>
-<p class="aside">要用真实的传感垫来看，得先给 Nano 装上扫描固件：<a href="#/lesson/build-your-own">第 1.6 课“自己动手做”</a>讲了怎样烧录（flash）固件，以及图像一直是暗的或看起来不对时该检查什么。</p>`,
+<p class="aside">要用真实的传感垫来看，得先给 Nano 装上扫描固件：<a href="#/lesson/build-your-own">第 1.4 课“自己动手做”</a>讲了怎样烧录（flash）固件，以及图像一直是暗的或看起来不对时该检查什么。</p>`,
   wiring: {
     intro: "每一步在哪里进行。只有第一行在 Arduino 上运行；其余都在你的电脑上运行。",
     rows: [

@@ -13,7 +13,7 @@ export const PAGES_ZH: Partial<Record<keyof typeof PAGES_EN, string>> = {
   "home.kw.flexible": "柔性",
   "home.kw.flexibleTip": "又薄又能弯，硬夹爪和软手指都能贴",
   "home.stack":
-    "这门课一课一课带你走完整条链路：先是<b>传感器</b>和读数板，再把它<b>装到机器人上</b>，最后<b>在仿真中</b>使用它。",
+    "这门课一课一课带你走完整条链路：先是<b>传感器</b>：怎样用它、怎样把它<b>装到机器人上</b>；再是<b>读取板</b>；最后<b>在仿真中</b>使用它。",
   "home.figAria":
     "在机器人上：每根手指上贴着一块 FlexiTac 传感垫的机器人夹爪拿起一颗草莓，两块传感垫的触觉图亮了起来（示意）。打开第 {no} 课",
   "home.figCap": "第 {no} 课 · 在机器人上 · 示意",
@@ -25,12 +25,12 @@ export const PAGES_ZH: Partial<Record<keyof typeof PAGES_EN, string>> = {
   // ------------------------------------------------------------------ about (src/views/about.ts)
   "about.title": "关于本课程",
   "about.lede":
-    'Learn FlexiTac 面向本科生和高中生，讲解 <a href="{site}" target="_blank" rel="noopener noreferrer">FlexiTac</a> 触觉传感器和它的读取板，配有可以拆开的实时交互图形：传感器本身（第 1 部分）、装在机器人手指上的 FlexiTac（第 2 部分），以及仿真器怎样做出同样的触觉（第 3 部分）。',
+    'Learn FlexiTac 面向本科生和高中生，讲解 <a href="{site}" target="_blank" rel="noopener noreferrer">FlexiTac</a> 触觉传感器和它的读取板，配有可以拆开的实时交互图形：传感器本身、怎样用它，以及装在机器人手指上的 FlexiTac（第 1 部分），读取板（第 2 部分），以及仿真器怎样做出同样的触觉（第 3 部分）。',
   "about.numbers.title": "数字从哪里来",
   "about.numbers.p1":
     '本站的每个数字都读自同一个共享数据文件夹，图形和讲解视频用的也是它。这个文件夹的内容提取自项目自己的文件：FPC 和电路板的 Gerber 文件、BOM 和贴片坐标文件、原理图、固件、硬件指南，以及<a href="{paper}" target="_blank" rel="noopener noreferrer">论文</a>。每条参数旁边的灰色标签注明了它的来源。',
   "about.numbers.p2":
-    "这个传感器没有力的测量数据，所以第 1 部分的压力曲线都是“示意”，从不以牛顿为单位显示。第 2 和第 3 部分会在你的浏览器里运行一个小型触觉仿真：它的力以牛顿（N）为单位，但每一个力也都是“示意”，来自为教学选定的数值。FlexiTac 在机器人上的安装方式参照 FlexiTac 团队自己的实物（他们的照片）；只为这个例子画出的零件标为“建议做法”。",
+    "这个传感器没有力的测量数据，所以压力曲线都是“示意”，从不以牛顿为单位显示。机器人那一课（1.5）和第 3 部分会在你的浏览器里运行一个小型触觉仿真：它的力以牛顿（N）为单位，但每一个力也都是“示意”，来自为教学选定的数值。FlexiTac 在机器人上的安装方式参照 FlexiTac 团队自己的实物（他们的照片）；只为这个例子画出的零件标为“建议做法”。",
   "about.credits.title": "致谢与许可",
   "about.credits.hw":
     'FlexiTac 硬件：<a href="{hwRepo}" target="_blank" rel="noopener noreferrer">FlexiTac 硬件仓库</a>（CC BY-NC 4.0）。',

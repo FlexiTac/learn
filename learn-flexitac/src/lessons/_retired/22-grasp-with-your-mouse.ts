@@ -1,3 +1,4 @@
+// RETIRED 2026-10-29: merged into src/lessons/21-put-on-a-robot.ts (Lesson 1.5, its steps 6-9); kept for reference, not in the course.
 // Lesson 2.2: grasp with your mouse (PLAN-section2-3.md §1, D4 (a): the gripper close-up and a table, fully live). Fig 5's
 // teleop mode (figures/EMBED.md "Fig 5 gripper: teleop mode") puts the gripper over a cutting mat with a strawberry, a
 // wooden cube in a row; the learner drives it with a plain 2D mouse (left / right along the row, up / down the
@@ -8,8 +9,8 @@
 // move, wheel or key hands the gripper back to the learner.
 import { COLS, ROWS } from "@shared/data/constants.mjs";
 import { DEFAULTS } from "@shared/models/touchsim.mjs";
-import { fact, getFact } from "../content/facts";
-import type { Lesson } from "../types";
+import { fact, getFact } from "../../content/facts";
+import type { Lesson } from "../../types";
 
 const MODEL = "touchsim (this course's in-browser model, shared/models/touchsim.mjs)";
 

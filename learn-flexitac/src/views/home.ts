@@ -32,13 +32,17 @@ const STILL = (name: string, t: Theme) =>
 //   left out (it stays in the lesson), so the board and the pad fill the card; public/media/board, one set per theme
 //   (flexitac-anatomy/film/board-cover-src).
 // - useit: the real sensor and its live heatmap, from the project video (one set for both themes).
+// - gripper: Fig 5 as Lesson 1.5 step 4 "Extenders and cables" plays it, a 12.4 s seamless loop: the FFC extenders seat
+//   on the tails, the flat cables run to the two reading boards, the gripper closes, opens wide and rests, then the
+//   cables fold away; no words in it; public/media/gripper, one set per theme (flexitac-anatomy/film/gripper-cover-src).
 const MEDIA = `${import.meta.env.BASE_URL}media/`;
 // (the pad's loop has the touch map's title and legend in it: in Chinese, its Chinese recording, cover-zh-<theme>,
-// flexitac-anatomy/film/cover-src/make-cover-zh.sh; the board's loop and the footage have no words)
+// flexitac-anatomy/film/cover-src/make-cover-zh.sh; the board's and the gripper's loops and the footage have no words)
 const LOOPS: Record<CoverLoop, (t: Theme) => string> = {
   pad: (t) => `${MEDIA}cover/cover-${lang() === "zh" ? "zh-" : ""}${t}`,
   board: (t) => `${MEDIA}board/board-${t}`,
   useit: () => `${MEDIA}useit/useit`,
+  gripper: (t) => `${MEDIA}gripper/gripper-${t}`,
 };
 const WIDE = matchMedia("(min-width: 1024px)"); // the hero figure is shown from this width up (pages.css .hero-fig)
 const REDUCED = matchMedia("(prefers-reduced-motion: reduce)");

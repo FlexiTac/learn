@@ -46,7 +46,7 @@ const band = (r: number) => `${byteIndex(r, 0) + 1}–${byteIndex(r, COLS - 1) +
 
 export const lesson: Lesson = {
   id: "one-frame",
-  n: 4,
+  n: 8,
   title: "One frame",
   kicker: "The board",
   lede: `Plug in the pad and watch the board read it, row by row: one sense line, all ${COLS} drive lines, then the next. The <b>${TAXELS}</b> readings, with <code>${HDR}</code> in front, make one <b>${FRAME_BYTES}</b>-byte frame, sent <b>${FRAME_HZ}</b> times a second.`,
@@ -76,7 +76,7 @@ export const lesson: Lesson = {
   // src/state/store.ts migrateSteps.
   stepsAdded: [0, { keep: 2 }, { keep: 4 }, { merge: 1 }],
   overview: `
-<p><b>The pad, plugged in.</b> Two flat cables join the pad to the board you met in Lesson 1.3: the Bottom FPC's ${COLS} drive
+<p><b>The pad, plugged in.</b> Two flat cables join the pad to the board you met in Lesson 2.1: the Bottom FPC's ${COLS} drive
 lines go to FPC2, next to the shift registers, and the Top FPC's ${ROWS} sense lines to FPC1, next to the multiplexer.
 Lesson 1.2's 2 × 2 and 12 × 32 cards drew the rule: power one drive line, listen to one sense line, and the reading belongs
 to the single crossing where they meet. Here the same rule runs in real chips. The sense line the board listens to glows
@@ -131,7 +131,7 @@ snapshot: ${ROWS + COLS} wires, ${TAXELS} taxels, one picture every ${FRAME_MS} 
 channel: 2 + ${repo16.rows} × ${COLS} = ${REPO16_BYTES} bytes. The computer has to expect the same size as the board sends, or
 frames won't line up. Try it in the code card: set <code>ROW_COUNT</code> to ${repo16.rows} and the offset to ${repo16.muxOffset}.</p>`,
   wiring: {
-    intro: `What each Nano pin does during one frame, and where each byte of the ${FRAME_BYTES} comes from (counting bytes from 1). Lesson 1.3's Wiring tab has every connection on the board.`,
+    intro: `What each Nano pin does during one frame, and where each byte of the ${FRAME_BYTES} comes from (counting bytes from 1). Lesson 2.1's Wiring tab has every connection on the board.`,
     rows: [
       { from: "Nano D2", to: "U2 SER (data in)", note: "HIGH for one clock at the start of each sense line (the 1 goes in), LOW otherwise." },
       { from: "Nano D3", to: "SRCLK + RCLK of U2–U5", note: `${PER_ROW} ticks per sense line: 2 to load and latch the 1, then one per drive line. The outputs lag the shift stage by one tick.` },

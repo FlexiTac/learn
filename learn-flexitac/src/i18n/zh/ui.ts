@@ -80,6 +80,7 @@ export const UI_ZH: Partial<Record<keyof typeof UI_EN, string>> = {
   "stage.failed": "画面加载失败：{msg}",
   "stage.buildMedia": "制作过程的照片和视频即将上线",
   "stage.noFigure": "本课没有图形",
+  "stage.realRobot": "真实机器人视频即将放上",
   "run.drawsFrom": "{name}从第 {n} 步（{title}）起显示这一结果",
   "run.hidden": "{name}在这一步中隐藏",
   "run.nothing": "本课没有可运行的内容",

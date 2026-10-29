@@ -9,7 +9,7 @@ const PCT = Math.round(ALPHA * 100);
 
 export const lesson: Lesson = {
   id: "bytes-to-touch",
-  n: 5,
+  n: 3,
   title: "Bytes to touch: the heatmap",
   kicker: "Use it",
   lede: `On the computer, ${FRAME_HZ} frames a second become a live picture of touch. Five small steps turn ${TAXELS} raw numbers into colours. Press the simulated pad in the Heatmap lab and watch each step.`,
@@ -49,7 +49,7 @@ hold a press and click <b>Recalibrate</b>: after you let go, that spot goes dead
 <span class="badge badge-illustrative">illustrative</span>: the press strength and noise are made-up knobs, but every
 step after the bytes is the real viewer code.</p>
 <p class="aside">To watch it with a real pad, the Nano needs the scanning firmware first:
-<a href="#/lesson/build-your-own">Lesson 1.6, Build your own</a>, shows how to flash it, and what to check when the
+<a href="#/lesson/build-your-own">Lesson 1.4, Build your own</a>, shows how to flash it, and what to check when the
 picture stays dark or looks wrong.</p>`,
   wiring: {
     intro: "Where each step happens. Only the first row runs on the Arduino; everything else runs on your computer.",
