@@ -275,11 +275,18 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   };
   makeRamp();
 
-  const off = document.createElement("canvas");
-  off.width = COLS;
-  off.height = ROWS;
-  const og = off.getContext("2d")!;
-  const img = og.createImageData(COLS, ROWS);
+  // one small canvas per stage, painted once a frame and then scaled into the big map and the stage's mini. (One shared
+  // canvas painted again before each copy flickered in Safari: its canvas copies run later, after the next stage was
+  // painted over the source, so the big map showed another stage's picture, often the blank one, or half of it)
+  const offs = new Map(
+    STAGES.map((s) => {
+      const cv = document.createElement("canvas");
+      cv.width = COLS;
+      cv.height = ROWS;
+      const g = cv.getContext("2d")!;
+      return [s.id, { cv, g, img: g.createImageData(COLS, ROWS) }] as const;
+    }),
+  );
 
   function stageValue(id: StageId, k: number): number {
     switch (id) {
@@ -296,6 +303,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     }
   }
   function paintStage(s: Stage) {
+    const { g: og, img } = offs.get(s.id)!;
     if (s.id === "shown") {
       const rgb = colorize(toU8(host.filtered));
       for (let k = 0; k < N; k++) {
@@ -320,9 +328,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     const g = cv.getContext("2d")!;
     const W = cv.width, H = cv.height;
     if (!W || !H) return;
-    paintStage(s);
     g.imageSmoothingEnabled = false;
-    g.drawImage(off, 0, 0, W, H);
+    g.drawImage(offs.get(s.id)!.cv, 0, 0, W, H);
     const cw = W / COLS, ch = H / ROWS;
     if (grid) {
       g.strokeStyle = s.id === "shown" ? "rgba(0,0,0,.22)" : "rgba(128,128,128,.22)";
@@ -352,6 +359,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   let selected: StageId = "shown";
   const stageOf = (id: StageId) => STAGES.find((s) => s.id === id)!;
   function draw() {
+    for (const s of STAGES) paintStage(s);
     blit(big, stageOf(selected), true);
     for (const s of STAGES) blit(minis.get(s.id)!, s, false);
     const k = inspect.r * COLS + inspect.c;
