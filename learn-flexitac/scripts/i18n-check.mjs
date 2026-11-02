@@ -64,7 +64,7 @@ const KEEP = new Set(
     "reBot-DevArm DevArm PyFlexiTac Adafruit Gerber Gerbers BOM CD74HC4067 SN74HC595 74HC595 Seeed Studio CoRL Python " +
     "C++ Arduino-IDE IDE ATmega328P CH340 GND VCC Vcc ADC LOW HIGH SER SRCLK RCLK OE COM SPI UART LED LEDs " +
     "mm cm µm um mil Hz kHz MHz ms µs us s kΩ MΩ Ω V mV mA µA A W baud min hex px fps dB N kn kd ḋ d k " +
-    "Ctrl Enter Esc Shift Space Tab Alt Cmd ⌘ Mac Windows Linux macOS Chrome GitHub arXiv " +
+    "Ctrl Enter Esc Shift Space Tab Alt Cmd ⌘ Mac Windows Linux macOS Chrome GitHub Discord arXiv " +
     "Viridis VIRIDIS RGB PNG CSV JSON numpy NumPy OpenCV Matplotlib pyserial serial Serial PyPI pip CLI arduino-cli " +
     "Kapton Mylar Kelvin Voigt Kelvin–Voigt Kelvin-Voigt"
   ).split(/\s+/),
@@ -307,7 +307,8 @@ const SKIP_KEYS = new Set(
     "fig part from as tag data dataset width height x y cx cy r rx ry points font family weight anchor align baseline " +
     "cursor display position color background border easing ease direction unit format codec mime poster preload " +
     "decoding loading crossOrigin rel target inputmode autocomplete spellcheck pattern step min max value_type event " +
-    "stage demo widget select tab theme state status phase variant symptom form side shape cap join cls svg path"
+    "stage demo widget select tab theme state status phase variant symptom form side shape cap join cls svg path " +
+    "Accept"
   ).split(/\s+/),
 );
 const TEXT_ATTRS = /\b(aria-label|aria-valuetext|aria-description|title|alt|placeholder|data-tip|data-label)\s*=\s*"([^"]*)"/g;

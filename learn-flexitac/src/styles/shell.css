@@ -152,11 +152,17 @@
 }
 
 /* ---------------------------------------------------------------- top bar */
+/* One row: the brand and the course progress on the left, the GitHub card and the Discord button on the right. The
+   three boxes are exactly as tall as the brand's lettering (the cap tops of the name to the foot of the tagline) and
+   line up with it: shell.ts measures the letters (--ink-top, --ink-foot: how far the brand's text box reaches above and
+   below them; --ink-h: their height) and the brand's text gives that space up (negative margins), so the row is the
+   lettering's height and the padding is measured from the letters: 16 px above, 14 px below to the page, as above
+   and below the old, taller cards. Before the first measure (and without a canvas) the margins are 0 and the boxes
+   take a height near the lettering's, centred on it. */
 .topbar {
   grid-column: 2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   padding: calc(16px + env(safe-area-inset-top, 0px)) var(--gutter-r) 14px var(--gutter-l);
   min-width: 0;
@@ -168,6 +174,7 @@
   text-decoration: none;
   color: var(--ink);
   min-width: 0;
+  flex: none;
 }
 .brand .logo {
   display: none;
@@ -181,6 +188,7 @@
 .brand-text {
   display: grid;
   gap: 4px;
+  margin: calc(-1 * var(--ink-top, 0px)) 0 calc(-1 * var(--ink-foot, 0px));
 }
 .brand-name {
   font-family: var(--mono);
@@ -206,48 +214,68 @@
 .brand:hover {
   color: var(--ink);
 }
+/* (shell.ts: a line's baseline, read off this zero-size box while it sits at the end of the line) */
+.baseline-probe {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: baseline;
+}
 
-.status {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-}
+/* the three boxes: one height, one border, one radius; the two cards on the card colour, Discord filled like the
+   site's primary buttons (ink on light, light on dark: the logo plate's colours). No shadow (as on flexitac.github.io):
+   the site's card shadow darkens the row under a card's bottom border, so the two cards would end a pixel below the
+   tagline and the Discord button. */
 .progress-card,
-.spec-card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-.progress-card {
+.gh-card,
+.discord-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  flex: none;
+  height: var(--ink-h, 38px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
   text-decoration: none;
   color: var(--ink);
-  min-width: 210px;
 }
-.progress-card:hover {
+.progress-card,
+.gh-card {
+  background: var(--card);
+}
+.progress-card:hover,
+.gh-card:hover {
   color: var(--ink);
   border-color: var(--line-strong);
 }
-.progress-icon {
-  width: 28px;
-  height: 28px;
-  stroke-width: 1.4;
-}
-.progress-body {
-  display: grid;
-  gap: 6px;
-  flex: 1;
-}
-.progress-label {
+/* the labels: the site's small mono capitals */
+.progress-label,
+.gh-name,
+.discord-label {
   font-family: var(--mono);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* course progress: right after the brand */
+.progress-card {
+  gap: 10px;
+  margin-left: clamp(0px, 1.25vw, 16px);
+  padding: 0 14px 0 11px;
+}
+.progress-icon {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.4;
+}
+.progress-body {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
 }
 .progress-row {
   display: flex;
@@ -271,21 +299,72 @@
   transition: width 0.6s var(--ease);
 }
 .progress-count {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1;
 }
-.spec-card {
+
+/* GitHub and Discord: at the far right */
+.topbar-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex: none;
+}
+.mark {
+  display: block;
+  flex: none;
+  fill: currentColor;
+}
+.gh-card {
+  gap: 9px;
+  padding: 0 13px 0 10px;
+}
+.gh-card .mark-github {
+  width: 22px;
+  height: 22px;
+}
+.gh-text {
   display: grid;
-  align-content: center;
-  gap: 2px;
-  padding: 8px 14px;
-  font-size: 11.5px;
-  color: var(--muted);
-  letter-spacing: 0.04em;
+  gap: 4px;
 }
-.spec-card b {
-  color: var(--ink);
+.gh-stats {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--muted);
+}
+.gh-stats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.gh-stats .mark {
+  width: 12px;
+  height: 12px;
+}
+.gh-stats b {
   font-weight: 600;
+  color: var(--ink);
+}
+.discord-btn {
+  gap: 9px;
+  padding: 0 14px 0 11px;
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.discord-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.discord-btn .mark-discord {
+  width: 20px;
+  height: 20px;
 }
 
 /* ---------------------------------------------------------------- phone: bottom bar */
@@ -376,21 +455,102 @@
     font-size: 10px;
     letter-spacing: 0.22em;
   }
-  .status {
-    width: 100%;
-  }
+  /* the brand's row ends in the GitHub and Discord marks (square buttons as tall as the lettering, their names in
+     their labels and tooltips); the progress card takes the next row, the whole width, as it always has on phones
+     (shell.ts moves it after the links in the page, so the keyboard goes along the rows too) */
   .progress-card {
-    flex: 1;
+    flex: 1 0 100%;
     min-width: 0;
+    height: auto;
+    margin-left: 0;
+    gap: 12px;
     padding: 8px 12px;
+    border-radius: var(--radius);
   }
-  .spec-card {
-    display: none;
+  .progress-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .progress-body {
+    gap: 6px;
+  }
+  .progress-label {
+    line-height: inherit;
+  }
+  .progress-count {
+    font-size: 13px;
+    line-height: inherit;
   }
 }
-@media (min-width: 601px) and (max-width: 860px) {
-  .spec-card {
+/* phones and narrow tablets: GitHub and Discord show only their marks, on square buttons (tablets: in the one row, after
+   the progress card; the full cards need ~830 px) */
+@media (max-width: 859.98px) {
+  .gh-text,
+  .discord-label {
     display: none;
+  }
+  .gh-card,
+  .discord-btn {
+    width: var(--ink-h, 34px);
+    padding: 0;
+    justify-content: center;
+  }
+  .gh-card .mark-github,
+  .discord-btn .mark-discord {
+    width: 18px;
+    height: 18px;
+  }
+  /* a finger's target bigger than the mark (30-36 px; ~44 is the comfortable size): each link reaches 7 px up into the
+     header's padding and down into the space below it, and 3 px sideways, no further than half the gap between them
+     (the insets count from inside the 1 px border) */
+  .gh-card,
+  .discord-btn {
+    position: relative;
+  }
+  .gh-card::after,
+  .discord-btn::after {
+    content: "";
+    position: absolute;
+    inset: -8px -4px;
+  }
+}
+/* the narrowest phones (320 px): the brand's row would need ~330 px for the logo, the name and the two marks; a smaller
+   logo, a tighter name and smaller gaps bring it to ~300 px (the Chinese row, whose marks are taller, included) */
+@media (max-width: 359.98px) {
+  .topbar {
+    column-gap: 10px;
+  }
+  .brand {
+    gap: 8px;
+  }
+  .brand .logo {
+    width: 32px;
+    height: 32px;
+  }
+  .brand-name {
+    font-size: 16px;
+    letter-spacing: 0.1em;
+  }
+  .topbar-links {
+    gap: 6px;
+  }
+}
+/* the narrowest tablets (601-679 px): the brand, the progress card and the two marks need ~560 px in one row and have
+   ~510; the card drops its book icon and its extra space after the brand and lets its pips narrow (the label and the
+   count stay), and the marks sit closer (~495 px in Chinese, whose marks are taller) */
+@media (min-width: 601px) and (max-width: 679.98px) {
+  .progress-card {
+    margin-left: 0;
+  }
+  .progress-icon {
+    display: none;
+  }
+  .topbar-links {
+    gap: 6px;
+  }
+  /* (above explore.css's 132 px, which loads later) */
+  .progress-card .progress-pips {
+    min-width: 100px;
   }
 }
 /* a phone on its side (wider than 600 px, at most 500 px tall: 844 x 390, 932 x 430, ~340 px tall with Safari's bars):

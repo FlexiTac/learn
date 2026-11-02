@@ -11,7 +11,7 @@ the reader as “你”. Say what a thing *does* before you name it, as the Engl
 
 | Rule | Example |
 |---|---|
-| **Product and part names stay English.** | FlexiTac, Velostat, Arduino Nano, FPC, FFC, PCB, USB, A0, D2–D8, AA 55, 74HC595, CD74HC4067, Isaac, VT-Refine, 3D-ViTac, UMI, reBot (also PyFlexiTac, Gerber, BOM, arduino-cli, Adafruit 1361, U2–U6, FPC1/FPC2, E#, SER, SRCLK, RCLK, GND) |
+| **Product and part names stay English.** | FlexiTac, Velostat, Arduino Nano, FPC, FFC, PCB, USB, A0, D2–D8, AA 55, 74HC595, CD74HC4067, Isaac, VT-Refine, 3D-ViTac, UMI, reBot (also PyFlexiTac, Gerber, BOM, arduino-cli, Adafruit 1361, U2–U6, FPC1/FPC2, E#, SER, SRCLK, RCLK, GND; the header's GitHub and Discord) |
 | **Key concepts are bilingual at their FIRST mention in each lesson (and each glossary definition), then Chinese only.** Write 中文（English）. | first 「触觉像素（taxel）」, later 「触觉像素」 |
 | In `<dfn>`, put the first-mention form inside and name the glossary entry. | `<dfn data-term="taxel">触觉像素（taxel）</dfn>` |
 | **Code, formulas, units, numbers and serial bytes stay as they are.** | `raw >> 2`, `V = 5 V × R1 / (R1 + R)`, 0.1 mm, 100 Hz, 10 kΩ, 2,000,000 baud, `AA 55`, 0x41 |
