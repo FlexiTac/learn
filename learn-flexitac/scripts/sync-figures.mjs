@@ -1,8 +1,9 @@
 // Copy the finished anatomy figures into public/figures so Vite serves and ships them as static files.
 //   node scripts/sync-figures.mjs            (also runs before `npm run dev` and `npm run build`)
-// Source: ../flexitac-anatomy/figures/{pad,crossing,board,gripper}/{name}.html and {name}-light.html
+// Source: ../flexitac-anatomy/figures/{pad,crossing,board,gripper}/{name}.html and {name}-light.html (and Fig 3's
+// board-layers/ folder of pictures)
 // Override the source with FLEXITAC_FIGURES=/abs/path/to/figures.
-import { copyFileSync, existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -37,8 +38,15 @@ if (missing.length) {
 }
 console.log(`sync-figures: ${copied} file(s) in public/figures`);
 
-// The site copies the lesson accents, the hotspot teal and a few materials (gold, Velostat, rubber, signal pink: the
-// Velostat demo card) from figures/palette.css into src/styles/tokens.css.
+// Fig 3's realistic layers (figures/board/board-layers: rendered pictures the page loads beside it, build.mjs REAL)
+const layers = join(src, "board", "board-layers");
+if (existsSync(layers)) {
+  cpSync(layers, join(out, "board-layers"), { recursive: true });
+  console.log("sync-figures: board-layers copied");
+}
+
+// The site copies the lesson accents, the hotspot teal and a few materials (gold with its ENIG sheen's stops, Velostat,
+// rubber, signal pink: the demo cards) from figures/palette.css into src/styles/tokens.css.
 // Warn (don't fail) when the two drift apart.
 const palette = join(src, "palette.css");
 if (existsSync(palette)) {
@@ -46,7 +54,7 @@ if (existsSync(palette)) {
     const i = css.indexOf(start);
     if (i < 0) return {};
     const block = css.slice(i, end ? css.indexOf(end, i + start.length) : undefined);
-    return Object.fromEntries([...block.matchAll(/(--ft-(?:lesson-\d+(?:-soft)?|hotspot(?:-soft)?|(?:gold|velostat|rubber)-(?:top|left|right|edge)|signal(?:-soft)?)):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim().toLowerCase()]));
+    return Object.fromEntries([...block.matchAll(/(--ft-(?:lesson-\d+(?:-soft)?|hotspot(?:-soft)?|(?:gold|velostat|rubber)-(?:top|left|right|edge)|gold-(?:shine|shade)|signal(?:-soft)?)):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim().toLowerCase()]));
   };
   const pal = readFileSync(palette, "utf8");
   const tok = readFileSync(join(root, "src/styles/tokens.css"), "utf8");

@@ -1,7 +1,7 @@
 // Robot grasp: FlexiTac on a robot hand, live. The reBot B601-DM arm (in its real colours: silver, black, Seeed
 // lime; fin-shaped soft fingers, one FlexiTac pad on each finger) picks up a strawberry, lifts it, holds it and puts
 // it back, as a 9 s seamless loop. The video frame holds the whole arm on the left and a round close-up of the
-// gripper on the right (the same view, magnified, following the strawberry), where the amber pad on the right
+// gripper on the right (the same view, magnified, following the strawberry), where the pad on the right
 // finger's face is plain to see; a "FlexiTac pad" tag points at it while the fingers hold still. Beside the video,
 // the two pads' 12 x 32 touch maps light up in step with it. Made for Lesson 1 step 1 (mount it as the step's
 // widget, filling the stage) and meant to be reused in Section 2.
@@ -156,7 +156,7 @@ const PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5.5h3.6v1
 const S = strings(
   {
     label:
-      "Animation: a robot arm with soft, fin-shaped fingers. A thin FlexiTac touch pad is stuck on the inner face of each finger; a round close-up beside the arm shows the gripper bigger, with the amber pad on the right finger. The arm reaches down, closes its fingers on a strawberry, lifts it, holds it, puts it back and lets go. Beside it, two touch maps show what each pad feels: a patch of touch spots lights up while the fingers hold the strawberry, a little brighter while it hangs in the air, and goes dark when the fingers open.",
+      "Animation: a robot arm with soft, fin-shaped fingers. A thin FlexiTac touch pad is stuck on the inner face of each finger; a round close-up beside the arm shows the gripper bigger, with the pad on the right finger. The arm reaches down, closes its fingers on a strawberry, lifts it, holds it, puts it back and lets go. Beside it, two touch maps show what each pad feels: a patch of touch spots lights up while the fingers hold the strawberry, a little brighter while it hangs in the air, and goes dark when the fingers open.",
     tag: "FlexiTac pad",
     pause: "Pause the animation",
     play: "Play the animation",
@@ -176,7 +176,7 @@ const S = strings(
   },
   {
     label:
-      "动画：一只带鳍形软指的机械臂。每个手指的内侧都贴着一块薄薄的 FlexiTac 触觉传感垫；机械臂旁边的圆形放大图把夹爪放大显示，右手指上的琥珀色传感垫清晰可见。机械臂向下伸，用手指夹住一颗草莓，把它拿起、停住、放回，再松开。旁边的两张触觉图显示每块传感垫感受到的东西：手指夹住草莓时，一片触摸点亮起；草莓悬在空中时更亮一些；手指张开后又变暗。",
+      "动画：一只带鳍形软指的机械臂。每个手指的内侧都贴着一块薄薄的 FlexiTac 触觉传感垫；机械臂旁边的圆形放大图把夹爪放大显示，右手指上的传感垫清晰可见。机械臂向下伸，用手指夹住一颗草莓，把它拿起、停住、放回，再松开。旁边的两张触觉图显示每块传感垫感受到的东西：手指夹住草莓时，一片触摸点亮起；草莓悬在空中时更亮一些；手指张开后又变暗。",
     tag: "FlexiTac 传感垫",
     pause: "暂停动画",
     play: "播放动画",

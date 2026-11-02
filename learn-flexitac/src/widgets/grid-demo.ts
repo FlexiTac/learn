@@ -57,6 +57,7 @@ import { fill, strings } from "../i18n";
 import { paintText } from "../i18n/paint";
 import type { WidgetCtx, WidgetInstance } from "../types";
 import { h } from "../ui/dom";
+import { enigDefs, enigFill, enigGrain } from "../ui/enig";
 import "./grid-demo.css";
 
 // ------------------------------------------------------------------ the sync API
@@ -613,6 +614,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
     sG: SVGGElement[];
     sHalo: SVGPathElement[];
     sTop: SVGPathElement[];
+    /** The grain over each top strip's top face (bare ENIG, ../ui/enig.ts): its outline follows the face's. */
+    sGrain: SVGPathElement[];
     sFront: SVGPathElement[];
     sEnd: SVGPathElement[];
     sDots: SVGPathElement[];
@@ -778,6 +781,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
     svgEl("stop", { offset: 1, "stop-color": "#fff", "stop-opacity": 1 }, fadeG);
     const mask = svgEl("mask", { id: `${uid}-fade`, maskUnits: "userSpaceOnUse", x: 0, y: -2, width: W, height: H + 4 }, defs);
     svgEl("rect", { x: 0, y: -2, width: W, height: H + 4, fill: `url(#${uid}-fadeg)` }, mask);
+    // the strips' top faces are bare ENIG: the photo look's sheen and grain (../ui/enig.ts)
+    enigDefs(defs, uid);
 
     const { ln, lf } = lensOf(plan);
     const dEnd = XD.map((x) => P(x, ln, TB / 2));
@@ -920,7 +925,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
       dG.push(g);
       const topPts = [P(x - HS, -lf, TB), P(x + HS, -lf, TB), P(x + HS, ln, TB), P(x - HS, ln, TB)];
       dHalo.push(svgEl("path", { class: "gd-halo", d: pathOf([P(x - HS, -lf, TB), P(x + HS, -lf, TB), P(x + HS, -lf, 0), P(x + HS, ln, 0), P(x - HS, ln, 0), P(x - HS, ln, TB)]) }, g));
-      svgEl("path", { class: "gd-g-top", d: pathOf(topPts) }, g);
+      enigFill(svgEl("path", { class: "gd-g-top", d: pathOf(topPts) }, g), uid);
+      enigGrain(g, uid, pathOf(topPts));
       svgEl("path", { class: "gd-g-r", d: pathOf([P(x + HS, -lf, 0), P(x + HS, ln, 0), P(x + HS, ln, TB), P(x + HS, -lf, TB)]) }, g);
       svgEl("path", { class: "gd-g-l", d: pathOf([P(x - HS, ln, 0), P(x + HS, ln, 0), P(x + HS, ln, TB), P(x - HS, ln, TB)]) }, g);
       // the sheet's shadow on it (light from straight above)
@@ -998,6 +1004,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
     const sG: SVGGElement[] = [];
     const sHalo: SVGPathElement[] = [];
     const sTop: SVGPathElement[] = [];
+    const sGrain: SVGPathElement[] = [];
     const sFront: SVGPathElement[] = [];
     const sEndF: SVGPathElement[] = [];
     const sDots: SVGPathElement[] = [];
@@ -1007,7 +1014,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
       sHalo.push(svgEl("path", { class: "gd-halo" }, g));
       sFront.push(svgEl("path", { class: "gd-g-l" }, g));
       sEndF.push(svgEl("path", { class: "gd-g-r" }, g));
-      sTop.push(svgEl("path", { class: "gd-g-top" }, g));
+      sTop.push(enigFill(svgEl("path", { class: "gd-g-top" }, g), uid));
+      sGrain.push(enigGrain(g, uid));
       sDots.push(svgEl("path", { class: "gd-dot gd-dot-on-strip" }, g));
       if (plan !== "mini") svgEl("circle", { class: "gd-joint", cx: f1(sEnd[i][0]), cy: f1(sEnd[i][1]), r: 2.2 }, g);
     });
@@ -1048,7 +1056,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
       return e;
     });
 
-    A = { plan, s, P, ln, lf, dG, dHalo, dDots, sG, sHalo, sTop, sFront, sEnd: sEndF, sDots, spotG, spotFace, spotLine, chains, tips, cir, hits };
+    A = { plan, s, P, ln, lf, dG, dHalo, dDots, sG, sHalo, sTop, sGrain, sFront, sEnd: sEndF, sDots, spotG, spotFace, spotLine, chains, tips, cir, hits };
   };
 
   // ------------------------------------------------------------------ the frame
@@ -1072,7 +1080,9 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): GridDemoInstance {
       const top = (x: number) => zTb(i, x) + TT;
       const yb = y - HS;
       const yf = y + HS;
-      set(A!.sTop[i], "d", pathOf([...xs.map((x) => P(x, yb, top(x))), ...[...xs].reverse().map((x) => P(x, yf, top(x)))]));
+      const dTop = pathOf([...xs.map((x) => P(x, yb, top(x))), ...[...xs].reverse().map((x) => P(x, yf, top(x)))]);
+      set(A!.sTop[i], "d", dTop);
+      set(A!.sGrain[i], "d", dTop);
       set(A!.sFront[i], "d", pathOf([...xs.map((x) => P(x, yf, top(x))), ...[...xs].reverse().map((x) => P(x, yf, zTb(i, x)))]));
       set(A!.sEnd[i], "d", pathOf([P(ln, yb, zTb(i, ln)), P(ln, yf, zTb(i, ln)), P(ln, yf, top(ln)), P(ln, yb, top(ln))]));
       // (the halo: the strip's outline as seen, top face, its end and its front face)

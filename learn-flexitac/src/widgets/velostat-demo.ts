@@ -20,6 +20,7 @@ import { paintText, setTextBeside } from "../i18n/paint";
 import type { WidgetCtx, WidgetInstance } from "../types";
 import { h } from "../ui/dom";
 import { fmtR } from "../ui/ohms";
+import { enigDefs, enigFill, enigGrain } from "../ui/enig";
 import "./velostat-demo.css";
 
 const T_PRESS = 2.2;
@@ -103,8 +104,11 @@ function rng(seed: number) {
   };
 }
 
+let seq = 0;
+
 export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   const reduced = ctx.reducedMotion();
+  const uid = `vd${++seq}`;
   const root = h("div", { class: "vd" });
   root.innerHTML = `
     <p class="vd-kicker mono"><span class="vd-name">Velostat</span><span class="vd-sep" aria-hidden="true">·</span><span class="vd-ill" title="${S().illTip}" data-t-title="illTip" data-t="ill">${S().ill}</span></p>
@@ -144,6 +148,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     prof: (x: number) => number;
     xs: number[];
     topCu: SVGPathElement;
+    /** The grain over the top copper (bare ENIG, ../ui/enig.ts): its outline follows the copper's. */
+    topGrain: SVGPathElement;
     film: SVGPathElement;
     tip: SVGPathElement;
     tipHi: SVGPathElement;
@@ -180,7 +186,10 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     for (let x = sx0; x < sx1; x += 3) xs.push(x);
     xs.push(sx1);
 
-    svgEl("rect", { class: "vd-cu", x: sx0, y: yb0, width: f1(sx1 - sx0), height: cu }, animSvg);
+    // the copper is bare ENIG where it touches the film: the photo look's sheen and grain (../ui/enig.ts)
+    enigDefs(svgEl("defs", {}, animSvg), uid);
+    enigFill(svgEl("rect", { class: "vd-cu", x: sx0, y: yb0, width: f1(sx1 - sx0), height: cu }, animSvg), uid);
+    enigGrain(animSvg, uid, `M${sx0},${yb0}H${f1(sx1)}V${yb0 + cu}H${sx0}Z`);
     const film = svgEl("path", { class: "vd-film" }, animSvg);
     const gGrains = svgEl("g", { class: "vd-grains" }, animSvg);
     const rand = rng(1361);
@@ -202,7 +211,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
         flip: k % 2 ? -1 : 1,
       };
     });
-    const topCu = svgEl("path", { class: "vd-cu" }, animSvg);
+    const topCu = enigFill(svgEl("path", { class: "vd-cu" }, animSvg), uid);
+    const topGrain = enigGrain(animSvg, uid);
     const tip = svgEl("path", { class: "vd-tip" }, animSvg);
     const tipHi = svgEl("path", { class: "vd-tip-hi" }, animSvg);
     const lab = (y: number, t: string) => {
@@ -214,7 +224,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       lab(yv0 + T0 / 2, "Velostat");
       lab(yb0 + cu / 2, S().copper);
     }
-    A = { W, H, sx0, sx1, cu, T0, yb0, yv0, cx, fw, prof, xs, topCu, film, tip, tipHi, grains, chains };
+    A = { W, H, sx0, sx1, cu, T0, yb0, yv0, cx, fw, prof, xs, topCu, topGrain, film, tip, tipHi, grains, chains };
   };
 
   const drawAnim = () => {
@@ -230,6 +240,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     for (const x of xs.slice(1)) d += `L${f1(x)},${f1(filmTop(x) - cu)}`;
     for (let i = xs.length - 1; i >= 0; i--) d += `L${f1(xs[i])},${f1(filmTop(xs[i]))}`;
     A.topCu.setAttribute("d", `${d}Z`);
+    A.topGrain.setAttribute("d", `${d}Z`);
     let fd = `M${f1(xs[0])},${f1(filmTop(xs[0]))}`;
     for (const x of xs.slice(1)) fd += `L${f1(x)},${f1(filmTop(x))}`;
     A.film.setAttribute("d", `${fd}L${f1(sx1)},${yb0}L${f1(sx0)},${yb0}Z`);

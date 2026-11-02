@@ -16,11 +16,12 @@
   --wp-wire: color-mix(in oklab, var(--ink) 42%, var(--face));
   --wp-box: var(--card-2);
   --wp-box-edge: color-mix(in oklab, var(--ink) 55%, var(--face));
-  /* palette.css, light: copper, the FPC film, the laminating sheet, the fingertip (pad.css) */
-  --wp-cu: #c0702e;
-  --wp-cu-hi: #a2561c;
-  --wp-fpc: #e8963c;
-  --wp-fpc-edge: #8a5412;
+  /* palette.css, light: copper (a deeper orange than the film, the photo look), the FPC film, the laminating sheet, the
+     fingertip (pad.css) */
+  --wp-cu: #c2650c;
+  --wp-cu-hi: #c2650c;
+  --wp-fpc: #e08607;
+  --wp-fpc-edge: #6b2a03;
   --wp-lam: #e1e9ee;
   --wp-lam-edge: #8a959b;
   --wp-hatch: rgba(24, 24, 26, 0.3);
@@ -33,10 +34,10 @@
   --wp-power-soft: color-mix(in oklab, var(--ft-signal) 34%, transparent);
   --wp-listen-soft: color-mix(in oklab, var(--ft-hotspot) 34%, transparent);
   --wp-box: var(--card-2);
-  --wp-cu: #c98140;
-  --wp-cu-hi: #e2894a;
-  --wp-fpc: #a66a24;
-  --wp-fpc-edge: #d39552;
+  --wp-cu: #d0782a;
+  --wp-cu-hi: #b35a05;
+  --wp-fpc: #cf7800;
+  --wp-fpc-edge: #edc197;
   --wp-lam: #3c4752;
   --wp-lam-edge: #67727d;
   --wp-hatch: rgba(255, 255, 255, 0.26);
@@ -48,10 +49,10 @@
     --wp-power-soft: color-mix(in oklab, var(--ft-signal) 34%, transparent);
     --wp-listen-soft: color-mix(in oklab, var(--ft-hotspot) 34%, transparent);
     --wp-box: var(--card-2);
-    --wp-cu: #c98140;
-    --wp-cu-hi: #e2894a;
-    --wp-fpc: #a66a24;
-    --wp-fpc-edge: #d39552;
+    --wp-cu: #d0782a;
+    --wp-cu-hi: #b35a05;
+    --wp-fpc: #cf7800;
+    --wp-fpc-edge: #edc197;
     --wp-lam: #3c4752;
     --wp-lam-edge: #67727d;
     --wp-hatch: rgba(255, 255, 255, 0.26);

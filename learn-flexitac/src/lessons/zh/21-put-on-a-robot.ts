@@ -1,6 +1,6 @@
 // Chinese for src/lessons/21-put-on-a-robot.ts (docs/i18n.md; words per docs/i18n-terms-zh.md). An empty slot shows the English.
 // 2026-10-29: steps 6-9, the last three quiz questions and the teleop specs came from "Grasp with your mouse" (its old
-// Chinese is in src/lessons/_retired/zh-22-grasp-with-your-mouse.ts).
+// Chinese is in src/lessons/_retired/zh-22-grasp-with-your-mouse.ts). 2026-11-01: those four steps became one, step 6.
 import { COLS, FRAME_HZ, ROWS } from "@shared/data/constants.mjs";
 import type { LessonZh } from "../../i18n/localize";
 
@@ -26,7 +26,7 @@ export const zh: LessonZh = {
 </ul>
 <p><b>为什么每根手指一块板？</b>每块板正好读一块传感垫（${ROWS} × ${COLS} = ${TAXELS} 个触摸点），所以两块传感垫从不共用导线，也不用互相等待：各自每秒发送 ${FRAME_HZ} 帧（frame）。排线很短，只需跟着手指滑动，不用经过机器人的任何关节。但它们仍要留出余量，让手指能完全张开和合拢，而不会拉扯排线。</p>
 <p><b>其他夹爪。</b>这只是一个例子。同样的三个步骤也适用于平行平爪、ALOHA 和 xArm 的夹爪以及 LeRobot 机械臂：把传感垫贴在夹持面上，把尾线插进转接板，再用排线连到读取板。要换的只是承载手指的支架。</p>
-<p><b>轮到你来操控（第 6–9 步）。</b>指尖跟着鼠标走：左右移动鼠标，夹爪就沿着切割垫上的一排物体滑动；上下移动鼠标，夹爪就升高或降低。按住鼠标按键，手指合拢；松开，手指张开。夹住东西后把鼠标往上移，它就被带起来了。靠近物体时，夹爪会自动对准它，一条虚线标出指尖将落下的位置；张开的手指降到足够低、围住物体时，物体会发光。（键盘也可以：方向键移动和升降，空格键夹紧；滚轮也能升降。）<span class="only-touch">在触摸屏上，在图上拖动来移动夹爪，轻点<b>夹住</b>合拢手指，轻点<b>松开</b>张开。</span></p>
+<p><b>轮到你来操控（第 6 步）。</b>指尖跟着鼠标走：左右移动鼠标，夹爪就沿着切割垫上的一排物体滑动；上下移动鼠标，夹爪就升高或降低。按住鼠标按键，手指合拢；松开，手指张开。夹住东西后把鼠标往上移，它就被带起来了。靠近物体时，夹爪会自动对准它，一条虚线标出指尖将落下的位置；张开的手指降到足够低、围住物体时，物体会发光。（键盘也可以：方向键移动和升降，空格键夹紧；滚轮也能升降。）<span class="only-touch">在触摸屏上，在图上拖动来移动夹爪，轻点<b>夹住</b>合拢手指，轻点<b>松开</b>张开。</span></p>
 <p><b>触觉图显示什么。</b>夹爪下方是两块传感垫的触觉图，左手指和右手指，各 ${ROWS} × ${COLS} 个方格：正是两块读取板会发送的数据。某个触摸点被按压时，对应的方格就亮起来；按得越重，方格越亮。旁边的条形图是总的夹紧力，上面有一个标记，表示这个物体被提起之前需要多大的夹紧力。</p>
 <p><b>形状留下图案。</b>草莓压出一片圆形的区域，立方体的棱压出一条沿着手指的线。如果抓偏了，一开始只有一根手指碰到物体：一张图亮了，另一张还是暗的，物体会被推着走，直到另一根手指也碰到它。</p>
 <p><b>为什么这很重要。</b>机器人看到这些图，就知道自己是不是真的抓住了东西、东西夹在手指间的哪个位置、夹得有多紧，即使摄像头看不到手指也一样。</p>
@@ -47,7 +47,7 @@ export const zh: LessonZh = {
     // 0–100 mm
     { label: "夹爪开合范围" },
     { label: "支架和板托", value: "为这台夹爪绘制" },
-    // the teleop steps (6-9)
+    // the teleop step (6)
     { label: "夹紧力", value: "每块传感垫最大 5 N", note: "手指合拢在这里停下：即本模型中电机的堵转力" },
     // k_n = 0.6 N/mm
     { label: "每个点的弹簧" },
@@ -82,20 +82,8 @@ export const zh: LessonZh = {
       text: `每块板有自己的 USB 线，所以电脑会得到两张触觉图：左和右。<span class="only-mouse">点击</span><span class="only-touch">轻点</span>一根手指来按压它的传感垫，看它的触觉图亮起来。`,
     },
     {
-      title: "轮到你：靠近",
-      text: `<span class="only-mouse">移动鼠标</span><span class="only-touch">在图上拖动</span>：左右移动让夹爪沿着这排物体滑动，上下移动让它升降。把张开的手指降下来围住草莓，或者点“演示一下”。`,
-    },
-    {
-      title: "合拢",
-      text: `<span class="only-mouse">按住鼠标按键</span><span class="only-touch">轻点<b>夹住</b></span>，手指就会合拢。两张图在传感垫接触草莓的地方亮起来；夹得越紧，就越亮。`,
-    },
-    {
-      title: "提起",
-      text: `<span class="only-mouse">继续按住，把鼠标往上移。</span><span class="only-touch">保持夹住，往上拖动。</span>夹紧力够大，草莓就会被一起带起来。条形图标出了需要的夹紧力。`,
-    },
-    {
-      title: "换个形状试试",
-      text: `松开，再去抓立方体。它的棱留下不同的图案：沿着手指的一条线，而不是一片。抓偏一点，就只有一侧会亮。`,
+      title: "轮到你：抓取",
+      text: `<span class="only-mouse">移动鼠标</span><span class="only-touch">在图上拖动</span>，把张开的手指降下来围住草莓；<span class="only-mouse">按住鼠标按键</span><span class="only-touch">轻点<b>夹住</b></span>让手指合拢；再<span class="only-mouse">按住往上移</span><span class="only-touch">往上拖动</span>，把它提起来。两张图在传感垫接触的地方亮起来。也可以点“演示一下”。`,
     },
   ],
   quiz: [

@@ -36,7 +36,8 @@ const THUMB: Record<string, string> = {
   "why-simulate-touch": "L09",
   "pad-made-of-points": "L10",
   "how-deep-how-hard": "L11",
-  "sim-playground": "L12",
+  // (scripts/covers.mjs draws the playground card as L14; L12 is the set-aside calibration card's)
+  "sim-playground": "L14",
 };
 
 /** Lesson pictures that are the same in both themes (the heatmap, the build footage). */

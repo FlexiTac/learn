@@ -4,7 +4,7 @@ import type { PAGES_EN } from "../en/pages";
 
 export const PAGES_ZH: Partial<Record<keyof typeof PAGES_EN, string>> = {
   // ------------------------------------------------------------------ home (src/views/home.ts)
-  "home.title": "<span class=\"nw\">为机器人打造</span><span class=\"nw\">第一层</span><em class=\"nw\">触觉皮肤</em>",
+  "home.title": "<span class=\"nw\">为机器人打造</span><br><span class=\"nw\">第一层<em>触觉皮肤</em></span>",
   "home.tagline": "让每个机器人实验室都拥有触觉",
   "home.kw.accessible": "易获取",
   "home.kw.accessibleTip": "制作简单、成本低，每个机器人实验室都用得起",

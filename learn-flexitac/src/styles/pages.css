@@ -67,11 +67,43 @@
   border-color: var(--line-strong);
 }
 @media (min-width: 1024px) {
+  /* a narrow text column, the robot gets the rest of the row. The title is sized to fit the column on its two lines
+     (--hero-title-em: the first line's width in ems, "Building Your Robot's" / "第一层触觉皮肤"). The text's rows are
+     shared with the picture (subgrid), so the picture runs from the title's top (its cap height: the margin) to the
+     buttons' bottom; the cover inside fits itself to that box (src/widgets/robot-grasp.ts, cover form) */
   .hero {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    --hero-col: clamp(430px, 38vw, 500px);
+    --hero-title-em: 12.4;
+    --hero-title-fs: min(46px, 3.9vw, var(--hero-col) / var(--hero-title-em));
+    grid-template-columns: var(--hero-col) minmax(0, 1fr);
+    grid-template-rows: repeat(6, auto);
+    column-gap: 28px;
+    row-gap: 16px;
+    align-items: stretch;
+  }
+  html:lang(zh) .hero {
+    --hero-title-em: 7.2;
+  }
+  .hero-text {
+    grid-row: 1 / -1;
+    grid-template-rows: subgrid;
+    gap: inherit;
+  }
+  .hero .hero-title {
+    font-size: var(--hero-title-fs);
   }
   .hero-fig {
-    display: block;
+    grid-column: 2;
+    grid-row: 2 / -1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin-top: calc(var(--hero-title-fs) * 0.1);
+  }
+  .hero-fig-img {
+    flex: 1 1 0;
+    aspect-ratio: auto;
+    contain: size;
   }
 }
 .hero-title {

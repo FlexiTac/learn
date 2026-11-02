@@ -1,19 +1,20 @@
 // Lesson 1.5: put FlexiTac on a robot, then grasp with your mouse (PLAN-section2-3.md §1). 2026-10-29: the course's
 // Section 1 ends on the robot, and "Grasp with your mouse" (once Lesson 2.2, now src/lessons/_retired/
 // 22-grasp-with-your-mouse.ts) became this lesson's last four steps; its old links and saved progress come here
-// (src/state/store.ts MOVED, migrateIds revision 3).
+// (src/state/store.ts MOVED, migrateIds revision 3). 2026-11-01 (user): those four became one, step 6, whose Show me
+// grasps the strawberry (reach, close, lift); the cube is still on the mat to try.
 // The robot is already fitted with fin-shaped soft fingers (the UMI finger); the lesson shows how the pad goes on and how
 // it is wired, never how to swap the stock gripper, and it says the same three moves (stick it on, plug the tails into an
 // extender, cable to a reading board) work on other grippers. Mounting facts are the FlexiTac team's build (their photos,
 // refs/s2s3-research/user-photos/, 2026-10-25).
 // Step 1 is the robot (Lesson 1.1's robot grasp, src/widgets/robot-grasp.ts, over the stage); steps 2-5 are Fig 5
-// (figures/gripper, figures/EMBED.md "Fig 5"): its step acts play each stage of the mounting. Steps 6-9 are Fig 5's
+// (figures/gripper, figures/EMBED.md "Fig 5"): its step acts play each stage of the mounting. Step 6 is Fig 5's
 // teleop mode (figures/EMBED.md "Fig 5 gripper: teleop mode"): the gripper over a cutting mat with a strawberry and a
 // wooden cube in a row; the learner drives it with a plain 2D mouse (left / right along the row, up / down the height,
 // hold the button to grip; figures/EMBED.md "Controls") and the widget under it, src/widgets/teleop-maps.ts, draws what
 // the two pads feel, frame by frame, as the figure computes it with the shared touch engine (shared/models/touchsim.mjs:
 // the same model Section 3 takes apart). The widget is hidden on steps 1-5 (the figure has the whole stage). Every
-// number in the teleop steps is illustrative. Their "Show me"s queue the figure's own guided acts (reach, close, lift),
+// number in the teleop step is illustrative. Its "Show me" queues the figure's own guided acts (reach, close, lift),
 // and any mouse move, wheel or key hands the gripper back to the learner.
 import { COLS, FRAME_HZ, ROWS } from "@shared/data/constants.mjs";
 import { DEFAULTS } from "@shared/models/touchsim.mjs";
@@ -43,12 +44,12 @@ export const lesson: Lesson = {
     fig: "gripper",
     // The lesson opens on step 1, the robot (a picture over the stage). Underneath, Fig 5 waits in the pose step 2 starts
     // from: the fingers bare (wrap false takes the pads, tape, tails, cables and USB off), so step 2 shows the pad going
-    // on. reset (a dot or the restart button) does the same from any pose: it ends the teleop mode of steps 6-9 first,
+    // on. reset (a dot or the restart button) does the same from any pose: it ends the teleop mode of step 6 first,
     // then step 5's press mode.
     initial: [{ name: "wrap", arg: false }],
     reset: [{ name: "teleop", arg: false }, { name: "labels", arg: null }, { name: "feel", arg: false }, { name: "reset" }, { name: "wrap", arg: false }],
   },
-  // steps 6-9: the two maps, a force bar and one status line under the figure (the widget asks the split stage for its
+  // step 6: the two maps, a force bar and one status line under the figure (the widget asks the split stage for its
   // short row); steps 1-5 hide it
   widget: "teleop-maps",
   overview: `
@@ -72,7 +73,7 @@ the way without pulling on them.</p>
 <p><b>Other grippers.</b> This is one example. The same three moves work on flat parallel jaws, ALOHA and xArm grippers and
 LeRobot arms: stick the pad on the gripping surface, plug the tails into extenders, cable them to a board. Only the holder
 that carries the finger changes.</p>
-<p><b>Your turn to drive (steps 6-9).</b> The fingertips follow the mouse: move it left and right and the gripper slides
+<p><b>Your turn to drive (step 6).</b> The fingertips follow the mouse: move it left and right and the gripper slides
 along the row of things on the mat; move it up and down and the gripper rises and sinks. Hold the mouse button to close
 the fingers; let go to open them. Close on something and move the mouse up: it comes along. Near an object the gripper
 eases onto it, a dashed line shows where the fingertips will land, and the object glows when the open fingers are low
@@ -117,7 +118,7 @@ to scale a frame. <a href="#/lesson/why-simulate-touch">Section 3</a> takes that
     { label: "Soft finger", value: "UMI fin, TPU 95A, 40 × 123.4 × 25.8 mm", src: UMI },
     { label: "Gripper opening", value: "0–100 mm", src: REBOT },
     { label: "Holders and trays", value: "drawn for this gripper", src: REBOT, badge: "proposed" },
-    // the teleop steps (6-9)
+    // the teleop step (6)
     { label: "Grip force", value: "up to 5 N per pad", src: MODEL, badge: "illustrative", note: "Where the closing stops: the motor's stall in this model" },
     { label: "Spring per point", value: `k<sub>n</sub> = ${DEFAULTS.kn} N/mm`, src: MODEL, badge: "illustrative" },
     { label: "Damper per point", value: `k<sub>d</sub> = ${DEFAULTS.kd} N·s/mm`, src: MODEL, badge: "illustrative" },
@@ -126,8 +127,10 @@ to scale a frame. <a href="#/lesson/why-simulate-touch">Section 3</a> takes that
     fact("host.threshold", "Noise threshold", { note: "The real viewer's rule, used here too: smaller readings count as 0" }),
     fact("host.noiseScale", "Quiet-frame scale", { note: "A frame whose top value is under the threshold is divided by this" }),
   ],
-  // steps 6-9 came from "Grasp with your mouse" at the end, so saved counts stay where they are (its own saved steps move
-  // on top of a finished mounting: src/state/store.ts migrateIds revision 3)
+  // steps 6-9 came from "Grasp with your mouse" at the end, so saved counts stayed where they were (its own saved steps
+  // moved on top of a finished mounting: src/state/store.ts migrateIds revision 3); 2026-11-01 they became one step, 6:
+  // a count above 6 drops to 6 (src/state/store.ts migrateSteps)
+  stepsAdded: [{ keep: 6 }],
   steps: [
     {
       title: "A robot that can feel",
@@ -171,29 +174,14 @@ to scale a frame. <a href="#/lesson/why-simulate-touch">Section 3</a> takes that
       widget: false,
     },
     {
-      title: "Your turn: reach",
-      text: `<span class="only-mouse">Move the mouse</span><span class="only-touch">Drag on the drawing</span>: left and right slide the gripper along the row, up and down raise and lower it. Bring the open fingers down round the strawberry, or press Show me.`,
-      // into teleop mode: the camera eases to the table, the mat and objects fade in, the gripper waits over the cube
+      title: "Your turn: grasp",
+      // keep it to 2-3 lines in a 475-530 px column (1366-1440 px windows)
+      text: `<span class="only-mouse">Move the mouse</span><span class="only-touch">Drag</span> to put the open fingers round the strawberry, <span class="only-mouse">hold the button</span><span class="only-touch">tap <b>Grip</b></span> to grip and <span class="only-mouse">move up</span><span class="only-touch">drag up</span> to lift: both maps light where the pads touch. Or press Show me.`,
+      // into teleop mode: the camera eases to the table, the mat and objects fade in, the gripper waits over the cube.
+      // Show me grasps the strawberry: the figure queues these one after another (each starts when the one before is done)
       act: [{ name: "labels", arg: null }, { name: "feel", arg: false }, { name: "teleop", arg: { object: "strawberry" } }],
-      show: [{ name: "reach", arg: "strawberry", once: true }],
-    },
-    {
-      title: "Close",
-      text: `<span class="only-mouse">Hold the mouse button</span><span class="only-touch">Tap <b>Grip</b></span> to close the fingers. Both maps light up where the pads touch the fruit; a firmer squeeze reads brighter.`,
-      show: [{ name: "close", once: true }],
-    },
-    {
-      title: "Lift",
-      text: `<span class="only-mouse">Keep holding and move the mouse up.</span><span class="only-touch">Keep them closed and drag up.</span> If the squeeze is enough, the strawberry comes along. The bar shows the squeeze it needs.`,
-      show: [{ name: "lift", arg: 35, once: true }],
-    },
-    {
-      title: "Try another shape",
-      text: "Let go, then grab the cube. Its edge leaves a different pattern: a line along the finger, not a patch. Grab it off-centre and only one side lights.",
-      // the figure queues these one after another (each starts when the one before is done)
       show: [
-        { name: "open", once: true },
-        { name: "reach", arg: "cube", once: true },
+        { name: "reach", arg: "strawberry", once: true },
         { name: "close", once: true },
         { name: "lift", arg: 35, once: true },
       ],

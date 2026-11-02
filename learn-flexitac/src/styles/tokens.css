@@ -65,10 +65,13 @@
   --ft-hotspot-soft: rgba(21, 145, 143, .22);
   /* materials for the site's own small drawings (the Velostat demo card, src/widgets/velostat-demo.ts), copied from
      figures/palette.css like the accents above: ENIG gold, Velostat, the rubber press tip, the signal pink */
-  --ft-gold-top: #e9c25a;
-  --ft-gold-left: #cfaa45;
-  --ft-gold-right: #b18f2d;
-  --ft-gold-edge: #594503;
+  --ft-gold-top: #dccaa0;
+  --ft-gold-left: #cdb98c;
+  --ft-gold-right: #b19c6f;
+  --ft-gold-edge: #5c4a28;
+  /* (ENIG's photo look, src/ui/enig.ts: the sheen's bright and deep stops) */
+  --ft-gold-shine: #ebdfbf;
+  --ft-gold-shade: #a48e62;
   --ft-velostat-top: #2c2f3a;
   --ft-velostat-left: #21242e;
   --ft-velostat-right: #151720;
@@ -155,10 +158,12 @@
     --ft-lesson-14-soft: rgba(212, 98, 126, .16);
     --ft-hotspot: #2cc2bf;
     --ft-hotspot-soft: rgba(44, 194, 191, .26);
-    --ft-gold-top: #d6ab45;
-    --ft-gold-left: #be9634;
-    --ft-gold-right: #a68123;
-    --ft-gold-edge: #ecd5a3;
+    --ft-gold-top: #cbb990;
+    --ft-gold-left: #bca97e;
+    --ft-gold-right: #a38e63;
+    --ft-gold-edge: #eaddbd;
+    --ft-gold-shine: #d8ccac;
+    --ft-gold-shade: #978258;
     --ft-velostat-top: #3f4250;
     --ft-velostat-left: #2d303d;
     --ft-velostat-right: #1d1f2a;
@@ -228,10 +233,12 @@
   --ft-lesson-14-soft: rgba(212, 98, 126, .16);
   --ft-hotspot: #2cc2bf;
   --ft-hotspot-soft: rgba(44, 194, 191, .26);
-  --ft-gold-top: #d6ab45;
-  --ft-gold-left: #be9634;
-  --ft-gold-right: #a68123;
-  --ft-gold-edge: #ecd5a3;
+  --ft-gold-top: #cbb990;
+  --ft-gold-left: #bca97e;
+  --ft-gold-right: #a38e63;
+  --ft-gold-edge: #eaddbd;
+  --ft-gold-shine: #d8ccac;
+  --ft-gold-shade: #978258;
   --ft-velostat-top: #3f4250;
   --ft-velostat-left: #2d303d;
   --ft-velostat-right: #1d1f2a;

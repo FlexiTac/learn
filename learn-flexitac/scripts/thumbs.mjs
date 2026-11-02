@@ -55,7 +55,8 @@ const POSES = {
   L02: { fig: "pad", acts: [["explode"], ["select", "velostat"]] },
   // lesson 3 "Meet the reading board": the board alone, the Nano lifted and see-through on its short floating pins, the
   // chips under it in view (no scan: the board at power-on)
-  L03: { fig: "board", acts: [["reset"], ["lift"]], zoom: [0, -0.05, 1, 1.05], bare: true },
+  // (the realistic board, 2026-11-01, has no mat round it: a closer crop)
+  L03: { fig: "board", acts: [["reset"], ["lift"]], zoom: [0.1, -0.1, 0.79, 0.84], bare: true },
   // lesson 4 "One frame": the pad plugged in, a finger on it, the map part-way through a frame
   // (the finger presses fully before the scan reads its rows, so the map lights where it presses)
   L04: { fig: "board", acts: [["reset"], ["lift"], ["connect", "instant"], ["press", { sense: 6.4, drive: 20.6, amount: 1 }], ["wait", 1.5], ["seek", 1], ["seek", 300]], settle: 2 },

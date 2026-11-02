@@ -59,6 +59,7 @@ import { paintText } from "../i18n/paint";
 import type { WidgetCtx, WidgetInstance } from "../types";
 import { h } from "../ui/dom";
 import { fmtR } from "../ui/ohms";
+import { enigDefs, enigFill, enigGrain } from "../ui/enig";
 import "./unit-demo.css";
 
 const T_PRESS = 2.2;
@@ -386,6 +387,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     chains: Chain[];
     spot: SVGPathElement;
     tTop: SVGPathElement;
+    /** The grain over the top strip's top face (bare ENIG, ../ui/enig.ts): its outline follows the face's. */
+    tGrain: SVGPathElement;
     tFront: SVGPathElement;
     tEnd: SVGPathElement;
     tDots: SVGPathElement;
@@ -555,6 +558,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     svgEl("stop", { offset: 1, "stop-color": "#fff", "stop-opacity": 1 }, fadeG);
     const mask = svgEl("mask", { id: `${uid}-fade`, maskUnits: "userSpaceOnUse", x: 0, y: -2, width: W, height: H + 4 }, defs);
     svgEl("rect", { x: 0, y: -2, width: W, height: H + 4, fill: `url(#${uid}-fadeg)` }, mask);
+    // the strips' top faces are bare ENIG: the photo look's sheen and grain (../ui/enig.ts)
+    enigDefs(defs, uid);
 
     // ---- the circuit's wires, under the unit (they leave from the strips' end faces)
     const gW = svgEl("g", { class: "ud-wires" }, svg);
@@ -579,7 +584,9 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
 
     // ---- the bottom strip (it lies still; everything else comes down onto it)
     const gU = svgEl("g", { class: "ud-unit" }, svg);
-    svgEl("path", { class: "ud-g-top", d: pathOf([P(-HS, -L, TB), P(HS, -L, TB), P(HS, L, TB), P(-HS, L, TB)]) }, gU);
+    const bTop = pathOf([P(-HS, -L, TB), P(HS, -L, TB), P(HS, L, TB), P(-HS, L, TB)]);
+    enigFill(svgEl("path", { class: "ud-g-top", d: bTop }, gU), uid);
+    enigGrain(gU, uid, bTop);
     svgEl("path", { class: "ud-g-r", d: pathOf([P(HS, -L, 0), P(HS, L, 0), P(HS, L, TB), P(HS, -L, TB)]) }, gU);
     svgEl("path", { class: "ud-g-l", d: pathOf([P(-HS, L, 0), P(HS, L, 0), P(HS, L, TB), P(-HS, L, TB)]) }, gU);
     // the film's shadow on it (seen through the glass half and the gap under the section face while the layers are
@@ -662,7 +669,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     // ---- the top strip (it bends into the squeeze), its current dots, the solder joints
     const tFront = svgEl("path", { class: "ud-g-l" }, gU);
     const tEnd = svgEl("path", { class: "ud-g-r" }, gU);
-    const tTop = svgEl("path", { class: "ud-g-top" }, gU);
+    const tTop = enigFill(svgEl("path", { class: "ud-g-top" }, gU), uid);
+    const tGrain = enigGrain(gU, uid);
     const tDots = svgEl("path", { class: "ud-dot ud-dot-on-strip" }, gU);
     dotPaths.push(tDots);
     const jointC = svgEl("circle", { class: "ud-joint", r: Z.joint }, gU);
@@ -785,7 +793,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     // height)
     const got = { s, sW: large && budget > 0 ? fit(plan, true).s : s };
     if (large) svg.dataset.plan += ` width-only ${got.sW.toFixed(2)}`;
-    A = { short: plan.short, P, s, ux, vTop, vSide, vShade, vRim, vWall, ghLeft, ghFarEdge, ghTop, ghFront, ghSide, ghEdge, grains, chains, spot, tTop, tFront, tEnd, tDots, tipBody, tipHi, wireC, dotsC, jointC, xc, yR0, dotPaths, tag, tagKnock, lead, leadFrom: [xTag - Z.leadX, yTag], read, bar, barW: boxW - 4, hit, dotK: Z.dotK };
+    A = { short: plan.short, P, s, ux, vTop, vSide, vShade, vRim, vWall, ghLeft, ghFarEdge, ghTop, ghFront, ghSide, ghEdge, grains, chains, spot, tTop, tGrain, tFront, tEnd, tDots, tipBody, tipHi, wireC, dotsC, jointC, xc, yR0, dotPaths, tag, tagKnock, lead, leadFrom: [xTag - Z.leadX, yTag], read, bar, barW: boxW - 4, hit, dotK: Z.dotK };
     return got;
   };
 
@@ -889,7 +897,9 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     // the top strip, bent into the squeeze
     const xs = range(-L, L, 56);
     const top = (x: number) => zTb(x) + TT;
-    A.tTop.setAttribute("d", pathOf([...xs.map((x) => P(x, -HS, top(x))), ...[...xs].reverse().map((x) => P(x, HS, top(x)))]));
+    const dTop = pathOf([...xs.map((x) => P(x, -HS, top(x))), ...[...xs].reverse().map((x) => P(x, HS, top(x)))]);
+    A.tTop.setAttribute("d", dTop);
+    A.tGrain.setAttribute("d", dTop);
     A.tFront.setAttribute("d", pathOf([...xs.map((x) => P(x, HS, top(x))), ...[...xs].reverse().map((x) => P(x, HS, zTb(x)))]));
     A.tEnd.setAttribute("d", pathOf([P(L, -HS, zTb(L)), P(L, HS, zTb(L)), P(L, HS, top(L)), P(L, -HS, top(L))]));
     A.tDots.setAttribute("d", pathOf(range(0, L - 3, 28).map((x) => P(x, 0, top(x))), false));

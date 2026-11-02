@@ -3,7 +3,7 @@
 // {name} is filled by t(key, {name}) (links, numbers from the shared data).
 export const PAGES_EN = {
   // ------------------------------------------------------------------ home (src/views/home.ts)
-  "home.title": "Building Your Robot's First <em>Tactile Skin</em>",
+  "home.title": "Building Your Robot's<br> <span class=\"nw\">First <em>Tactile Skin</em></span>",
   "home.tagline": "Bringing touch to every robot lab",
   "home.kw.accessible": "Accessible",
   "home.kw.accessibleTip": "Simple to build and low-cost, so touch sensing fits any robot lab",
