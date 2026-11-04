@@ -51,13 +51,12 @@ html:lang(zh) .lang-label:lang(zh) > [lang="en"] {
   letter-spacing: 0.08em;
 }
 
-/* the brand stays English: it keeps its English look (lang="en" on it) */
-html:lang(zh) .brand-tag:lang(zh) {
-  font-family: var(--sans-cjk);
-  font-size: 12px;
-}
-html:lang(zh) .brand-tag:lang(zh) i {
-  margin: 0 0.25em;
+/* the brand's Chinese tagline (outlined in Noto Sans CJK SC, shell.css): 12 px on every width, from its characters'
+   tops to their feet */
+html:lang(zh) .topbar {
+  --tag-fs: 12px;
+  --tag-k: 0.923;
+  --tag-lead: 0.419;
 }
 
 /* the lesson strip's two-line titles break between words, never inside one (“机器 / 人”): the titles' spaces and
