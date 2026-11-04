@@ -153,11 +153,13 @@
 
 /* ---------------------------------------------------------------- top bar */
 /* One row: the brand and the course progress on the left, the GitHub card and the Discord button on the right. The
-   three boxes are exactly as tall as the brand's lettering and line up with it: the lettering is drawn as outlines
-   (brand-mark.ts, from scripts/brand-mark.py), each line's drawing reaching from its cap tops to its baseline (the
-   Chinese tagline's: from its characters' tops to their feet), so the brand runs from the name's cap tops to the
-   tagline's foot whatever the browser, its fonts and the screen's scaling, and the boxes take its height (--ink-h). The
-   row is as tall as the lettering, and the padding is measured from the letters: 16 px above, 14 px below to the page.
+   three boxes line up with the brand's lettering: the lettering is drawn as outlines (brand-mark.ts, from
+   scripts/brand-mark.py), each line's drawing reaching from its cap tops to its baseline (the Chinese tagline's: from
+   its characters' tops to their feet), so the brand runs from the name's cap tops to the tagline's foot whatever the
+   browser, its fonts and the screen's scaling (--ink-h: its height), and what shows of each box spans exactly that: the
+   Discord button's fill, and the two cards' near-white inside, their faint 1 px border just outside the letters (the
+   border on the letters' edges read as a line inside them, the card a pixel or two short). The letters sit 16 px below
+   the page's top and 14 px above the page, as they did.
    The lettering's sizes: the name's (--name-fs) and the tagline's (--tag-fs), the tagline's height per its size
    (--tag-k: its cap height; 0.923 in Chinese, i18n.css), and its distance below the name's baseline, the spacing the
    two lines had as text: the name's line (line-height 1) ended 0.154 of its size under its baseline, then 4 px, then
@@ -168,7 +170,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: calc(16px + env(safe-area-inset-top, 0px)) var(--gutter-r) 14px var(--gutter-l);
+  padding: calc(15px + env(safe-area-inset-top, 0px)) var(--gutter-r) 13px var(--gutter-l);
   min-width: 0;
   --name-fs: clamp(18px, 2vw, 24px);
   --tag-fs: 11px;
@@ -238,10 +240,9 @@
   color: var(--ink);
 }
 
-/* the three boxes: one height, one border, one radius; the two cards on the card colour, Discord filled like the
-   site's primary buttons (ink on light, light on dark: the logo plate's colours). No shadow (as on flexitac.github.io):
-   the site's card shadow darkens the row under a card's bottom border, so the two cards would end a pixel below the
-   tagline and the Discord button. */
+/* the three boxes: one border, one radius; the two cards on the card colour, their border outside the lettering's
+   height, Discord filled like the site's primary buttons (ink on light, light on dark: the logo plate's colours) and as
+   tall as the lettering. No shadow (as on flexitac.github.io): it darkened the row under a card's bottom border. */
 .progress-card,
 .gh-card,
 .discord-btn {
@@ -256,6 +257,7 @@
 }
 .progress-card,
 .gh-card {
+  height: calc(var(--ink-h) + 2px);
   background: var(--card);
 }
 .progress-card:hover,
@@ -510,6 +512,9 @@
     width: var(--ink-h);
     padding: 0;
     justify-content: center;
+  }
+  .gh-card {
+    width: calc(var(--ink-h) + 2px);
   }
   .gh-card .mark-github,
   .discord-btn .mark-discord {
