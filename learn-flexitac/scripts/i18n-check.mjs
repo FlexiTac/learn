@@ -470,19 +470,27 @@ function widgetsInUse(lessons) {
   }
   const dir = join(root, "src/widgets");
   const files = new Set([...ids].map((id) => join(dir, `${id}.ts`)).filter(existsSync));
-  for (const f of [...files]) {
-    for (const m of readFileSync(f, "utf8").matchAll(/from\s+"\.\/([\w/-]+)"/g)) {
-      const dep = join(dir, `${m[1]}.ts`);
-      if (existsSync(dep) && !files.has(dep)) files.add(dep);
+  // and every module of src/widgets they import, at any depth (a helper folder's own imports resolve from its folder)
+  for (const f of files) {
+    for (const m of readFileSync(f, "utf8").matchAll(/from\s+"(\.\.?\/[\w./-]+)"/g)) {
+      const dep = join(dirname(f), `${m[1]}.ts`);
+      if (dep.startsWith(dir) && existsSync(dep) && !files.has(dep)) files.add(dep);
     }
   }
   return files;
 }
 
+// every widget module: src/widgets/*.ts and the helper folders under it (scan/, bench/, chips/, pcb/ ...)
+function widgetFiles(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? widgetFiles(join(dir, e.name)) : e.name.endsWith(".ts") && !(dir.endsWith("widgets") && e.name === "index.ts") ? [join(dir, e.name)] : [],
+  );
+}
+
 async function checkWidgets(lessons) {
   const used = widgetsInUse(lessons);
   const dir = join(root, "src/widgets");
-  const all = [...readdirSync(dir).filter((f) => f.endsWith(".ts") && f !== "index.ts").map((f) => join(dir, f)), ...readdirSync(join(dir, "scan")).filter((f) => f.endsWith(".ts")).map((f) => join(dir, "scan", f))];
+  const all = widgetFiles(dir);
   const ui = ["src/ui", "src/views", "src/figure"].flatMap((d) => readdirSync(join(root, d)).filter((f) => f.endsWith(".ts")).map((f) => join(root, d, f)));
   const targets = [
     ...all.filter((f) => ALL || used.has(f)).map((f) => ({ f, group: "widget" })),

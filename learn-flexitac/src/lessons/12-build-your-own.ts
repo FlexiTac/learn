@@ -201,15 +201,17 @@ export const BOM: { id: number; key: string; part: string; share: number; price:
   { id: 7, key: "FFC 32-pin", part: "Flat cable, 32-pin (5 pack)", share: 0.2, price: 5.09, group: "Cables & tools" },
   { id: 8, key: "FFC 16-pin", part: "Flat cable, 16-pin (5 pack)", share: 0.2, price: 6.09, group: "Cables & tools" },
   { id: 9, key: "USB cable", part: "Mini USB cable (2 pack)", share: 0.5, price: 11.99, group: "Cables & tools" },
-  { id: 10, key: "Extender 20", part: "20-pin FFC extender (Adafruit 4523)", share: 1, price: 0.95, group: "Cables & tools" },
-  { id: 11, key: "Extender 40", part: "40-pin FFC extender (Adafruit 5203)", share: 1, price: 0.95, group: "Cables & tools" },
+  // (the guide's links pair the names with the wrong Adafruit numbers: 5203 is the 20-pin extender, 4523 the 40-pin,
+  // adafruit.com/product/5203 and /4523, checked 2026-11-09)
+  { id: 10, key: "Extender 20", part: "20-pin FFC extender (Adafruit 5203)", share: 1, price: 0.95, group: "Cables & tools" },
+  { id: 11, key: "Extender 40", part: "40-pin FFC extender (Adafruit 4523)", share: 1, price: 0.95, group: "Cables & tools" },
 ];
 export const usd = (v: number) => `$${v.toFixed(2)}`;
 export const perSensor = (g?: string) => BOM.filter((b) => !g || b.group === g).reduce((s, b) => s + b.share * b.price, 0);
 
 /** Reading-board parts with their LCSC codes (board BOM csv; R1's code from the guide's JLC screenshot). */
 export const LCSC = [
-  { ref: "FPC1", part: "FFC05001-16SBB124W5M", what: "16-pin, 0.5 mm flat-cable socket: sense lines in", code: "C2856801" },
+  { ref: "FPC1", part: "FFC05001-16SBB124W5M", what: "16-pin, 0.5 mm flat-cable socket: sense lines in. The code is XUNPU's FPC-05F-16PH20, the socket JLCPCB fits", code: "C2856801" },
   { ref: "FPC2", part: "THD0515-32CL-SN", what: "32-pin, 0.5 mm flat-cable socket: drive lines out", code: "C283153" },
   { ref: "R1", part: "1206W4F1002T5E", what: `${R1 / 1000} kΩ resistor, the bottom of the voltage divider`, code: "C17902" },
   { ref: "U2–U5", part: "SN74HC595NSR × 4", what: `Shift registers: ${COLS} drive lines`, code: "C191873" },
@@ -259,7 +261,7 @@ build checklist, <b>Flash</b> and <b>Fix</b>, go with the two sections below.</p
 
 ${h3("Flash the firmware")}
 <p>To <dfn title="copy a program into a microcontroller's memory">flash</dfn> the Nano means to copy the
-<dfn>firmware</dfn>, the scanning program of Lesson 2.2, into its memory over USB. You do it once; the Nano keeps
+<dfn>firmware</dfn>, the scanning program of Lesson 2.4, into its memory over USB. You do it once; the Nano keeps
 the program when unplugged and starts scanning as soon as it gets power. Four settings must match your pad and your
 viewer:</p>
 <ul>

@@ -285,8 +285,11 @@ export type DemoId = "velostat" | "unit" | "grid" | "pad";
 /** A picture that takes the whole stage while one guided step is on show (GuidedStep.stage), in place of the lesson's
  *  figure. Each id is a widget module src/widgets/<id>.ts (mount(el, ctx), filling the box it is given).
  *  robot-grasp   FlexiTac on both fingers of a robot gripper picking up a strawberry (a 9 s loop) beside the two pads'
- *                live 12 × 32 touch maps (Lesson 1.1 step 1, Lesson 2.1 step 1); illustrative */
-export type StageId = "robot-grasp";
+ *                live 12 × 32 touch maps (Lesson 1.1 step 1, Lesson 1.5 step 1); illustrative
+ *  pcb-design    how the reading board was made (Lesson 2.3 steps 2-4): its schematic (simplified, or the real EasyEDA
+ *                page), its two-layer copper layout drawn from shared/data/board.json, and the factory order. The step
+ *                picks the form through its widgetView: {view: "schematic" | "layout" | "order"} */
+export type StageId = "robot-grasp" | "pcb-design";
 
 export interface GuidedStep {
   /** Short title, e.g. "Take it apart". */
@@ -319,7 +322,8 @@ export interface GuidedStep {
   /** What the lesson's widget shows while this step is on show, passed to its view() (views/lesson.ts) when the step is
    *  reached or opened on; a step without it passes undefined (the widget's default form). Each widget says what it
    *  takes: frame-runner {grid: false} (the strip: lesson 4), flash-doctor {symptom: id}, clock-stepper {extra:
-   *  "outputs" | "mux" | null} (no lesson uses it since lesson 3 became "Meet the reading board"). */
+   *  "outputs" | "mux" | null} (no lesson uses it since lesson 3 became "Meet the reading board"). A step with a `stage`
+   *  passes it to that picture's view() instead (pcb-design {view: "schematic" | "layout" | "order"}). */
   widgetView?: Record<string, unknown>;
 }
 
@@ -434,6 +438,10 @@ export interface WidgetInstance {
   say?(params: Record<string, number>): string | string[] | void;
   /** Lay out again now for the size the host just gave it (a demo card measures its height right after). */
   layout?(): void;
+  /** Put everything back as it was when the lesson opened: called when the learner restarts the guided steps ("Start
+   *  the steps again"), just before the first step's view is passed again (a lesson without a figure has no reset
+   *  acts, so its widget resets itself). */
+  reset?(): void;
   /** Show the form a guided step asks for (GuidedStep.widgetView; undefined = the widget's default form). */
   view?(v?: Record<string, unknown>): void;
 }

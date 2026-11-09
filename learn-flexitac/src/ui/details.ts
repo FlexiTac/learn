@@ -41,8 +41,8 @@ export function detailsWindow(panel: HTMLElement, figure: FigureHost, lesson: Le
 
   const render = (part: FigPart) => {
     // Fig 1-3 name the lesson by its place in the course, Fig 5 by its shown number ("2.1"), both as the figures were
-    // built (src/lessons/index.ts lessonForPart)
-    const target = lessonForPart(part.lesson);
+    // built, unless a later lesson now teaches the part (src/lessons/index.ts lessonForPart)
+    const target = lessonForPart(part.lesson, figure.fig, part.id);
     const facts = (part.facts ?? []).slice(0, 4);
     el.innerHTML = `
       <header class="det-head">

@@ -1,0 +1,1219 @@
+/* Chips lab (src/widgets/chips-lab.ts): Lesson 2.2's stage. The widget fills the stage body like a figure: the figure
+   pages' paper (--card), a kicker row in the figures' corner style, the drawing, and a card beside it in the demo cards'
+   look (white face, the lesson colour across the top). The drawings use the demo cards' vocabulary (src/widgets/
+   grid-demo.css): mono labels, quiet chip boxes, ink wires, the lesson colour for what the learner sets (a toggle at 1,
+   a pressed FSR), teal for the line A0 listens to, pink for current and for an LED that is on, and a quieter pink for a
+   powered drive line (the +5 V rail, which stands for one; an output at 1). The card's wiring pictures colour each wire
+   by its job, as Lesson 2.3's schematic and Fig 3 do: the drive path pink, the sense path teal, power and ground grey.
+   Materials in their photo colours (copied from
+   flexitac-anatomy/figures/palette.css, light then dark): polyimide amber, ENIG gold (src/ui/enig.ts), the stiffener's
+   brown, the board's green solder mask, the socket's ivory housing and black latch, the white flat cable and its blue
+   stiffener, tin. Type in the drawings keeps a steady size on screen: its font size is divided by the drawing's scale
+   (--cl-k, set by chips/svg.ts frame) and grows a little with a big stage (--cl-fk). */
+.cl {
+  --cl-wire: color-mix(in oklab, var(--ink) 80%, var(--face));
+  --cl-wire-dim: color-mix(in oklab, var(--ink) 30%, var(--face));
+  --cl-faint: color-mix(in oklab, var(--ink) 14%, var(--face));
+  --cl-pi: #e08607;
+  --cl-pi-edge: #6b2a03;
+  --cl-pi-trace: #c96402;
+  --cl-stiff: #7a360b;
+  --cl-stiff-edge: #2a0a04;
+  --cl-pcb: #24a053;
+  --cl-pcb-edge: #0b5a2b;
+  --cl-tin: #b6bcc2;
+  --cl-tin-edge: #5d636a;
+  --cl-zif: #efe6cf;
+  --cl-zif-edge: #6d6450;
+  --cl-latch: #2e2e33;
+  --cl-latch-edge: #111115;
+  --cl-ffc: #f4f6f8;
+  --cl-ffc-edge: #7d8186;
+  --cl-ffc-cu: #b9bec4;
+  --cl-tab: #2f6fe4;
+  --cl-tab-edge: #0b2f73;
+  --cl-ic: #38393f;
+  --cl-ic-edge: #101116;
+  --cl-nano: #2f8068;
+  --cl-nano-edge: #0d4a3a;
+  --cl-led-off: color-mix(in oklab, var(--ink) 6%, var(--face));
+  --cl-glow: color-mix(in oklab, var(--ft-signal) 40%, transparent);
+  /* a powered drive line (step 1's +5 V rail and the FSRs' outer leads, which stand for it; an output at 1): the drive
+     path's pink, a little quieter than current */
+  --cl-power: color-mix(in oklab, var(--ft-signal) 60%, var(--face));
+  /* the side card's wiring: the drive path, the sense path (lit, and a quiet tint for a 0), power and ground (Lesson
+     2.3's grey) */
+  --cl-drive: var(--ft-signal);
+  --cl-drive-q: color-mix(in oklab, var(--ft-signal) 40%, var(--face));
+  --cl-sense: var(--ft-hotspot);
+  --cl-sense-q: color-mix(in oklab, var(--ft-hotspot) 42%, var(--face));
+  --cl-pwr: #8a8a90;
+  --cl-panel: var(--face);
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  height: 100%;
+  min-height: 0;
+  padding: 12px 16px 14px;
+  background: var(--card);
+  color: var(--text);
+  container-type: inline-size;
+}
+:root[data-theme="dark"] .cl {
+  --cl-wire: color-mix(in oklab, var(--ink) 74%, var(--face));
+  --cl-pi: #cf7800;
+  --cl-pi-edge: #edc197;
+  --cl-pi-trace: #b65e00;
+  --cl-stiff: #723310;
+  --cl-stiff-edge: #b99683;
+  --cl-pcb: #1d8445;
+  --cl-pcb-edge: #91bf9b;
+  --cl-tin: #a9afb6;
+  --cl-tin-edge: #d4d8dc;
+  --cl-zif: #d8cfb7;
+  --cl-zif-edge: #f0ead9;
+  --cl-latch: #45454d;
+  --cl-latch-edge: #9a9ba0;
+  --cl-ffc: #c9cfd4;
+  --cl-ffc-edge: #e8ebee;
+  --cl-ffc-cu: #8e959c;
+  --cl-tab: #3a73de;
+  --cl-tab-edge: #a3bdea;
+  --cl-ic: #4a4b53;
+  --cl-ic-edge: #898a8f;
+  --cl-nano: #2a6f5b;
+  --cl-nano-edge: #86ac9e;
+  --cl-glow: color-mix(in oklab, var(--ft-signal) 45%, transparent);
+  --cl-drive-q: color-mix(in oklab, var(--ft-signal) 50%, var(--face));
+  --cl-sense-q: color-mix(in oklab, var(--ft-hotspot) 50%, var(--face));
+  --cl-pwr: #8e8e95;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .cl {
+    --cl-wire: color-mix(in oklab, var(--ink) 74%, var(--face));
+    --cl-pi: #cf7800;
+    --cl-pi-edge: #edc197;
+    --cl-pi-trace: #b65e00;
+    --cl-stiff: #723310;
+    --cl-stiff-edge: #b99683;
+    --cl-pcb: #1d8445;
+    --cl-pcb-edge: #91bf9b;
+    --cl-tin: #a9afb6;
+    --cl-tin-edge: #d4d8dc;
+    --cl-zif: #d8cfb7;
+    --cl-zif-edge: #f0ead9;
+    --cl-latch: #45454d;
+    --cl-latch-edge: #9a9ba0;
+    --cl-ffc: #c9cfd4;
+    --cl-ffc-edge: #e8ebee;
+    --cl-ffc-cu: #8e959c;
+    --cl-tab: #3a73de;
+    --cl-tab-edge: #a3bdea;
+    --cl-ic: #4a4b53;
+    --cl-ic-edge: #898a8f;
+    --cl-nano: #2a6f5b;
+    --cl-nano-edge: #86ac9e;
+    --cl-glow: color-mix(in oklab, var(--ft-signal) 45%, transparent);
+    --cl-drive-q: color-mix(in oklab, var(--ft-signal) 50%, var(--face));
+    --cl-sense-q: color-mix(in oklab, var(--ft-hotspot) 50%, var(--face));
+    --cl-pwr: #8e8e95;
+  }
+}
+
+/* ---- the kicker row (the figures' corner texts) */
+.cl-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 18px;
+}
+.cl-kicker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.cl-mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.cl-name {
+  color: var(--accent);
+  font-weight: 700;
+}
+.cl-sep {
+  color: var(--faint);
+}
+.cl-part {
+  text-transform: none;
+  letter-spacing: 0.04em;
+}
+.cl-tag {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+/* ---- the drawing and the card beside it */
+.cl-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(236px, 31%, 316px);
+  gap: 18px;
+  min-height: 0;
+}
+.cl-draw {
+  position: relative;
+  min-width: 0;
+  min-height: 240px;
+  overflow: hidden;
+}
+.cl-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  --cl-k: 1;
+  --cl-fk: 1;
+}
+.cl-side {
+  position: relative;
+  align-self: center;
+  display: grid;
+  gap: 8px;
+  max-height: 100%;
+  overflow: auto;
+  padding: 13px 14px 12px;
+  background: var(--face);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 36px -24px rgba(0, 0, 0, 0.35), 0 8px 14px -12px rgba(0, 0, 0, 0.14), var(--shadow);
+  scrollbar-width: thin;
+}
+.cl-side::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--accent);
+}
+.cl-side-k {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cl-side-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.cl-wsvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* ---- the buttons and the caption */
+.cl-foot {
+  display: grid;
+  gap: 8px;
+}
+.cl-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+}
+.cl-ctl-gap {
+  width: 10px;
+}
+.cl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--face);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+.cl-btn:hover {
+  border-color: var(--line-strong);
+  background: var(--card-2);
+}
+.cl-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.cl-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.cl-btn-main {
+  color: var(--accent);
+  border-color: var(--accent-line);
+}
+.cl-btn-main:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.cl-ico {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+  margin-left: -3px;
+}
+.cl-lamp {
+  width: 7px;
+  height: 7px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition: background-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.cl-btn[aria-pressed="true"] .cl-lamp {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.cl-btn-data[aria-pressed="true"] {
+  color: var(--accent);
+  border-color: var(--accent-line);
+}
+.cl-cap {
+  margin: 0;
+  max-width: 76ch;
+  min-height: calc(2 * 1.5em);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* ---- type in the drawings */
+.cl-t {
+  font-family: var(--mono);
+  font-size: calc(10.5px * var(--cl-fk) / var(--cl-k));
+  fill: var(--text);
+}
+.cl-t-dim {
+  fill: var(--muted);
+}
+.cl-t-strong {
+  font-weight: 700;
+  fill: var(--ink);
+}
+.cl-t-tiny {
+  font-size: calc(8.5px * var(--cl-fk) / var(--cl-k));
+}
+.cl-t-code {
+  font-size: calc(9.5px * var(--cl-fk) / var(--cl-k));
+}
+.cl-t-big {
+  font-family: var(--mono);
+  font-size: calc(19px * var(--cl-fk) / var(--cl-k));
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  fill: var(--ink);
+}
+.cl-sum {
+  font-weight: 700;
+  fill: var(--ink);
+}
+.cl-t-onpcb {
+  fill: rgba(255, 255, 255, 0.86);
+  font-size: calc(9px * var(--cl-fk) / var(--cl-k));
+}
+.cl-t-onlatch {
+  fill: rgba(255, 255, 255, 0.9);
+  font-size: calc(9px * var(--cl-fk) / var(--cl-k));
+}
+.cl-t-onpi {
+  fill: #2a1400;
+  font-size: calc(9px * var(--cl-fk) / var(--cl-k));
+  font-weight: 600;
+}
+.cl-t-onstiff {
+  fill: rgba(255, 255, 255, 0.88);
+  font-size: calc(8.5px * var(--cl-fk) / var(--cl-k));
+}
+
+/* ---- wires, nodes, leaders */
+.cl-svg path,
+.cl-svg line,
+.cl-svg circle,
+.cl-svg rect {
+  vector-effect: non-scaling-stroke;
+}
+.cl-wire {
+  fill: none;
+  stroke: var(--cl-wire);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cl-wire.cl-faint {
+  stroke: var(--cl-faint);
+}
+.cl-hair {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.cl-joint,
+.cl-node {
+  fill: var(--cl-wire);
+}
+.cl-term {
+  fill: var(--face);
+  stroke: var(--cl-wire);
+  stroke-width: 1.4;
+}
+.cl-wire.cl-power,
+.cl-term.cl-power {
+  stroke: var(--cl-power);
+  stroke-width: 1.8;
+}
+.cl-joint.cl-power {
+  fill: var(--cl-power);
+}
+.cl-hit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+  cursor: pointer;
+}
+.cl-leader {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+.cl-leader-dot {
+  fill: var(--muted);
+}
+.cl-bracket {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.2;
+}
+
+/* the line A0 listens to (teal) and the current through it (pink dots on a soft glow) */
+.cl-wire.cl-listen.is-on,
+.cl-wire.cl-lead.is-on {
+  stroke: var(--ft-hotspot);
+  stroke-width: 2;
+}
+.cl-flow-glow {
+  fill: none;
+  stroke: var(--cl-glow);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.7;
+}
+.cl-flow {
+  fill: none;
+  stroke: var(--ft-signal);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-dasharray: 0.01 9;
+  animation: cl-flow 0.9s linear infinite;
+}
+@keyframes cl-flow {
+  to {
+    stroke-dashoffset: -9;
+  }
+}
+
+/* ---- the multiplexer */
+.cl-contact {
+  fill: var(--face);
+  stroke: var(--cl-wire);
+  stroke-width: 1.3;
+  transition: fill 0.2s var(--ease), stroke 0.2s var(--ease);
+}
+.cl-contact.is-on {
+  fill: var(--ft-hotspot);
+  stroke: var(--ft-hotspot);
+}
+.cl-hub {
+  fill: var(--face);
+  stroke: var(--cl-wire);
+  stroke-width: 1.6;
+}
+.cl-blade-line {
+  stroke: var(--ft-hotspot);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.cl-blade.is-off .cl-blade-line {
+  stroke: var(--cl-wire-dim);
+  stroke-dasharray: 3 3;
+}
+.cl-tog .cl-tog-box,
+.cl-data .cl-tog-box {
+  fill: var(--face);
+  stroke: var(--line-strong);
+  stroke-width: 1.3;
+  transition: fill 0.2s var(--ease), stroke 0.2s var(--ease);
+}
+.cl-tog-d {
+  font-family: var(--mono);
+  font-size: calc(17px * var(--cl-fk) / var(--cl-k));
+  font-weight: 700;
+  fill: var(--muted);
+  pointer-events: none;
+}
+.cl-tog-d-s {
+  font-size: calc(14px * var(--cl-fk) / var(--cl-k));
+}
+.cl-tog.is-1 .cl-tog-box,
+.cl-data.is-1 .cl-tog-box {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 1.8;
+}
+.cl-tog.is-1 .cl-tog-d,
+.cl-data.is-1 .cl-tog-d {
+  fill: var(--accent);
+}
+.cl-tog,
+.cl-data,
+.cl-fsr {
+  cursor: pointer;
+  outline: none;
+}
+.cl-tog:hover .cl-tog-box,
+.cl-data:hover .cl-tog-box {
+  stroke: var(--accent);
+}
+.cl-tog:focus-visible .cl-tog-box,
+.cl-data:focus-visible .cl-tog-box,
+.cl-fsr:focus-visible .cl-fsr-body {
+  stroke: var(--accent);
+  stroke-width: 2.4;
+}
+/* keyboard focus: a dashed ring round the box (a box already at 1 is blue, so a thicker stroke alone can't show it) */
+.cl-focus {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+  opacity: 0;
+}
+.cl-tog:focus-visible .cl-focus,
+.cl-data:focus-visible .cl-focus {
+  opacity: 1;
+}
+/* E#: HIGH (1) switches the chip off: a muted box, not the lesson colour */
+.cl-tog-e.is-1 .cl-tog-box {
+  fill: var(--card-2);
+  stroke: var(--muted);
+}
+.cl-tog-e.is-1 .cl-tog-d {
+  fill: var(--ink);
+}
+.cl-fsr-body {
+  fill: color-mix(in oklab, var(--ft-velostat-top) 92%, var(--face));
+  stroke: var(--cl-wire);
+  stroke-width: 1.3;
+  transition: stroke 0.2s var(--ease);
+}
+.cl-fsr-face {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 1;
+}
+.cl-fsr-n {
+  font-weight: 700;
+  fill: #ffffff;
+  pointer-events: none;
+}
+.cl-fsr-tip {
+  fill: var(--accent);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.6);
+  transition: opacity 0.2s var(--ease), transform 0.25s var(--ease);
+}
+.cl-fsr.is-pressed .cl-fsr-tip {
+  opacity: 0.92;
+  transform: scale(1);
+}
+.cl-fsr.is-pressed .cl-fsr-body {
+  stroke: var(--accent);
+  stroke-width: 2.2;
+}
+/* pressed AND picked, with the chip on: current flows through it */
+.cl-fsr.is-live .cl-fsr-tip {
+  fill: var(--ft-signal);
+}
+.cl-fsr.is-live .cl-fsr-body {
+  stroke: var(--ft-signal);
+}
+.cl-fsr:hover .cl-fsr-body {
+  stroke: var(--accent);
+}
+.cl-screen {
+  fill: var(--card-2);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.cl-readbox.is-live .cl-screen {
+  stroke: color-mix(in oklab, var(--ft-signal) 60%, var(--line-strong));
+}
+.cl-track {
+  fill: var(--line);
+}
+.cl-bar {
+  fill: var(--accent);
+  transition: width 0.25s var(--ease);
+}
+.cl-cell {
+  fill: var(--face);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  stroke-dasharray: 2.5 2;
+  transition: fill 0.3s var(--ease);
+}
+.cl-cell.is-read {
+  stroke: rgba(0, 0, 0, 0.22);
+  stroke-dasharray: none;
+}
+.cl-cell.is-cur {
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  stroke-dasharray: none;
+}
+
+/* ---- the shift register */
+.cl-box {
+  fill: var(--face);
+  stroke: var(--line-strong);
+  stroke-width: 1.3;
+}
+.cl-digit {
+  font-family: var(--mono);
+  font-size: calc(17px * var(--cl-fk) / var(--cl-k));
+  font-weight: 700;
+  fill: var(--faint);
+  pointer-events: none;
+  transition: opacity 0.22s var(--ease);
+}
+.cl-digit-s {
+  font-size: calc(13px * var(--cl-fk) / var(--cl-k));
+}
+.cl-digit.is-1 {
+  fill: var(--accent);
+}
+.cl-digit.is-hidden {
+  opacity: 0;
+}
+.cl-digit.is-out {
+  opacity: 0;
+}
+/* after a slide the digits go back to their own boxes at once (no fade: no ghost of the bit that came in) */
+.cl-digits.is-snap .cl-digit {
+  transition: none;
+}
+/* the output latch: the second row of boxes, a little quieter than the shift boxes; it flashes on a latch */
+.cl-lbox {
+  fill: var(--card-2);
+  transition: stroke 0.2s var(--ease);
+}
+.cl-ldigit {
+  transition: fill 0.2s var(--ease);
+}
+.cl-lrow.is-flash .cl-lbox {
+  animation: cl-lflash 0.42s var(--ease);
+}
+@keyframes cl-lflash {
+  0% {
+    stroke: var(--accent);
+    stroke-width: 2.2;
+  }
+  100% {
+    stroke: var(--line-strong);
+    stroke-width: 1.3;
+  }
+}
+.cl-wire.cl-out {
+  stroke: var(--cl-wire-dim);
+  transition: stroke 0.2s var(--ease);
+}
+.cl-wire.cl-out.is-on {
+  stroke: var(--cl-power);
+  stroke-width: 1.8;
+}
+.cl-copy.is-tick {
+  animation: cl-copy 0.42s var(--ease);
+}
+@keyframes cl-copy {
+  0% {
+    stroke: var(--accent);
+    stroke-width: 2.2;
+  }
+  100% {
+    stroke: var(--cl-faint);
+    stroke-width: 1.4;
+  }
+}
+.cl-arrow {
+  marker-end: none;
+}
+.cl-latch {
+  fill: var(--line);
+  stroke: none;
+}
+.cl-chip-outline {
+  fill: color-mix(in oklab, var(--card-2) 70%, transparent);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.cl-clockline {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+.cl-clockline.is-tick {
+  animation: cl-tick 0.38s var(--ease);
+}
+@keyframes cl-tick {
+  0% {
+    stroke: var(--accent);
+    stroke-width: 2.4;
+  }
+  100% {
+    stroke: var(--line-strong);
+    stroke-width: 1.2;
+  }
+}
+.cl-latch.is-flash {
+  animation: cl-latch 0.42s var(--ease);
+}
+@keyframes cl-latch {
+  0% {
+    fill: var(--accent);
+  }
+  100% {
+    fill: var(--line);
+  }
+}
+.cl-led {
+  fill: var(--cl-led-off);
+  stroke: var(--line-strong);
+  stroke-width: 1.3;
+  transition: fill 0.2s var(--ease), stroke 0.2s var(--ease);
+}
+.cl-led.is-on {
+  fill: var(--ft-signal);
+  stroke: var(--ft-signal);
+}
+.cl-led-halo {
+  fill: var(--ft-signal-soft);
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+}
+.cl-led-halo.is-on {
+  opacity: 1;
+}
+.cl-qhp.is-flash {
+  animation: cl-qhp 0.7s var(--ease);
+}
+@keyframes cl-qhp {
+  0% {
+    fill: var(--ft-signal);
+  }
+  100% {
+    fill: var(--ink);
+  }
+}
+
+/* ---- the gold fingers */
+.cl-pi {
+  fill: var(--cl-pi);
+  stroke: none;
+}
+.cl-tail .cl-pi {
+  stroke: var(--cl-pi-edge);
+  stroke-width: 1;
+}
+.cl-pi-trace {
+  fill: var(--cl-pi-trace);
+  stroke: none;
+}
+.cl-stiff {
+  fill: var(--cl-stiff);
+  stroke: none;
+}
+.cl-finger {
+  fill: var(--ft-gold-top);
+  stroke: var(--ft-gold-edge);
+  stroke-width: 0.8;
+  stroke-opacity: 0.55;
+}
+.cl-finger.is-sel {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-opacity: 1;
+}
+.cl-pick {
+  cursor: zoom-in;
+}
+.cl-svg :focus {
+  outline: none;
+}
+.cl-pick:focus-visible {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+.cl-panel {
+  fill: var(--cl-panel);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.cl-zoom {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease);
+}
+.cl-zoom.is-on {
+  opacity: 1;
+}
+.cl-hintpill {
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+  pointer-events: none;
+}
+.cl-hintpill.is-on {
+  opacity: 1;
+}
+.cl-ftop {
+  transition: transform 0.45s var(--ease);
+}
+.cl-ftop.is-low {
+  transform: translate(0px, 84px);
+}
+.cl.is-reduced .cl-ftop {
+  transition: none;
+}
+.cl-loupe {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.cl-dim {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+.cl-dim-ext {
+  stroke: var(--line-strong);
+  stroke-dasharray: 2 2;
+}
+.cl-fadeL-a {
+  stop-color: var(--cl-panel);
+  stop-opacity: 1;
+}
+.cl-fadeL-b {
+  stop-color: var(--cl-panel);
+  stop-opacity: 0;
+}
+
+/* ---- the flat cable and the socket */
+.cl-pcb {
+  fill: var(--cl-pcb);
+  stroke: var(--cl-pcb-edge);
+  stroke-width: 1;
+}
+.cl-cu {
+  fill: var(--cl-tin);
+  stroke: none;
+}
+.cl-zif {
+  fill: var(--cl-zif);
+  stroke: var(--cl-zif-edge);
+  stroke-width: 1;
+}
+.cl-zif-latch {
+  fill: var(--cl-latch);
+  stroke: var(--cl-latch-edge);
+  stroke-width: 1;
+}
+.cl-hinge {
+  fill: var(--cl-tin);
+  stroke: var(--cl-latch-edge);
+  stroke-width: 1;
+}
+.cl-spring {
+  fill: none;
+  stroke: var(--cl-tin);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: none;
+}
+.cl-spring-edge {
+  fill: none;
+  stroke: var(--cl-tin-edge);
+  stroke-width: 4.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: none;
+}
+.cl-ffc {
+  fill: var(--cl-ffc);
+  stroke: var(--cl-ffc-edge);
+  stroke-width: 0.9;
+}
+.cl-ffc-cu {
+  fill: var(--cl-ffc-cu);
+  opacity: 0.8;
+}
+.cl-ffc-bare {
+  fill: var(--cl-tin);
+  stroke: var(--cl-tin-edge);
+  stroke-width: 0.8;
+}
+.cl-ffc-tab {
+  fill: var(--cl-tab);
+  stroke: var(--cl-tab-edge);
+  stroke-width: 0.9;
+}
+.cl-ffc-view .cl-flow,
+.cl-ffc-view .cl-flow-glow {
+  opacity: 0;
+}
+.cl[data-view="ffc"] .cl-flow,
+.cl[data-view="ffc"] .cl-flow-glow,
+.cl-spark,
+.cl-miss {
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+.cl[data-view="ffc"] .cl-flow.is-on {
+  opacity: 1;
+}
+.cl[data-view="ffc"] .cl-flow-glow.is-on {
+  opacity: 0.7;
+}
+.cl-spark {
+  fill: var(--ft-signal);
+}
+.cl-spark.is-on {
+  opacity: 0.85;
+}
+.cl-miss {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.cl-miss.is-on {
+  opacity: 1;
+}
+.cl-cable-tags {
+  transition: opacity 0.25s var(--ease);
+}
+.cl-cable-tags.is-hidden {
+  opacity: 0;
+}
+
+/* ---- the side card's wiring pictures */
+.cl-w-title {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  fill: var(--ink);
+}
+.cl-w-nano {
+  fill: var(--cl-nano);
+  stroke: var(--cl-nano-edge);
+  stroke-width: 1;
+}
+.cl-w-chip {
+  fill: var(--cl-ic);
+  stroke: var(--cl-ic-edge);
+  stroke-width: 1;
+}
+.cl-w-dot1 {
+  fill: color-mix(in oklab, var(--cl-ic) 70%, #ffffff);
+}
+.cl-w-pad,
+.cl-w-lead {
+  fill: var(--cl-tin);
+}
+.cl-w-pin {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+}
+.cl-w-pin-sub {
+  font-size: 9px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+.cl-w.cl-w-thin {
+  stroke-width: 1.1;
+}
+.cl-w-pin-nano,
+.cl-w-pin-chip {
+  fill: rgba(255, 255, 255, 0.92);
+}
+.cl-w-pin-out {
+  font-weight: 500;
+  fill: var(--muted);
+}
+/* each wire in the colour of its job, as Lesson 2.3's schematic and Fig 3 have them: the drive path pink, the sense path
+   teal, power and ground grey. A wire at 1 (or a clock just ticked) is lit in its path's colour; a 0 is a quiet tint */
+.cl-w {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.2s var(--ease), stroke-width 0.2s var(--ease);
+}
+/* the drive path: DATA on D2, the clocks on D3, the chain, the outputs */
+.cl-w-data,
+.cl-w-clk,
+.cl-w-chain,
+.cl-w-out {
+  stroke: var(--cl-drive-q);
+}
+.cl-w-data.is-1,
+.cl-w-clk.is-tick {
+  stroke: var(--cl-drive);
+  stroke-width: 2.4;
+}
+/* the sense path: the select pins on D4-D7 and E# on D8, COM to A0 (quiet while E# is HIGH) */
+.cl-w-sel,
+.cl-w-en {
+  stroke: var(--cl-sense-q);
+}
+.cl-w-sel.is-1,
+.cl-w-en.is-1 {
+  stroke: var(--cl-sense);
+  stroke-width: 2.4;
+}
+.cl-w-sig {
+  stroke: var(--cl-sense);
+  stroke-width: 2.2;
+}
+.cl-w-sig.is-off {
+  stroke: var(--cl-sense-q);
+  stroke-width: 1.6;
+}
+/* power and ground; A0's resistor in ink, a part */
+.cl-w-5v,
+.cl-w-gnd {
+  stroke: var(--cl-pwr);
+}
+.cl-w-plain {
+  stroke: var(--cl-wire);
+}
+/* a junction dot in its wire's colour; drawn right after its wire (chips/art.ts), it follows that wire's state */
+.cl-w-joint {
+  stroke: none;
+  transition: fill 0.2s var(--ease);
+}
+.cl-w-joint.cl-w-sig {
+  fill: var(--cl-sense);
+}
+.cl-w-joint.cl-w-clk {
+  fill: var(--cl-drive-q);
+}
+.cl-w-joint.cl-w-5v,
+.cl-w-joint.cl-w-gnd {
+  fill: var(--cl-pwr);
+}
+.cl-w-clk.is-tick + .cl-w-joint {
+  fill: var(--cl-drive);
+}
+.cl-w-sig.is-off + .cl-w-joint {
+  fill: var(--cl-sense-q);
+}
+
+/* ---- "where else" and the photos */
+.cl-uses {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.cl-use {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  margin: 0;
+}
+.cl-use-svg {
+  width: 100%;
+  max-width: 82px;
+  height: auto;
+}
+.cl-use figcaption {
+  font-size: 11px;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--muted);
+}
+.cl-use-board {
+  fill: var(--card-2);
+  stroke: var(--cl-wire);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+.cl-use-line {
+  fill: none;
+  stroke: var(--cl-wire);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+.cl-use-faint {
+  stroke: var(--line-strong);
+}
+.cl-use-chip {
+  fill: var(--cl-ic);
+}
+.cl-use-pcb {
+  fill: color-mix(in oklab, var(--cl-pcb) 70%, var(--face));
+  stroke: var(--cl-wire);
+  stroke-width: 1.1;
+}
+.cl-use-gold {
+  fill: var(--ft-gold-left);
+}
+.cl-use-ffc {
+  fill: none;
+  stroke: var(--cl-ffc-edge);
+  stroke-width: 5;
+  stroke-linecap: butt;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+.cl-use-tab {
+  fill: none;
+  stroke: var(--cl-tab);
+  stroke-width: 5;
+}
+.cl-photo {
+  display: grid;
+  gap: 5px;
+  margin: 2px 0 0;
+}
+.cl-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9.6;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--card-2);
+}
+.cl-photo figcaption {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  /* (three lines' room, so the card keeps one height whichever photo shows) */
+  min-height: calc(3 * 1.4em);
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.cl-photo-src {
+  white-space: nowrap;
+}
+.cl-dots {
+  display: inline-flex;
+  margin: -2px -4px 0 -6px;
+  flex: none;
+}
+/* a 20 px target, the 8 px dot drawn inside it */
+.cl-dot {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.cl-dot::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+}
+.cl-dot.is-on::after {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.cl-dot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---- a narrow stage (a phone, a narrow window): the card under the drawing; the drawing takes its height from its
+   width (the full pass for small screens comes later) */
+@container (max-width: 640px) {
+  .cl-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cl-draw {
+    aspect-ratio: 16 / 10;
+  }
+  .cl-side {
+    align-self: start;
+  }
+}
+
+/* ---- reduced motion: no moving dots, no transitions */
+.cl.is-reduced .cl-flow {
+  animation: none;
+  stroke-dasharray: 0.01 6;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cl-flow {
+    animation: none;
+  }
+  .cl *,
+  .cl *::before {
+    transition: none !important;
+  }
+  .cl-latch.is-flash,
+  .cl-lrow.is-flash .cl-lbox,
+  .cl-copy.is-tick,
+  .cl-qhp.is-flash {
+    animation: none;
+  }
+}

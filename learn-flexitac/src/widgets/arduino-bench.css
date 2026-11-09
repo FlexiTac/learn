@@ -1,0 +1,825 @@
+/* Lesson 2.1's bench (src/widgets/arduino-bench.ts). Scoped to .w-bench. The widget paints the stage like a figure card
+   (--card), the render on it in the same colour; the side panel slides in from the right after step 1. The label cards
+   follow the figures' (figures/board/explore.css .ft-label): white, icon + TITLE + one line, a teal leader. */
+.w-bench {
+  --wb-card-bg: #ffffff;
+  --wb-card-ink: #18181a;
+  --wb-card-text: #57575a;
+  --wb-card-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 8px 18px -8px rgba(0, 0, 0, 0.14);
+  --wb-press: 0;
+  --wb-volts: 0;
+  position: relative;
+  height: 100%;
+  min-height: 340px;
+  overflow: hidden;
+  background: var(--card);
+  color: var(--text);
+  -webkit-user-select: none;
+  user-select: none;
+}
+:root[data-theme="dark"] .w-bench {
+  --wb-card-bg: #f4f4f1;
+  --wb-card-text: #4a4a4f;
+  --wb-card-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .w-bench {
+    --wb-card-bg: #f4f4f1;
+    --wb-card-text: #4a4a4f;
+    --wb-card-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* ---------------------------------------------------------------- the bench (the render and its overlays) */
+.wb-stage {
+  position: absolute;
+  inset: 0;
+}
+.wb-cam {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.wb-img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s var(--ease);
+  /* a soft edge (--fx / --fy, set per picture): a picture laid over another never shows its rectangle */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fx, 2%), #000 calc(100% - var(--fx, 2%)), transparent), linear-gradient(to bottom, transparent, #000 var(--fy, 2%), #000 calc(100% - var(--fy, 2%)), transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 var(--fx, 2%), #000 calc(100% - var(--fx, 2%)), transparent), linear-gradient(to bottom, transparent, #000 var(--fy, 2%), #000 calc(100% - var(--fy, 2%)), transparent);
+  mask-composite: intersect;
+}
+.w-bench.is-ready .wb-base,
+.w-bench.is-ready[data-view="nano"] .wb-nano,
+.w-bench.is-ready:not([data-view="nano"]) .wb-wired {
+  opacity: 1;
+}
+/* (the circuit goes in once the camera has pulled back for step 2) */
+.w-bench.is-ready:not([data-view="nano"]) .wb-wired {
+  transition-delay: 0.6s;
+}
+.wb-ov {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.wb-ov * {
+  pointer-events: none;
+}
+
+/* step 2: the path lights segment by segment (arduino-bench.ts draws each along its length) */
+.wb-segs {
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+.w-bench[data-view="wire"] .wb-segs {
+  opacity: 1;
+}
+.wb-seg path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wb-seg-glow {
+  stroke-width: 1.7;
+  opacity: 0.2;
+}
+.wb-seg-core {
+  stroke-width: 0.4;
+  opacity: 0.9;
+}
+.wb-seg-current path {
+  stroke: var(--ft-signal);
+}
+.wb-seg-sense path {
+  stroke: var(--ft-hotspot);
+}
+/* a breadboard strip (five joined holes) as one soft capsule, lit once the path reaches it */
+.wb-strip,
+.wb-sense-strip {
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+.wb-strip-current {
+  stroke: var(--ft-signal);
+}
+.wb-strip-sense,
+.wb-sense-strip {
+  stroke: var(--ft-hotspot);
+}
+.wb-strip.is-lit {
+  opacity: 0.34;
+}
+
+/* step 3: the current as small, soft beads round the loop (a light pink core in a faint pink glow, as Lesson 1.2 draws
+   current), the A0 branch in teal as bright as the voltage on it */
+.wb-dots,
+.wb-dots-halo {
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: 0.01 3.4;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+}
+.wb-dots {
+  stroke: color-mix(in srgb, var(--ft-signal) 70%, #fff);
+  stroke-width: 0.4;
+}
+.wb-dots-halo {
+  stroke: var(--ft-signal);
+  stroke-width: 1.1;
+}
+.w-bench[data-view="press"].is-pressed .wb-dots {
+  opacity: 1;
+}
+.w-bench[data-view="press"].is-pressed .wb-dots-halo {
+  opacity: 0.22;
+}
+.wb-sense {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 0.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease);
+}
+.w-bench[data-view="press"] .wb-sense {
+  opacity: calc(0.15 + var(--wb-volts) * 0.85);
+}
+.w-bench[data-view="press"] .wb-sense-strip {
+  opacity: calc(var(--wb-volts) * 0.4);
+}
+.w-bench[data-view="pins"] .wb-sense {
+  opacity: 0.7;
+}
+
+/* the press: a pink glow over the sensing area. A teal ring round the disc says where to press: it breathes slowly
+   until the first press, and comes back whenever the pointer is over the sensor */
+.wb-press-glow {
+  opacity: calc(var(--wb-press) * 0.95);
+}
+.wb-press-ring {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 2.5px;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity 0.2s var(--ease);
+}
+.w-bench[data-view="press"]:not(.was-pressed) .wb-press-ring {
+  opacity: 1;
+  animation: wb-ring 2.4s ease-in-out infinite;
+}
+.w-bench[data-view="press"].is-hit-hover .wb-press-ring {
+  opacity: 1;
+  animation: none;
+}
+.w-bench[data-view="press"].is-hit-focus .wb-press-ring {
+  opacity: 1;
+  stroke: var(--accent);
+  animation: none;
+}
+@keyframes wb-ring {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* step 4: the Nano's 8 analog pins (A0 in use) */
+.wb-pins {
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+}
+.w-bench[data-view="pins"] .wb-pins {
+  opacity: 1;
+}
+.wb-pin {
+  fill: color-mix(in srgb, var(--wb-card-bg) 55%, transparent);
+  stroke: var(--ft-hotspot);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+.wb-pin.is-used {
+  fill: var(--ft-hotspot);
+}
+
+/* step 1: the parts, pickable */
+.wb-hot {
+  display: none;
+}
+.w-bench[data-view="nano"]:not(.is-moving) .wb-hot {
+  display: inline;
+}
+.wb-hot-shape,
+.wb-hot-pins circle {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: all !important;
+  cursor: pointer;
+  transition: fill 0.16s var(--ease), stroke 0.16s var(--ease);
+}
+.wb-hot-shape.is-hover,
+.wb-hot-pins.is-hover circle {
+  fill: color-mix(in srgb, var(--ft-hotspot) 14%, transparent);
+  stroke: color-mix(in srgb, var(--ft-hotspot) 60%, transparent);
+}
+.wb-hot-shape.is-pick,
+.wb-hot-pins.is-pick circle {
+  fill: var(--ft-hotspot-soft);
+  stroke: var(--ft-hotspot);
+}
+
+/* ---------------------------------------------------------------- the label cards and their leaders (step 1) */
+.wb-leads {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.wb-lead path {
+  fill: none;
+}
+.wb-lead-halo {
+  stroke: var(--wb-card-bg);
+  stroke-width: 4px;
+  opacity: 0.8;
+}
+.wb-lead-line {
+  stroke: var(--ft-hotspot);
+  stroke-width: 1.25px;
+}
+.wb-lead-end {
+  fill: var(--ft-hotspot);
+  stroke: var(--wb-card-bg);
+  stroke-width: 1.5px;
+}
+.wb-lead {
+  animation: wb-in 0.26s var(--ease) both;
+  animation-delay: var(--wb-delay, 0ms);
+  transition: opacity 0.16s var(--ease);
+}
+.wb-lead.is-dim {
+  opacity: 0.45;
+}
+.wb-cards {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.wb-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 2px;
+  align-items: start;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 8px 11px 8px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--wb-card-bg);
+  color: var(--wb-card-text);
+  box-shadow: var(--wb-card-shadow);
+  font: 11px/1.35 var(--sans);
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  visibility: hidden;
+  transition: box-shadow 0.16s var(--ease);
+}
+.w-bench[data-view="nano"]:not(.is-moving) .wb-card {
+  visibility: visible;
+  animation: wb-in 0.28s var(--ease) both;
+  animation-delay: var(--wb-delay, 0ms);
+}
+.wb-card-icon {
+  grid-row: 1 / span 2;
+  width: 16px;
+  height: 16px;
+  color: var(--wb-card-ink);
+}
+.wb-card-icon .icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wb-card b {
+  font: 700 9.5px/1.3 var(--mono);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--wb-card-ink);
+}
+.wb-card b:lang(zh) {
+  font: 700 11px/1.3 var(--sans);
+}
+.wb-card > * {
+  transition: opacity 0.16s var(--ease);
+}
+/* (two lines of about the same length: no word or character left alone on the second) */
+.wb-card-line {
+  text-wrap: balance;
+}
+/* (Chinese breaks at its punctuation and spaces, never inside a word) */
+.wb-card-line:lang(zh) {
+  word-break: keep-all;
+}
+/* every card keeps room for a two-line sentence, so a language switch never moves one */
+.wb-cards:not([data-short]) .wb-card {
+  min-height: 62px;
+  align-content: center;
+}
+/* (no room for every card's sentence: icon and title only, arduino-bench.ts) */
+.wb-cards[data-short] .wb-card-line {
+  display: none;
+}
+.wb-cards[data-short] .wb-card-icon {
+  grid-row: 1;
+}
+.wb-card.is-hover {
+  box-shadow: 0 0 0 1px var(--ft-hotspot), var(--wb-card-shadow);
+}
+.wb-card.is-pick {
+  box-shadow: 0 0 0 1.5px var(--ft-hotspot), var(--wb-card-shadow);
+}
+.wb-card.is-dim > * {
+  opacity: 0.5;
+}
+.wb-card:focus {
+  outline: none;
+}
+.wb-card:focus-visible {
+  box-shadow: 0 0 0 2px var(--wb-card-bg), 0 0 0 4px var(--accent), var(--wb-card-shadow);
+}
+@keyframes wb-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- corner texts and the press target */
+.wb-kicker {
+  position: absolute;
+  left: 16px;
+  top: 12px;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+}
+.wb-foot {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 11px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 26px;
+  pointer-events: none;
+}
+.w-bench:not([data-view="nano"]):not([data-narrow]) .wb-foot {
+  right: calc(var(--wb-panel, 280px) + 16px);
+}
+.wb-hint {
+  margin: 0;
+  font: 11px/1.35 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+/* (step 2's hint is a path with a unit in it: 10 kΩ keeps its small k) */
+.w-bench[data-view="wire"] .wb-hint {
+  text-transform: none;
+}
+.wb-replay {
+  display: none;
+  align-items: center;
+  height: 26px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font: 600 11px/1 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.wb-replay:hover {
+  border-color: var(--accent);
+}
+.wb-replay:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.w-bench[data-view="wire"] .wb-replay {
+  display: inline-flex;
+}
+.wb-hit {
+  position: absolute;
+  display: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.w-bench.is-ready[data-view="press"]:not(.is-moving) .wb-hit {
+  display: block;
+}
+.wb-hit:focus {
+  outline: none;
+}
+
+/* ---------------------------------------------------------------- the side panel */
+.wb-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--wb-panel, 280px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 18px;
+  border-left: 1px solid var(--line);
+  background: var(--card);
+  overflow: auto;
+  overscroll-behavior: contain;
+  transform: translateX(100%);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.5s var(--ease), opacity 0.3s var(--ease), visibility 0s linear 0.5s;
+}
+.w-bench:not([data-view="nano"]) .wb-panel {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  transition: transform 0.5s var(--ease), opacity 0.3s var(--ease), visibility 0s;
+}
+.wb-sec {
+  display: none;
+  margin: 0;
+}
+/* What the panel shows, step by step: the circuit and its formula (step 2), the readings, the formula and the serial
+   tools (step 3), 8 pins against 384 crossings (step 4). Each step's drawing takes the panel's height. */
+.w-bench[data-view="press"] .wb-chain,
+.w-bench[data-view="wire"] .wb-formula,
+.w-bench[data-view="press"] .wb-formula {
+  display: block;
+}
+.w-bench[data-view="wire"] .wb-panel {
+  justify-content: center;
+}
+.w-bench[data-view="wire"] .wb-schem {
+  display: grid;
+  place-items: center;
+}
+.w-bench[data-view="wire"] .wb-formula {
+  text-align: center;
+}
+.w-bench[data-view="press"] .wb-serial {
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
+}
+.w-bench[data-view="pins"] .wb-pinsfig {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+}
+/* force -> resistance -> volts -> analogRead: four quiet rows, the number at the end a little larger */
+.wb-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+/* the first row is also the press control (keyboard and touch can press from here) */
+.wb-row-press {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.wb-row-press input {
+  flex: 1 0 100%;
+  width: 100%;
+  margin: 0 0 2px;
+  accent-color: var(--accent);
+}
+.wb-lab {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.wb-lab code {
+  font: 11.5px var(--mono);
+  color: var(--muted);
+}
+.wb-lab .badge {
+  font-size: 9px;
+}
+.wb-val {
+  font: 600 13px/1.25 var(--mono);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.wb-row-code {
+  border-bottom: 0;
+  padding-bottom: 4px;
+  align-items: center;
+}
+.wb-row-code .wb-val {
+  font-size: 24px;
+  font-weight: 600;
+}
+.wb-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.wb-bar i {
+  display: block;
+  height: 100%;
+  background: var(--ft-hotspot);
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+.wb-formula {
+  margin: -6px 0 0;
+  font-size: 10.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.wb-formula sub {
+  font-size: 0.78em;
+}
+/* the circuit: grey at rest, each part lit with the bench */
+.wb-schem svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+.wb-sch-base * {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wb-sch-base circle {
+  fill: var(--card);
+}
+.wb-sch-base .wb-sch-node {
+  fill: var(--line-strong);
+}
+.wb-sch-seg path {
+  fill: none;
+  stroke: var(--ft-signal);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+.wb-sch-seg.wb-sch-sense path {
+  stroke: var(--ft-hotspot);
+}
+.wb-sch-seg.is-lit path {
+  opacity: 1;
+}
+.wb-sch-text text {
+  font-size: 9px;
+  fill: var(--text);
+  stroke: none;
+}
+/* the Serial Plotter (the last 10 s) and the Serial Monitor (a line per reading) side by side, as tall as the panel
+   leaves them */
+.wb-serial {
+  grid-template-columns: minmax(0, 1fr) 70px;
+  gap: 10px;
+}
+.wb-plot,
+.wb-mon {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.wb-cap {
+  margin: 0 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.wb-plot-box,
+.wb-mon ol {
+  position: relative;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 120px;
+  max-height: 380px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card-2);
+}
+.wb-plot-box svg {
+  position: absolute;
+  left: 30px;
+  right: 6px;
+  top: 8px;
+  bottom: 8px;
+  width: calc(100% - 36px);
+  height: calc(100% - 16px);
+  overflow: visible;
+}
+.wb-ax {
+  position: absolute;
+  left: 5px;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--faint);
+}
+.wb-ax-hi {
+  top: 4px;
+}
+.wb-ax-lo {
+  bottom: 4px;
+}
+.wb-grid {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+.wb-trace {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.wb-mon ol {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 6px 8px;
+  overflow: hidden;
+  list-style: none;
+  font-size: 11.5px;
+  line-height: 1.42;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  /* (the oldest lines fade out at the top instead of being cut) */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 2.2em);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 2.2em);
+}
+.wb-mon li:last-child {
+  color: var(--accent);
+}
+/* step 4: 8 pins against 384 crossings, each pin joined to the one crossing it could read */
+.wb-pins-cap {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.wb-pins-cap-b {
+  margin: 8px 0 14px;
+}
+.wb-pins-fig {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.wb-pins-fig text {
+  font-size: 7.5px;
+  fill: var(--muted);
+  text-anchor: middle;
+}
+.wb-pins-fig circle {
+  fill: var(--ft-hotspot);
+}
+.wb-pins-line {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 0.8;
+  opacity: 0.7;
+}
+.wb-pins-fig rect {
+  fill: var(--line-strong);
+  opacity: 0.55;
+}
+:root[data-theme="dark"] .wb-pins-fig rect {
+  fill: var(--muted);
+  opacity: 0.32;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .wb-pins-fig rect {
+    fill: var(--muted);
+    opacity: 0.32;
+  }
+}
+.wb-pins-fig rect.is-read {
+  fill: var(--ft-hotspot);
+  opacity: 1;
+}
+.wb-pins-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------- failure, narrow, reduced motion */
+.w-bench.is-failed .wb-kicker {
+  text-transform: none;
+}
+/* (a stacked layout: the panel under the bench; checked properly in the phone pass) */
+.w-bench[data-narrow] {
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.w-bench[data-narrow] .wb-stage {
+  position: relative;
+  inset: auto;
+  aspect-ratio: 113 / 96;
+  overflow: hidden;
+}
+.w-bench[data-narrow] .wb-panel {
+  position: static;
+  width: auto;
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  border-left: 0;
+  border-top: 1px solid var(--line);
+  overflow: visible;
+}
+.w-bench[data-narrow][data-view="nano"] .wb-panel {
+  display: none;
+}
+.w-bench.is-reduced *,
+.w-bench.is-reduced *::before,
+.w-bench.is-reduced *::after {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .w-bench *,
+  .w-bench *::before,
+  .w-bench *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

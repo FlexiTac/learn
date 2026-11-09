@@ -3,8 +3,24 @@
 An interactive course on the FlexiTac tactile sensor and its reading board. It is a static single-page app
 (Vite + vanilla TypeScript, no framework) built around the anatomy figures in `../flexitac-anatomy/figures` (Fig 1–3,
 Fig 5 the gripper) and, for Section 3, small in-browser simulation cards on the shared touch engine
-(`../flexitac-anatomy/shared/models/touchsim.mjs`). Three sections of three chapters each (`src/lessons/index.ts`
-`SECTIONS`): 1 The sensor (1.1–1.6), 2 On a robot (2.1–2.2, then "Coming next"), 3 In simulation (3.1–3.6).
+(`../flexitac-anatomy/shared/models/touchsim.mjs`). Three sections and 14 lessons (`src/lessons/index.ts` `LESSONS`
+and `SECTIONS`, as of 2026-11-09):
+
+| Section | Chapter | Lessons |
+|---|---|---|
+| 1 The sensor | The pad | 1.1 Meet FlexiTac · 1.2 The sandwich |
+| | Use it | 1.3 Bytes to touch: the heatmap · 1.4 Build your own in ~3 minutes |
+| | On a robot | 1.5 Put FlexiTac on a robot · 1.6 FlexiTac on a real robot |
+| 2 The reading board | The basics | 2.1 Arduino reads one force sensor · 2.2 Chips and connectors |
+| | The board | 2.3 How the reading board was made · 2.4 One frame |
+| 3 In simulation | Touch as points | 3.1 Why simulate touch · 3.2 A pad made of points |
+| | Contact to signal | 3.3 How deep, how hard · 3.4 Playground |
+| | Train with it | coming soon |
+
+Each lesson is `src/lessons/<NN>-<id>.ts`, with its Chinese under the same name in `src/lessons/zh/`. The prefix is
+only a file name; the order is `LESSONS`. The ids, in order: `meet-flexitac`, `the-sandwich`, `bytes-to-touch`,
+`build-your-own`, `put-on-a-robot`, `real-robot`, `arduino-fsr`, `chips-and-connectors`, `meet-the-board`,
+`one-frame`, `why-simulate-touch`, `pad-made-of-points`, `how-deep-how-hard`, `sim-playground`.
 
 ```
 #/                     home: hero, then each section's title and its three chapter cards (cover pictures)

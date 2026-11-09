@@ -11,7 +11,7 @@ the reader as “你”. Say what a thing *does* before you name it, as the Engl
 
 | Rule | Example |
 |---|---|
-| **Product and part names stay English.** | FlexiTac, Velostat, Arduino Nano, FPC, FFC, PCB, USB, A0, D2–D8, AA 55, 74HC595, CD74HC4067, Isaac, VT-Refine, 3D-ViTac, UMI, reBot (also PyFlexiTac, Gerber, BOM, arduino-cli, Adafruit 1361, U2–U6, FPC1/FPC2, E#, SER, SRCLK, RCLK, GND; the header's GitHub and Discord) |
+| **Product and part names stay English.** | FlexiTac, Velostat, Arduino Nano, FPC, FFC, PCB, USB, A0, D2–D8, AA 55, 74HC595, CD74HC4067, Isaac, VT-Refine, 3D-ViTac, UMI, reBot (also PyFlexiTac, Gerber, BOM, arduino-cli, Adafruit 1361, U2–U6, FPC1/FPC2, E#, SER, SRCLK, RCLK, GND; the header's GitHub and Discord; Arduino, ATmega328P, FSR, ZIF, EDA, EasyEDA, JLCPCB, LCSC; code such as `analogRead()`, `setup()`, `loop()`, `digitalWrite()`, HIGH and LOW) |
 | **Key concepts are bilingual at their FIRST mention in each lesson (and each glossary definition), then Chinese only.** Write 中文（English）. | first 「触觉像素（taxel）」, later 「触觉像素」 |
 | In `<dfn>`, put the first-mention form inside and name the glossary entry. | `<dfn data-term="taxel">触觉像素（taxel）</dfn>` |
 | **Code, formulas, units, numbers and serial bytes stay as they are.** | `raw >> 2`, `V = 5 V × R1 / (R1 + R)`, 0.1 mm, 100 Hz, 10 kΩ, 2,000,000 baud, `AA 55`, 0x41 |
@@ -95,7 +95,7 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 | Ohm's law | 欧姆定律 | 欧姆定律 | `ohms-law` | |
 | voltage divider | 分压电路 | 分压电路（voltage divider） | `voltage-divider` | |
 | in series | 串联 | 串联 | `series` | |
-| ground (GND) | 地（GND） | 地（GND） | | |
+| ground (GND) | 地 | 地（GND） | `ground` | to ground (verb): 接地. GND stays English |
 | press / pressure / force | 按压 / 压力 / 力 | | | “no force data”: 没有力的测量数据. Newtons: 牛顿（N） |
 | ghosting | 鬼影 | 鬼影（ghosting） | `ghosting` | |
 | time multiplexing | 分时复用 | 分时复用（time multiplexing） | `time-multiplexing` | |
@@ -106,13 +106,13 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 |---|---|---|---|---|
 | reading board | 读取板 | 读取板（reading board） | | |
 | Arduino Nano | Arduino Nano | Arduino Nano | `arduino-nano` | stays English; the Nano |
-| microcontroller | 微控制器 | 微控制器（microcontroller） | | |
+| microcontroller | 微控制器 | 微控制器（microcontroller） | `microcontroller` | not 单片机 in the text (it is in the glossary's aka) |
 | firmware | 固件 | 固件（firmware） | `firmware` | |
 | flash (verb) | 烧录 | 烧录（flash） | `flash` | |
 | bootloader | 引导程序 | 引导程序（bootloader） | `bootloader` | |
 | FQBN | FQBN | FQBN（板卡全名） | `fqbn` | |
-| header sockets | 排母 | 排母（header sockets） | | the Nano plugs into them |
-| connector | 连接器 | 连接器 | | 16-pin connector: 16 针连接器 |
+| header sockets | 排母 | 排母（header sockets） | | the Nano plugs into them. Not the glossary id `header`: that is the frame header |
+| connector | 连接器 | 连接器 | | 16-pin connector: 16 针连接器. A flat-cable socket is a ZIF 座子 (lesson 2.2, below) |
 | pin | 引脚 | 引脚 | | data pin 数据引脚, select pins 选择引脚 |
 | select pins | 选择引脚 | 选择引脚（select pins） | `select-pins` | S0–S3 |
 | multiplexer, mux | 多路选择器 | 多路选择器（multiplexer，简称 mux） | `multiplexer` | then 多路选择器 or mux |
@@ -122,7 +122,7 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 | on-resistance R_on / switch resistance | 导通电阻 / 开关导通电阻 | | | the mux switch, 70 Ω |
 | header holes (for the Nano) | 排针孔 | | | two rows of 15: 两排，每排 15 个 |
 | output latch | 输出锁存器 | 输出锁存器（output latch） | `output-latch` | latch (verb): 锁存 |
-| clock / clock tick | 时钟 / 时钟脉冲 | 时钟 | | rising edge 上升沿 (`rising-edge`) |
+| clock / clock tick | 时钟 / 时钟脉冲 | 时钟（clock） | `clock` | rising edge 上升沿 (`rising-edge`) |
 | rising edge | 上升沿 | 上升沿（rising edge） | `rising-edge` | |
 | Active LOW | 低电平有效 | 低电平有效（active LOW） | `active-low` | HIGH / LOW stay English |
 | enable pin (E#) | 使能引脚（E#） | 使能引脚（E#） | | |
@@ -140,7 +140,62 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 | BOM | BOM | BOM（物料清单） | `bom` | |
 | PCBA | PCBA | PCBA（贴片成品板） | `pcba` | |
 | Gerber | Gerber 文件 | Gerber 文件 | `gerber` | |
-| schematic | 原理图 | 原理图 | | |
+| schematic | 原理图 | 原理图（schematic） | `schematic` | the PCB drawing next to it: PCB 版图 (lesson 2.3, below) |
+
+### Arduino and one sensor (lesson 2.1)
+
+| English | 中文 | First mention | Glossary id | Notes |
+|---|---|---|---|---|
+| Arduino | Arduino | Arduino | `arduino` | stays English; the Arduino IDE: Arduino IDE |
+| sketch (an Arduino program) | 程序 | 程序（sketch） | `sketch` | the glossary names it Arduino 程序. `setup()` / `loop()` stay code: setup() 只运行一次，loop() 一直重复 |
+| upload (a sketch) | 上传 | 上传 | `flash` | the IDE's Upload button: 上传. Putting FlexiTac's firmware on the Nano is 烧录 |
+| USB port / power pins | USB 口 / 电源引脚 | | | the power pins are 5V and GND (names stay English) |
+| digital pin | 数字引脚 | 数字引脚（digital pin） | `digital-pin` | D0–D13 |
+| analog pin | 模拟引脚 | 模拟引脚（analog pin） | `analog-pin` | A0–A7 |
+| HIGH / LOW | HIGH / LOW | HIGH（高电平）/ LOW（低电平） | `high-low` | stay English, as in the code. In plain prose 高电平 / 低电平; the glossary names it 高电平和低电平 |
+| `analogRead()` | `analogRead()` | `analogRead()` | `analogread` | code: never translated |
+| FSR, force-sensing resistor | FSR | 力敏电阻（force-sensing resistor，简称 FSR） | `fsr` | FSR stays English; its name is 力敏电阻, as in the glossary and lesson 2.1's overview. In titles and plain text 力传感器 is fine, as in lesson 2.1's title |
+| pull-down resistor | 下拉电阻 | 下拉电阻（pull-down resistor） | `pull-down-resistor` | the 10 kΩ from A0 to GND |
+| breadboard | 面包板 | 面包板（breadboard） | `breadboard` | |
+| jumper wire | 跳线 | 跳线（jumper wire） | `jumper-wire` | also called 杜邦线 |
+| Serial Monitor / Serial Plotter | 串口监视器 / 串口绘图器 | 串口监视器（Serial Monitor） | `serial-monitor` | tools in the Arduino IDE |
+
+### Chips and connectors (lesson 2.2)
+
+| English | 中文 | First mention | Glossary id | Notes |
+|---|---|---|---|---|
+| binary | 二进制 | 二进制（binary） | `binary` | a binary number: 二进制数. 1101 = 8 + 4 + 1 = 13 |
+| rotary switch (the multiplexer as a knob) | 旋钮开关 | 旋钮开关 | | 16 positions: 16 档 |
+| walking 1 | 走动的 1 | 走动的 1 | | the shift register's demo |
+| box (one stage of a shift register) | 格子 | 格子 | | not 盒子. The second row that drives the outputs: 输出锁存（output latch） |
+| FFC extender | FFC 转接板 | 转接板（extender） | | the small board on each pad tail: a socket on each side. Later mentions: FFC 转接板 |
+| LED | LED | LED | | stays English |
+| ZIF connector (flat-cable socket) | ZIF 座子 | ZIF 座子（ZIF connector） | `zif-connector` | ZIF = 零插拔力（zero insertion force）. A socket alone: 座子. The BOM tables of lesson 1.4 say 排线插座 |
+| latch (of a ZIF connector) | 锁扣 | 锁扣 | | open / close: 打开 / 合上 (flip up / press down: 掀开 / 压下) |
+| contact | 触点 | 触点 | | the springy contacts inside a socket: 弹片. Contacts facing up / down: 触点朝上 / 朝下 |
+| memory stick / graphics card / game cartridge | 内存条 / 显卡 / 游戏卡带 | | | gold fingers elsewhere |
+| laptop / printer / camera module | 笔记本电脑 / 打印机 / 相机模组 | | | where flat cables are used |
+
+### Making the board (lesson 2.3)
+
+| English | 中文 | First mention | Glossary id | Notes |
+|---|---|---|---|---|
+| PCB (printed circuit board) | PCB | PCB（印制电路板） | `pcb` | stays English. In plain prose 电路板; a bare board: 空板 |
+| PCB layout | PCB 版图 | PCB 版图（PCB layout） | `pcb-layout` | placing the parts: 摆零件（布局）; routing the traces: 走线（布线） |
+| trace | 走线 | 走线（trace） | `trace` | EasyEDA calls it a track. The pad's copper lines stay 铜线 |
+| footprint | 封装 | 封装（footprint） | `footprint` | a chip's package is also 封装 |
+| pad (on a PCB) | 焊盘 | 焊盘（pad） | | never 传感垫, which is the FlexiTac pad |
+| two-layer board / top / bottom layer | 双层板 / 顶层 / 底层 | | | copper layer: 铜层 |
+| solder mask | 阻焊层 | 阻焊层（solder mask） | `solder-mask` | in the workshop: 绿油 |
+| silkscreen | 丝印 | 丝印（silkscreen） | `silkscreen` | |
+| EDA | EDA | EDA（电子设计自动化） | `eda` | EasyEDA stays English: EasyEDA（立创EDA）at its first mention |
+| datasheet | 数据手册 | 数据手册（datasheet） | `datasheet` | |
+| pick-and-place file (CPL) | 坐标文件 | 坐标文件（pick-and-place） | `pick-and-place` | the machine: 贴片机 |
+| JLCPCB | JLCPCB | JLCPCB（嘉立创） | | stays English. Order: 下单; quote: 报价 |
+| assembly (the factory solders the parts on) | 贴片 | 贴片 | | solder / soldering: 焊锡 / 焊接; stencil 钢网; reflow 回流焊 |
+| ratline | 飞线 | 飞线（ratline） | `ratline` | the layout view's toggle "Before the copper": 布线之前 |
+| setup fee / extended-part fee (JLCPCB) | 开机费 / 扩展库费 | | | once per order, not per board |
+| drive path / sense path | 驱动通路 / 感应通路 | | | colours: pink 粉色 (powered), teal 青绿色 (listened to), as in lesson 2.4 |
 
 ### On the computer: from bytes to a picture
 
@@ -176,7 +231,7 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 | cutting mat | 切割垫 | 切割垫 | | the mat under the objects in Fig 5's teleop mode |
 | finger holder / board tray | 手指支架 / 板托 | | | the printed parts drawn for this gripper (proposed) |
 | slack (a loop of slack) | 余量（那圈余量） | | | in the flat cables |
-| squeeze / grip force | 夹紧力 | | | the total squeeze bar in 2.2 |
+| squeeze / grip force | 夹紧力 | | | the total squeeze bar in lesson 1.5 |
 | stall (motor) | 堵转 | | | |
 | strawberry / cube / ball / tube / bar | 草莓 / 立方体 / 球 / 圆管 / 横条 | | | the objects; glass ball 玻璃球, the cube's edge 立方体的棱; the 3.2 / 3.4 cards' buttons Ball / Tube / Edge / Strawberry: 球 / 圆管 / 横条的棱 / 草莓 (not 试管, not 方块) |
 | left / right finger | 左手指 / 右手指 | | | |
@@ -212,7 +267,7 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 | English | 中文 | First mention | Glossary id | Notes |
 |---|---|---|---|---|
 | plan view / top view | 俯视图 | 俯视图 | | Fig 1's G key; "Top view (G)": 俯视图（G） |
-| via | 过孔 | 过孔（via） | | Fig 3 |
+| via | 过孔 | 过孔（via） | `via` | Fig 3 and lesson 2.3 |
 | rail / carriage | 导轨 / 滑块 | | | Fig 5's gripper |
 | gripper motor | 夹爪电机 | | | |
 | SIMULATED (a map's kicker) | 仿真 | | | "WHAT THE SENSOR FEELS · SIMULATED": 传感器的感受 · 仿真 |
@@ -224,19 +279,29 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 
 ## 3a. Course structure
 
-The section and chapter names (`src/lessons/zh/_sections.ts`). A chapter's name is also the kicker of its lessons.
+The section and chapter names (`src/lessons/zh/_sections.ts`) and the lesson titles, as of 2026-11-09. A chapter's
+name is also the kicker of its lessons; lesson 1.1's kicker is “Start here” / 从这里开始.
 
 | English | 中文 |
 |---|---|
 | Section 1 · The sensor | 第 1 部分 · 传感器 |
-| The pad / The board / Use it | 传感垫 / 读取板 / 用起来 |
-| Section 2 · On a robot | 第 2 部分 · 在机器人上 |
-| Mount it / Grasp with touch / Coming next | 安装 / 用触觉抓取 / 接下来 |
+| The pad / Use it / On a robot | 传感垫 / 用起来 / 在机器人上 |
+| 1.1 Meet FlexiTac · 1.2 The sandwich | 认识 FlexiTac · 三明治结构 |
+| 1.3 Bytes to touch: the heatmap · 1.4 Build your own in ~3 minutes | 从字节到触觉：热力图 · 自己动手做：约 3 分钟 |
+| 1.5 Put FlexiTac on a robot · 1.6 FlexiTac on a real robot | 把 FlexiTac 装到机器人上 · 真实机器人上的 FlexiTac |
+| Section 2 · The reading board | 第 2 部分 · 读取板 |
+| The basics / The board | 基础 / 读取板 |
+| 2.1 Arduino reads one force sensor · 2.2 Chips and connectors | 用 Arduino 读一个力传感器 · 芯片和连接器 |
+| 2.3 How the reading board was made · 2.4 One frame | 读取板是怎么做出来的 · 一帧数据 |
 | Section 3 · In simulation | 第 3 部分 · 在仿真中 |
-| Touch as points / Contact to signal / Train with it | 用点表示触觉 / 从接触到信号 / 用它训练 |
-| 2.1 Put FlexiTac on a robot · 2.2 Grasp with your mouse | 把 FlexiTac 装到机器人上 · 用鼠标抓取 |
+| Touch as points / Contact to signal / Train with it (coming soon) | 用点表示触觉 / 从接触到信号 / 用它训练 |
 | 3.1 Why simulate touch · 3.2 A pad made of points | 为什么要仿真触觉 · 由点组成的传感垫 |
 | 3.3 How deep, how hard · 3.4 Playground | 压多深，力多大 · 实验场 |
+
+The lesson ids (the URL `#/lesson/<id>`, never changed): 1.1 `meet-flexitac`, 1.2 `the-sandwich`, 1.3
+`bytes-to-touch`, 1.4 `build-your-own`, 1.5 `put-on-a-robot`, 1.6 `real-robot`; 2.1 `arduino-fsr`, 2.2
+`chips-and-connectors`, 2.3 `meet-the-board`, 2.4 `one-frame`; 3.1 `why-simulate-touch`, 3.2 `pad-made-of-points`,
+3.3 `how-deep-how-hard`, 3.4 `sim-playground`.
 
 ## 4. Fixed phrases
 

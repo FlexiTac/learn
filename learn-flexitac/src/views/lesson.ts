@@ -304,14 +304,24 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
   // inert and hidden from assistive tech while it is covered. A step change cross-fades: the layer fades in over the
   // figure (which is then hidden), or the figure shows again under the layer as it fades out. Stacked layouts swap the
   // two in the page flow instead (the layer takes its own height there).
+  // The picture also gets the step's form (GuidedStep.widgetView -> its view(), undefined for a step without one): once
+  // it has mounted, and on every step that shows it, including a step change that keeps the same picture on show
+  // (lesson 2.3 steps 2-4: the schematic, the layout, the order). A picture without view() (the robot grasp) is left as
+  // it was.
   const STAGE_FADE_MS = 320;
   let over: HTMLElement | null = null;
   let overId: StageId | null = null;
   let overInst: WidgetInstance | null = null;
   let overTimer = 0;
+  /** The step whose picture is on show (or was last), for the form sent once the picture has mounted. */
+  let overStep = 0;
   const figSlot = stageBody.querySelector<HTMLElement>(":scope > .figure-slot");
   const showStageAt = (k: number) => {
     const want = lesson.steps?.[k]?.stage ?? null;
+    if (want) {
+      overStep = k;
+      if (want === overId) overInst?.view?.(lesson.steps?.[k]?.widgetView);
+    }
     if (want === (over && !over.hidden && over.classList.contains("is-on") ? overId : null)) return;
     clearTimeout(overTimer);
     const fade = reducedMotion() ? 0 : STAGE_FADE_MS;
@@ -328,6 +338,7 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
           .then((mount) => {
             if (!view.isConnected || over !== layer) return;
             overInst = mount(layer, { lesson, figure, theme, onTheme: ctx.onTheme, reducedMotion, lang, onLang: ctx.onLang });
+            overInst.view?.(lesson.steps?.[overStep]?.widgetView);
           })
           .catch((err: Error) => {
             layer.innerHTML = `<p class="figure-status mono">${t("stage.failed", { msg: esc(err.message) })}</p>`;
@@ -422,7 +433,11 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
   disposers.push(() => cancelDemoWait?.());
   let bar: StepsBar | null = null;
   if (lesson.steps?.length) {
-    bar = stepsBar(lesson, figure, onComplete, onStep);
+    // (a restart also puts the widgets back as they opened: the lesson's widget and a step's stage picture)
+    bar = stepsBar(lesson, figure, onComplete, onStep, () => {
+      widget?.reset?.();
+      overInst?.reset?.();
+    });
     stage.append(bar);
     disposers.push(keepBarInPlace(stage, bar));
   }

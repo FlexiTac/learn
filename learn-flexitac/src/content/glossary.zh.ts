@@ -5,7 +5,11 @@
 // sentences). Inside a definition, another key concept is bilingual at its first mention: 驱动线（drive line）. The
 // numbers come from the shared data, as in the English file. The glossary page shows the Chinese name with the
 // English one beside it, and the <dfn> popovers in a Chinese lesson use `def`.
-import { BAUD, COLS, FRAME_BYTES, FRAME_HZ, MUX_OFFSET, R1, ROWS } from "@shared/data/constants.mjs";
+import { ADC_BITS, BAUD, COLS, FRAME_BYTES, FRAME_HZ, MUX_OFFSET, R1, ROWS, VCC } from "@shared/data/constants.mjs";
+import { getFact, num } from "./facts";
+
+// (the reading board's outline, as in the English file: 56.8 × 39.9 mm)
+const BOARD_MM = (getFact("board.size").value as number[]).map((v) => v.toFixed(1)).join(" × ");
 
 export interface TermZh {
   term?: string;
@@ -39,7 +43,7 @@ export const GLOSSARY_ZH: Record<string, TermZh> = {
   },
   ffc: {
     aka: "flat flexible cable · 扁平柔性排线",
-    def: "一种扁平的排线，里面并排着很多根导体。它把传感垫两张 FPC 的尾线接到读取板（reading board）的连接器上。",
+    def: "一种扁平的排线，里面并排着很多根导体。在 FlexiTac 上，每条 FPC 尾线先插进一块小转接板，再由一根 FFC 排线接到读取板（reading board）的座子上。",
   },
   electrode: {
     term: "电极",
@@ -82,12 +86,12 @@ export const GLOSSARY_ZH: Record<string, TermZh> = {
   },
   stiffener: {
     term: "补强板",
-    def: "贴在 FPC 背面的一层额外薄膜，让某一块区域变硬。FlexiTac 在金手指（gold fingers）背后贴了一块，这样尾线能干脆地插进连接器。",
+    def: "贴在 FPC 背面的一层额外薄膜，让某一块区域变硬。FlexiTac 在金手指（gold fingers）背后贴了一块，这样尾线能干脆地插进连接器。排线两端也各有一块，就是那块蓝色的。",
   },
   "gold-fingers": {
     term: "金手指",
     aka: "fingers",
-    def: "软尾线末端一排镀金的触点。它们插进连接器里，就像游戏卡带上的那排触点。",
+    def: "电路板边缘或软尾线末端的一排镀金触点。它们插进连接器里，就像游戏卡带或显卡上的那排触点。",
   },
   gerber: {
     term: "Gerber 文件",
@@ -96,7 +100,7 @@ export const GLOSSARY_ZH: Record<string, TermZh> = {
   "shift-register": {
     term: "移位寄存器",
     aka: "74HC595",
-    def: `一种芯片：它在数据引脚上一次接收一位（bit），每来一个时钟脉冲就把这些位沿着一排输出往后挪一格，并把它们保持住。四片级联的 74HC595，用 Arduino 的 2 个引脚就能控制 ${COLS} 路驱动输出。`,
+    def: `一种芯片，里面有一排格子，每格装一位（bit）。每来一个时钟脉冲，所有位都往后挪一格，并从数据引脚收进下一位；再由锁存把这排格子一次复制到输出上。四片级联的 74HC595，用 Arduino 的 2 个引脚就能控制 ${COLS} 路驱动输出。`,
   },
   multiplexer: {
     term: "多路选择器",
@@ -105,7 +109,7 @@ export const GLOSSARY_ZH: Record<string, TermZh> = {
   },
   "voltage-divider": {
     term: "分压电路",
-    def: `两个电阻串联（in series）时，会按各自的大小按比例分掉一个电压。触觉像素（taxel）和读取板上的 ${R1 / 1000} kΩ 电阻串联，一起分掉 5 V；电阻上分到的那一份，就是 Arduino 读到的值。`,
+    def: `两个电阻串联（in series）时，会按各自的大小按比例分掉一个电压。FSR 和一个 ${R1 / 1000} kΩ 电阻串联，一起分掉 5 V；电阻上分到的那一份，就是 Arduino 读到的值。FlexiTac 的触觉像素（taxel）也是这样。`,
   },
   adc: {
     aka: "analog-to-digital converter · 模数转换器",
@@ -292,5 +296,148 @@ export const GLOSSARY_ZH: Record<string, TermZh> = {
   calibration: {
     term: "标定",
     def: "调整模型里的数，直到它和真实测量对得上。对仿真的传感垫来说，就是调 k<sub>n</sub> 和 k<sub>d</sub>，直到仿真的按压曲线和真实的一样。",
+  },
+  // Section 2 opens with the basics (2026-11-09): 2.1 Arduino and one force sensor, 2.2 chips and connectors, 2.3 how
+  // the reading board was made
+  arduino: {
+    aka: "Arduino 开发板 · Arduino IDE",
+    def: "一类开源的小电路板，每块板的核心是一个微控制器（microcontroller）；再加上 Arduino IDE，也就是你在电脑上给它写程序的软件。它最初是为没有电子基础的学生做的，好让他们很快做出东西来。",
+  },
+  microcontroller: {
+    term: "微控制器",
+    aka: "MCU · 单片机",
+    def: "做在一个芯片上的一台小电脑：有处理器，有存放一个程序的存储器，还有和外界相连的引脚。Arduino Nano 上的微控制器是 ATmega328P，运行频率 16 MHz。",
+  },
+  sketch: {
+    term: "Arduino 程序",
+    def: "Arduino 对程序的叫法。它的 <code>setup()</code> 部分在板子通电或复位后只运行一次，接着 <code>loop()</code> 部分一遍又一遍地运行；FlexiTac 的固件（firmware）也是这样一个程序。",
+  },
+  "digital-pin": {
+    term: "数字引脚",
+    aka: "digital I/O pin · 数字 I/O 引脚",
+    def: `只有开和关两种状态的引脚：HIGH（${VCC} V）或 LOW（0 V）。Nano 有 14 个数字引脚，D0 到 D13；读取板用其中的 D2 到 D8 控制它的芯片。`,
+  },
+  "analog-pin": {
+    term: "模拟引脚",
+    aka: "analog input · 模拟输入引脚",
+    def: `能测量 0 到 ${VCC} V 之间任意电压的引脚，不只是分辨开和关。Nano 有 8 个，A0 到 A7，共用一个 ADC；读取板通过 A0 读取每一个触觉像素（taxel）。`,
+  },
+  analogread: {
+    def: `Arduino 的一条命令：测量模拟引脚（analog pin）上的电压，返回 0（0 V）到 ${2 ** ADC_BITS - 1}（${VCC} V）之间的一个整数。FlexiTac 的固件每读一个触觉像素（taxel）就调用它一次，一帧要调用 ${ROWS * COLS} 次。`,
+  },
+  fsr: {
+    aka: "force-sensing resistor · 力敏电阻 · 薄膜压力传感器",
+    def: "力敏电阻（force-sensing resistor）的简称：一种又薄又平的传感器，按得越用力，电阻（resistance）就越小，没人碰时超过 10 MΩ，用力按时只剩几百欧姆。FlexiTac 传感垫上的每个交叉点（crossing），都很像一个小小的 FSR。",
+  },
+  "pull-down-resistor": {
+    term: "下拉电阻",
+    aka: "pull-down",
+    def: `从引脚接到地（GND）的电阻：没有别的东西把引脚往上拉时，它让引脚保持在 0 V。在 ${VCC} V 和这个引脚之间再接一个传感器，两者就组成分压电路（voltage divider），就像读取板上接在 A0 上的 ${R1 / 1000} kΩ 电阻 R1。`,
+  },
+  breadboard: {
+    term: "面包板",
+    aka: "solderless breadboard · 免焊面包板",
+    def: "一块布满小孔的塑料板，不用焊接就能把电路搭起来试一试。板子里面的金属条把一小排孔连在一起，插进同一排的导线和零件就接通了。",
+  },
+  "jumper-wire": {
+    term: "跳线",
+    aka: "jumper · 杜邦线",
+    def: "两头带插针或插孔的短导线。不用焊接，就能把两个点连起来，比如 Arduino 的一个引脚和面包板（breadboard）上的一排孔。",
+  },
+  "serial-monitor": {
+    term: "串口监视器",
+    def: "Arduino IDE 里的一个窗口，显示 Arduino 通过 USB 发来的文字；它的波特率（baud rate）要设成和程序里一样。FlexiTac 的固件发的是原始字节，不是文字，所以在这里只会看到乱码。",
+  },
+  ratline: {
+    term: "飞线",
+    aka: "ratline · 预拉线",
+    def: "画铜线之前，EDA 软件在原理图要求相连的两个焊盘之间画的一条细直线。设计的人把每一条飞线换成一条走线。",
+  },
+  "header-sockets": {
+    term: "排母",
+    aka: "header sockets · 母排针",
+    def: "焊在电路板上的一排带金属内衬的小孔。模块的引脚插进去，不用焊接就能拔下来、再插回去，读取板就是这样插着它的 Arduino Nano。",
+  },
+  "serial-plotter": {
+    term: "串口绘图器",
+    def: "Arduino IDE 里的一个窗口，把程序一行一行打印出来的数字画成一条在图上移动的曲线，方便你看一个读数怎样变化。",
+  },
+  ground: {
+    term: "地",
+    aka: "GND · 接地 · 地线",
+    def: `电路里 0 V 的那一边，标作 GND，其他电压都从它算起。电流从电源的 ${VCC} V 引脚出发，流过电路，再回到地。`,
+  },
+  "high-low": {
+    term: "高电平和低电平",
+    aka: "HIGH · LOW",
+    def: `数字引脚（digital pin）的两种状态：在 Nano 上，HIGH（高电平）是 ${VCC} V，LOW（低电平）是 0 V，也就是地（GND）。在程序里，<code>digitalWrite(2, HIGH)</code> 会让 D2 引脚变成 ${VCC} V。`,
+  },
+  clock: {
+    term: "时钟",
+    aka: "clock signal · 时钟信号 · 时钟脉冲",
+    def: "告诉芯片什么时候走下一步的信号，就像打拍子的鼓手。74HC595 的时钟每从 LOW 变成 HIGH 一次，芯片里的每一位（bit）就往后挪一格；在读取板上，这个时钟来自 Nano 的 D3 引脚。",
+  },
+  binary: {
+    term: "二进制",
+    aka: "base 2 · 二进制数",
+    def: "只用 0 和 1 两个数字来写数，每往左一位，这一位代表的值就翻一倍：1、2、4、8……所以 1101 就是 8 + 4 + 1 = 13，多路选择器（multiplexer）的四个选择引脚（select pins）就是这样选中通道 13 的。",
+  },
+  "zif-connector": {
+    term: "ZIF 座子",
+    aka: "ZIF 连接器 · 零插拔力连接器 · 排线插座",
+    def: "插扁平排线用的座子，插的时候不用使劲：先打开小锁扣，把排线一直推到底，再合上锁扣，把触点压紧。ZIF 是零插拔力（zero insertion force）的缩写；读取板上的两个排线座子都是 ZIF 座子。",
+  },
+  pcb: {
+    aka: "printed circuit board · 印制电路板 · 电路板",
+    def: `印制电路板（printed circuit board）：一块硬的玻璃纤维板，板上细细的铜线把焊在上面的零件连起来。读取板是一块有 ${num("board.copperLayers")} 层铜的 PCB，大小 ${BOARD_MM} mm。`,
+  },
+  schematic: {
+    term: "原理图",
+    aka: "circuit diagram · 电路图",
+    def: "用符号画出每个零件、再用线说明哪个引脚接哪个引脚的图。它不管零件摆在板上的哪里，那是 PCB 版图（PCB layout）的事。",
+  },
+  "pcb-layout": {
+    term: "PCB 版图",
+    aka: "PCB 图 · 布局布线",
+    def: "电路板的设计图：每个零件摆在板上的哪里，零件之间的走线（trace）在每一层上怎么走。它照着原理图（schematic）来画，从它导出的 Gerber 文件就是工厂做板的依据。",
+  },
+  trace: {
+    term: "走线",
+    aka: "track · 铜走线 · 印制导线",
+    def: "PCB 上一条细细的铜线，把信号从一个引脚送到另一个引脚，就像印在板上的导线。EasyEDA 里把它叫作 track。",
+  },
+  via: {
+    term: "过孔",
+    aka: "via hole · 导通孔",
+    def: `一个内壁镀了金属的小孔，把一层铜上的走线（trace）接到另一层，让一条线能从另一条线上面“跳”过去。读取板上有 ${num("board.vias")} 个过孔。`,
+  },
+  footprint: {
+    term: "封装",
+    aka: "PCB 封装 · land pattern",
+    def: "PCB 上焊一个零件用的那组铜焊盘，有时还带孔。它的大小和引脚间距必须和真实的零件对上，不然零件就装不上去。",
+  },
+  "pick-and-place": {
+    term: "坐标文件",
+    aka: "CPL · 贴片坐标文件 · pick-and-place 文件",
+    def: "一张表，告诉工厂的贴片机每个零件放在哪里：零件编号、x 和 y 坐标、在板子的哪一面、转了多少度。工厂组装电路板时，要把它和 BOM（物料清单）一起用。",
+  },
+  eda: {
+    aka: "electronic design automation · 电子设计自动化 · EDA 软件",
+    def: "电子设计自动化（electronic design automation）：用来画电路的原理图（schematic）和 PCB 版图（PCB layout）、再导出工厂所需文件的软件。读取板是用 EasyEDA（立创EDA）画的，它直接在网页浏览器里运行。",
+  },
+  datasheet: {
+    term: "数据手册",
+    aka: "规格书",
+    def: "零件厂家写的说明文档：每个引脚做什么，能接多高的电压，能跑多快，尺寸多大。一个芯片的数字要紧时，就去查它的数据手册。",
+  },
+  "solder-mask": {
+    term: "阻焊层",
+    aka: "solder resist · 阻焊 · 绿油",
+    def: "盖在 PCB 铜面上的一层薄薄的有色涂层，常见的是绿色，只把焊盘露出来。它防止焊锡把相邻的焊盘连在一起，也保护走线（trace）。",
+  },
+  silkscreen: {
+    term: "丝印",
+    aka: "丝印层 · legend",
+    def: "印在 PCB 上的文字和轮廓线，通常是白色的，用来标出零件的名字和引脚。读取板上的丝印标出了 Nano 每个引脚的名字。",
   },
 };

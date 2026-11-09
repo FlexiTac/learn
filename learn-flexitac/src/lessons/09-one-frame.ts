@@ -1,16 +1,18 @@
-// Lesson 4: one frame. The pad plugged into the board, the scan row by row that makes the 386-byte frame, a press.
-// It holds ALL the scanning since lesson 3 became "Meet the reading board" (2026-10-25): the select pins, the walking 1
-// and the firmware loop came here from "Pick one crossing" (src/lessons/_retired/07-pick-one-crossing.ts). Lesson 2's
-// 2 × 2 and 12 × 32 cards drew the rule; this lesson refers to them instead of drawing it again.
+// Lesson 2.4: one frame. The pad plugged into the board, the scan row by row that makes the 386-byte frame, a press.
+// It holds the scanning (it came from "Pick one crossing", src/lessons/_retired/07-pick-one-crossing.ts, 2026-10-25).
+// Since 2026-11-09 Lesson 2.1 teaches analogRead and raw bytes, 2.2 the chips (select pins and binary, the walking 1,
+// the output latch, the clocks tied on D3) and 2.3 the board and its two paths: this lesson points back to them and
+// adds what the firmware does with them (the offset, the one-clock lag, the loop, the byte order, the header, the
+// timing). Its own glossary terms: time-multiplexing, header, baud, prescaler.
 // Facts from shared/data/sources.json, behaviour from the firmware port (@shared/models/scan.mjs = PyFlexiTac
 // template.ino). Figure: Fig 3 in connect mode (figures/EMBED.md "Fig 3 board: connect mode"): the FlexiTac pad wired to
 // the board by its two flat cables, the sense line listened to (teal) and the drive line powered (pink) lit on the pad
 // as on the board, and a 12 x 32 map of the readings beside it that fills row by row. The Nano stays lifted and
-// see-through, as at the end of lesson 3. Widget: the frame runner in its strip form on every step (the frame bar
+// see-through, as at the end of Lesson 2.3. Widget: the frame runner in its strip form on every step (the frame bar
 // AA 55 + 12 blocks and one status line, following the figure; a click on a block seeks the figure there): one row
 // height for the whole lesson, so a step change never resizes the figure.
 import { BAUD, COLS, FRAME_BYTES, FRAME_HZ, HEADER, MUX_OFFSET, ROWS } from "@shared/data/constants.mjs";
-import { CONVERSION_S } from "@shared/models/adc.mjs";
+import { ADC_CLOCK_HZ, CONVERSION_CYCLES, CONVERSION_S, PRESCALER } from "@shared/models/adc.mjs";
 import { byteIndex, frameSize, VARIANTS } from "@shared/models/scan.mjs";
 import { fact } from "../content/facts";
 import type { Lesson } from "../types";
@@ -25,11 +27,20 @@ const BITS_PER_BYTE = 10; // 8N1 serial: start bit + 8 data bits + stop bit (ext
 const LINK_SHARE = Math.round(((BPS * BITS_PER_BYTE) / BAUD) * 100);
 const READ_US = Math.round(CONVERSION_S * 1e6);
 const READS_MS = (TAXELS * CONVERSION_S * 1000).toFixed(1);
+// Lesson 2.1's analogRead, at the Arduino core's own ADC prescaler (ArduinoCore-avr wiring.c "16 MHz / 128 = 125 KHz",
+// as in 03-arduino-fsr.ts): 13 cycles at 125 kHz = 104 µs, "about 100 µs" there and here (to 10 µs)
+const ARDUINO_PRESCALER = 128;
+const CPU_HZ = ADC_CLOCK_HZ * PRESCALER; // the Nano's 16 MHz
+const ARD_S = (CONVERSION_CYCLES * ARDUINO_PRESCALER) / CPU_HZ;
+const ARD_US = Math.round((ARD_S * 1e6) / 10) * 10; // 100
+const ARD_MS = Math.round((TAXELS * ARD_S * 1000) / 10) * 10; // 40: the 384 readings at that pace
+const ARD_X = Math.round(TAXELS * ARD_S * FRAME_HZ); // 4 frames' worth
+const TIMES = ["once", "twice", "three times", "four times", "five times", "six times"][ARD_X - 1] ?? `${ARD_X} times`;
 const PER_ROW = COLS + 2; // shiftColumn(true) + shiftColumn(false), then one per drive line
+const CALLS = ROWS * PER_ROW; // shiftColumn calls (D3 rising edges) in a frame: 408
 const repo16 = VARIANTS.repo16;
 const REPO16_BYTES = frameSize(repo16);
 const bits = (ch: number) => (ch & 15).toString(2).padStart(4, "0");
-const EX = 13; // the worked example channel in the overview
 const SLOW = 2e-4; // step 2: about eight readings a second, so each clock can be followed (a frame takes 50 s)
 // step 3 before Show me (user, 2026-10-25: "the press step can scan at 1/100× by default"): a frame a second, so the
 // map refreshes every second and the pressed squares show soon after the finger lands
@@ -46,10 +57,10 @@ const band = (r: number) => `${byteIndex(r, 0) + 1}–${byteIndex(r, COLS - 1) +
 
 export const lesson: Lesson = {
   id: "one-frame",
-  n: 8,
+  n: 10,
   title: "One frame",
   kicker: "The board",
-  lede: `Plug in the pad and watch the board read it, row by row: one sense line, all ${COLS} drive lines, then the next. The <b>${TAXELS}</b> readings, with <code>${HDR}</code> in front, make one <b>${FRAME_BYTES}</b>-byte frame, sent <b>${FRAME_HZ}</b> times a second.`,
+  lede: `Plug in the pad and watch the board read it, row by row: one sense line, all ${COLS} drive lines, then the next. The ${TAXELS} readings, with <code>${HDR}</code> in front, make one ${FRAME_BYTES}-byte frame, sent ${FRAME_HZ} times a second.`,
   status: "ready",
   features: [
     { icon: "grid", title: "Row by row", text: `One sense line, all ${COLS} drive lines, then the next` },
@@ -58,7 +69,7 @@ export const lesson: Lesson = {
   ],
   figure: {
     fig: "board",
-    // step 1's pose (the lesson opens there): the board alone, the Nano lifted (as lesson 3 ends); step 1's Show me
+    // step 1's pose (the lesson opens there): the board alone, the Nano lifted (as Lesson 2.3 ends); step 1's Show me
     // plugs the pad in (Fig 3 connect)
     initial: [{ name: "reset" }, { name: "lift" }],
     // restart: everything back to the start (reset: the scan at power-on, speed 1/10,000×, paused, the map and its
@@ -76,65 +87,62 @@ export const lesson: Lesson = {
   // src/state/store.ts migrateSteps.
   stepsAdded: [0, { keep: 2 }, { keep: 4 }, { merge: 1 }],
   overview: `
-<p><b>The pad, plugged in.</b> Two flat cables join the pad to the board you met in Lesson 2.1: the Bottom FPC's ${COLS} drive
-lines go to FPC2, next to the shift registers, and the Top FPC's ${ROWS} sense lines to FPC1, next to the multiplexer.
-Lesson 1.2's 2 × 2 and 12 × 32 cards drew the rule: power one drive line, listen to one sense line, and the reading belongs
-to the single crossing where they meet. Here the same rule runs in real chips. The sense line the board listens to glows
-teal on the pad, the drive line it powers glows pink, and each reading lands in one square of the map beside the pad.
-Taking turns like this, a few wires shared by many crossings one after another, is called
-<a href="#/glossary/time-multiplexing"><dfn>time-multiplexing</dfn></a>.</p>
+<p>Two flat cables join the pad to the board of Lesson 2.3: the Bottom FPC's ${COLS} drive lines go to FPC2, next to the
+shift registers, and the Top FPC's ${ROWS} sense lines to FPC1, next to the multiplexer. Lesson 2.3 ended on the board's
+two paths; now they reach the pad. The sense line the board listens to glows teal on the pad, the drive line it powers
+glows pink, and each reading lands in one square of the map beside the pad. Taking turns like this, which Lesson 2.2
+began, is called <dfn>time-multiplexing</dfn>: a few wires shared by many crossings, one after another.</p>
 
-<p><b>Power one drive line: a walking 1.</b> D2 (data) and D3 (clock) feed the chain of shift registers, U2 to U5. Every
-time D3 goes from LOW to HIGH (a <dfn title="the moment a signal switches from LOW to HIGH">rising edge</dfn>), every bit
-moves one box along and the first box takes whatever is on D2. A second row of boxes in each chip, the
-<dfn title="a copy of the shift boxes that drives the output pins">output latch</dfn>, copies them onto its 8 output pins.
-The firmware puts a single 1 in, then clocks in 0s, so the lonely 1 walks along the drive lines, one line per clock, like
-a bucket passed down a line of people. One detail: D3 drives both the shift clock and the latch clock, so the outputs show
-the boxes <i>one clock behind</i>. The first clock puts the 1 in the boxes; the second makes drive line 1 HIGH.</p>
+<p>The drive lines get Lesson 2.2's walking 1. The firmware puts a single 1 into U2, then clocks in 0s, and every rising
+edge on D3 moves the 1 one drive line along. Because D3 also latches, the outputs show the boxes one clock behind: the
+first clock puts the 1 into the first box, the second makes drive line 1 HIGH.</p>
 
-<p><b>Listen to one sense line: a rotary switch.</b> D4 to D7 spell the multiplexer's channel number in binary: D4 (S0) is
-worth 1, D5 2, D6 4 and D7 8. Channel ${EX} = 8 + 4 + 1, so D7 D6 D5 D4 = <code>${bits(EX)}</code>. The sense lines sit on
-channels ${MUX_OFFSET}–${LAST}, so the firmware adds <code>MUX_CHANNEL_OFFSET = ${MUX_OFFSET}</code> to the sense line's
-number, which it counts from 0 (<code>i</code>): sense line 1 is <code>i = 0</code>, channel ${MUX_OFFSET}. The enable pin E# (D8,
-active LOW) gets one short HIGH pulse at the start of every frame and stays LOW the rest of the time.</p>
+<p>The sense lines get Lesson 2.2's channel numbers on D4–D7, with one twist. They sit on channels ${MUX_OFFSET}–${LAST},
+so the firmware adds <code>MUX_CHANNEL_OFFSET = ${MUX_OFFSET}</code> to the sense line's number. It counts the sense lines
+from 0 (<code>i</code>), so sense line 1 is <code>i = 0</code>, channel ${MUX_OFFSET}. The enable pin E# (D8) stays LOW, which
+keeps the multiplexer on, apart from one short HIGH pulse at the start of every frame.</p>
 
-<p><b>The loop, row by row.</b> Send the two header bytes. Then for each of the ${ROWS} sense lines: point the multiplexer
-at it, put a single 1 into the shift registers and latch it (2 clocks). Now, ${COLS} times: read A0, shrink the reading to
-one byte, send it, and move the HIGH to the next drive line (1 clock). That is ${PER_ROW} clocks per sense line and ${TAXELS}
-readings per pass. Each pass makes one <a href="#/glossary/frame"><dfn>frame</dfn></a>; then the loop starts again.</p>
+<p>The firmware's loop goes row by row. First it sends the two header bytes. Then, for each of the ${ROWS} sense lines, it
+points the multiplexer at that line, puts a single 1 into the shift registers and latches it (2 clocks). Now, ${COLS}
+times, it reads A0, shrinks the reading to one byte, sends it and moves the HIGH to the next drive line (1 clock). That
+is ${PER_ROW} clocks per sense line and ${TAXELS} readings per pass. Each pass makes one frame; then the loop starts again.</p>
 
-<p><b>The order sets the address.</b> Because the drive-line loop sits <i>inside</i> the sense-line loop, the bytes arrive
-as all ${COLS} drive lines of sense line 1 (<code>i = 0</code>), then all ${COLS} of sense line 2 (<code>i = 1</code>), and so on.
-The firmware counts from 0, so sense line <i>n</i> is <code>i = n − 1</code> and drive line <i>m</i> is <code>j = m − 1</code>.
-The reading for the crossing <code>(i, j)</code> is always at <code>byte index = 2 + i × ${COLS} + j</code>. The 2 skips the header.
-The strip under the figure shows the frame in that order, <code>${HDR}</code> and then one block per sense line; click a block
-and the board goes to that crossing.</p>
+<p>Because the drive-line loop sits <i>inside</i> the sense-line loop, the bytes arrive as all ${COLS} drive lines of sense
+line 1 (<code>i = 0</code>), then all ${COLS} of sense line 2 (<code>i = 1</code>), and so on. The firmware counts from 0, so
+sense line <i>n</i> is <code>i = n − 1</code> and drive line <i>m</i> is <code>j = m − 1</code>. The reading for the crossing
+<code>(i, j)</code> is always at <code>byte index = 2 + i × ${COLS} + j</code>. The 2 skips the header. The strip under the
+figure shows the frame in that order, <code>${HDR}</code> and then one block per sense line; click a block and the board
+goes to that crossing.</p>
 
-<p><b>Why a header?</b> USB serial delivers one endless stream of bytes with no gaps between frames. When the
-computer starts listening, it lands somewhere in the middle of a frame. The
-<a href="#/glossary/header"><dfn>header</dfn></a> <code>${HDR}</code> (${HEADER.join(" and ")}) is a bookmark: the viewer
-searches for that pair, then takes the next ${TAXELS} bytes as one picture. It doesn't double-check, so two neighbouring
-readings of exactly ${HEADER[0]} then ${HEADER[1]} would fool it. That would need a sharp jump between neighbouring
-crossings, which is unusual.</p>
+<p>USB serial delivers one endless stream of bytes with no gaps between frames. When the computer starts listening, it
+lands somewhere in the middle of a frame. The <dfn>header</dfn> <code>${HDR}</code> (${HEADER.join(" and ")}) is a
+bookmark: the viewer searches for that pair, then takes the next ${TAXELS} bytes as one picture. It doesn't double-check,
+so two neighbouring readings of exactly ${HEADER[0]} then ${HEADER[1]} would fool it. That would need a sharp jump between
+neighbouring crossings, which is unusual.</p>
 
-<p><b>How fast is that?</b> ${FRAME_BYTES} bytes × ${FRAME_HZ} frames is ${BPS.toLocaleString("en-US")} bytes a second. Serial
-sends each byte as ${BITS_PER_BYTE} bits (a start bit, 8 data bits and a stop bit), so the link is about ${LINK_SHARE}% busy at
-${BAUD.toLocaleString("en-US")} <a href="#/glossary/baud"><dfn>baud</dfn></a>. The firmware speeds up the ADC (prescaler 16, a 1 MHz ADC clock), so
-one reading takes about ${READ_US} µs. The ${TAXELS} readings take about ${READS_MS} ms of each ${FRAME_MS} ms frame.</p>
+<p>Lesson 2.1's <code>analogRead()</code> takes about ${ARD_US} µs. At that pace the ${TAXELS} readings alone would take
+about ${ARD_MS} ms, ${TIMES} as long as a ${FRAME_MS} ms frame. So the firmware speeds up the ADC. The ADC's clock is the
+Nano's ${CPU_HZ / 1e6} MHz divided by a number called the <dfn>prescaler</dfn>. Arduino's own code sets it to
+${ARDUINO_PRESCALER}, and the firmware to ${PRESCALER}, for a ${ADC_CLOCK_HZ / 1e6} MHz ADC clock. One reading then takes about
+${READ_US} µs, and the ${TAXELS} take about ${READS_MS} ms of each ${FRAME_MS} ms frame.</p>
 
-<p><b>One crossing at a time, but it looks like one picture.</b> Each taxel is read for only a few microseconds, once per
-frame. The first and last readings of a frame are a few milliseconds apart, so the picture isn't one single instant, like
-a phone camera's rolling shutter. A fingertip moves far less than a taxel in that time, so the frame works as a
-snapshot: ${ROWS + COLS} wires, ${TAXELS} taxels, one picture every ${FRAME_MS} ms.</p>
+<p>The USB link has room to spare. ${FRAME_BYTES} bytes × ${FRAME_HZ} frames is ${BPS.toLocaleString("en-US")} bytes a
+second. Serial sends each byte as ${BITS_PER_BYTE} bits (a start bit, 8 data bits and a stop bit), so the link is about
+${LINK_SHARE}% busy at ${BAUD.toLocaleString("en-US")} <dfn>baud</dfn>.</p>
 
-<p><b>Other builds, other frame sizes.</b> The hardware repo also has a ${repo16.rows}-row firmware that reads every mux
-channel: 2 + ${repo16.rows} × ${COLS} = ${REPO16_BYTES} bytes. The computer has to expect the same size as the board sends, or
-frames won't line up. Try it in the code card: set <code>ROW_COUNT</code> to ${repo16.rows} and the offset to ${repo16.muxOffset}.</p>`,
+<p>Each taxel is read for only about ${READ_US} µs, once per frame. The first and last readings of a frame are a few
+milliseconds apart, so the picture isn't one single instant, like a phone camera's rolling shutter. A fingertip moves far
+less than a taxel in that time, so the frame works as a snapshot: ${ROWS + COLS} wires, ${TAXELS} taxels, one picture every
+${FRAME_MS} ms.</p>
+
+<p>The hardware repo also has a ${repo16.rows}-row firmware that reads every mux channel: 2 + ${repo16.rows} × ${COLS} =
+${REPO16_BYTES} bytes. The computer has to expect the same size as the board sends, or frames won't line up. Try it in the
+code card: set <code>ROW_COUNT</code> to ${repo16.rows} and the offset to ${repo16.muxOffset}.</p>`,
   wiring: {
-    intro: `What each Nano pin does during one frame, and where each byte of the ${FRAME_BYTES} comes from (counting bytes from 1). Lesson 2.1's Wiring tab has every connection on the board.`,
+    intro: `What each Nano pin does during one frame, and where each byte of the ${FRAME_BYTES} comes from (counting bytes from 1). Lesson 2.3's Wiring tab has every connection on the board.`,
     rows: [
       { from: "Nano D2", to: "U2 SER (data in)", note: "HIGH for one clock at the start of each sense line (the 1 goes in), LOW otherwise." },
-      { from: "Nano D3", to: "SRCLK + RCLK of U2–U5", note: `${PER_ROW} ticks per sense line: 2 to load and latch the 1, then one per drive line. The outputs lag the shift stage by one tick.` },
+      { from: "Nano D3", to: "SRCLK + RCLK of U2–U5", note: `${PER_ROW} ticks per sense line: 2 to load and latch the 1, then one per drive line. The outputs lag the boxes by one tick.` },
       { from: "Nano D4–D7", to: "U6 S0–S3", note: `The sense line's channel, i + ${MUX_OFFSET}, in binary; set once per sense line.` },
       { from: "Nano D8", to: "U6 E# (enable, active LOW)", note: "One HIGH pulse per frame, LOW the rest of the time." },
       { from: "U6 COM", to: "Nano A0 (and R1 to GND)", note: `Read ${COLS} times per sense line, once while each drive line is HIGH.` },
@@ -186,12 +194,12 @@ void loop() {
       { name: "offset", label: "MUX_CHANNEL_OFFSET", min: 0, max: 15, step: 1, value: MUX_OFFSET },
     ],
     notes: [
-      `<code>setRow(i)</code> writes the channel number <code>i + ${MUX_OFFSET}</code> onto D4–D7, one bit per pin: <code>bitRead(ch, b)</code> is bit <code>b</code>, a 0 or a 1. The multiplexer then connects that sense line to A0: the teal line on the pad. (The real setRow also pulses E# on D8 once per frame; left out here.)`,
-      "One <code>shiftColumn</code> call is one rising edge on D3. <code>SET_SR_DATA_HIGH()</code> and friends flip one bit of the Nano's port D register, much faster than <code>digitalWrite</code>, which matters when it runs thousands of times a frame.",
+      `<code>setRow(i)</code> is Lesson 2.2's <code>setChannel</code> with the offset added: it writes channel <code>i + ${MUX_OFFSET}</code> onto D4–D7, and the multiplexer connects that sense line to A0: the teal line on the pad. (The real setRow also pulses E# on D8 once per frame; left out here.)`,
+      `One <code>shiftColumn</code> call is one rising edge on D3, like Lesson 2.2's <code>clockOnce()</code>. <code>SET_SR_DATA_HIGH()</code> and friends flip one bit of the Nano's port D register, much faster than <code>digitalWrite</code>. That matters: a frame takes ${CALLS} calls.`,
       "Because the shift clock and the latch clock share D3, the outputs show the boxes one clock late: it takes two calls before drive line 1 (<code>j = 0</code>) is HIGH. After that, each call moves the HIGH one drive line on: the pink line on the pad.",
       `The inner loop runs ${COLS} times for every pass of the outer loop, which is why the map fills row by row and the bytes come out sense line by sense line: <code>index = 2 + i × ${COLS} + j</code>.`,
-      "<code>raw &gt;&gt; 2</code> drops the two lowest bits of the 10-bit reading, turning 0–1023 into 0–255 so it fits one byte.",
-      "<code>Serial.write</code> sends the number itself as one raw byte. <code>Serial.print(12)</code> would send the text \"12\": two bytes, and a much bigger frame.",
+      "<code>raw &gt;&gt; 2</code> is Lesson 2.1's divide by 4: it drops the two lowest bits of the 10-bit reading, turning 0–1023 into 0–255 so it fits one byte.",
+      "<code>Serial.write</code> sends the number itself as one raw byte. <code>Serial.print(12)</code> would send the text \"12\": two bytes, and a much bigger frame. Lesson 2.1's sketch sent text like that, with <code>Serial.println</code>.",
       `<code>ROW_COUNT</code> and <code>MUX_CHANNEL_OFFSET</code> must match the sensor: ${ROWS} and ${MUX_OFFSET} for this pad. With offset 0 the firmware would read four empty channels and miss the last four sense lines.`,
       `Try <code>ROW_COUNT ${repo16.rows}</code>, offset <code>${repo16.muxOffset}</code> (the repo's ${REPO16_BYTES}-byte build) and press <b>Run</b>: the frame strip under the figure redraws for that frame (the figure keeps the real ${ROWS} × ${COLS} pad). Rows + offset above 16 wrap around to channel 0.`,
     ],
@@ -201,7 +209,7 @@ void loop() {
     fact("firmware.header", "Header", { value: (v) => `${v} (${HEADER.join(", ")})` }),
     fact("system.frameRate", "Frame rate", { note: `One frame every ${FRAME_MS} ms` }),
     fact("firmware.baud", "Serial speed"),
-    fact("board.clockTie", "Clocks", { note: "The outputs run one clock behind the shift stage" }),
+    fact("board.clockTie", "Clocks", { note: "The outputs run one clock behind the boxes" }),
     fact("firmware.scanStart", "Start of a sense line"),
     { label: "Clocks per sense line", value: `${PER_ROW}`, src: "computed from refs/fw/pyflexitac/template.ino", note: "2 to load and latch the 1, then one per drive line" },
     fact("sensor.muxChannels", "Channels used", { note: `Sense line n (i = n − 1) → channel i + ${MUX_OFFSET}` }),
@@ -209,6 +217,14 @@ void loop() {
     fact("firmware.adcToByte", "Reading → byte"),
     fact("firmware.adcPrescaler", "ADC prescaler"),
     { label: "Time per reading", value: `≈ ${READ_US} µs`, src: "ATmega328P datasheet (external): 13 ADC clocks per conversion at 1 MHz", badge: "external" },
+    // (Lesson 2.1's pace, which the overview compares with: the same source as 2.1's "One analogRead")
+    {
+      label: "Lesson 2.1's analogRead",
+      value: `≈ ${ARD_US} µs a reading`,
+      src: "https://docs.arduino.cc/language-reference/en/functions/analog-io/analogRead/",
+      badge: "external",
+      note: `Arduino's own prescaler, ${ARDUINO_PRESCALER}: the ${TAXELS} readings would take about ${ARD_MS} ms`,
+    },
     { label: "Data rate", value: `${BPS.toLocaleString("en-US")} B/s`, src: "computed from firmware.frameBytes × system.frameRate", note: `About ${LINK_SHARE}% of the link with 8N1 serial (${BITS_PER_BYTE} bits a byte)` },
     fact("firmware.repo16.frameBytes", "16-row build", { note: `2 + ${repo16.rows} × ${COLS}; not the default` }),
   ],
@@ -219,8 +235,8 @@ void loop() {
     {
       title: "Plug in the pad",
       text: `Two flat cables join the pad to the board: its ${COLS} drive lines to FPC2, by the shift registers, and its ${ROWS} sense lines to FPC1, by the multiplexer. <b>Show&nbsp;me</b> plugs it in; then <span class="only-mouse">hover</span><span class="only-touch">tap</span> a cable to light its lines.`,
-      // the lesson opens here (figure.initial is this pose: the board alone, the Nano up), as lessons 1-3 open on their
-      // first step; Show me plays the plug-in
+      // the lesson opens here (figure.initial is this pose: the board alone, the Nano up), as the lessons before it
+      // open on their first step; Show me plays the plug-in
       start: true,
       show: [{ name: "connect", arg: true }],
       widgetView: STRIP,

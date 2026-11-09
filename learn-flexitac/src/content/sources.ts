@@ -66,6 +66,7 @@ const RAW_ZH: [RegExp, string][] = [
   [/^not stated in the board files$/, "读取板文件中未写明"],
   [/^FlexiTac Isaac Sim simulation \((\w+)\)$/, "FlexiTac Isaac Sim 仿真（$1）"],
   [/^Fig (\d+) display choice \(size not given in the materials\)$/, "图 $1 的显示取值（资料中未给出尺寸）"],
+  [/^EasyEDA design rules$/, "EasyEDA 设计规则"],
 ];
 function rawZh(part: string): string | undefined {
   const bare = part.replace(/\s*\[[\w.]+\]$/, ""); // (a trailing [fact.key] is for the tooltip)
@@ -73,10 +74,28 @@ function rawZh(part: string): string | undefined {
   return undefined;
 }
 
+/** A src's sources: split on "; " and " + ", but not inside parentheses ("Gerber_16_32.zip (GTL + GBL)" is one). */
+function sources(src: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let from = 0;
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (c === "(") depth++;
+    else if (c === ")") depth = Math.max(0, depth - 1);
+    else if (depth === 0 && (c === ";" || (c === "+" && src[i - 1] === " " && src[i + 1] === " "))) {
+      out.push(src.slice(from, i));
+      from = i + 1;
+    }
+  }
+  out.push(src.slice(from));
+  return out;
+}
+
 export function chips(src: string): Chip[] {
   const out: Chip[] = [];
   const seen = new Set<string>();
-  for (const raw of src.split(/;\s*|\s\+\s/)) {
+  for (const raw of sources(src)) {
     const part = raw.trim();
     if (!part) continue;
     let label = "";

@@ -8,7 +8,7 @@ const VT = "VT-Refine (Huang et al., CoRL 2025), App. D";
 
 export const lesson: Lesson = {
   id: "why-simulate-touch",
-  n: 9,
+  n: 11,
   title: "Why simulate touch",
   kicker: "Touch as points",
   lede: `Robots learn by trying, over and over. A simulation lets many copies practise at once, but only if the simulated fingers feel like the real FlexiTac pads.`,

@@ -1,0 +1,1447 @@
+/* PCB design (src/widgets/pcb-design.ts, lesson 2.3 steps 2-4): the schematic, the copper layout and the factory order,
+   filling the stage. Corner texts as the figures' (Fig 3: a mono kicker top left, the hint bottom left, the readout bottom
+   right); the drive path in the signal pink, the sense path in the hotspot teal, power grey; the two copper layers in
+   the colours EDA tools use (top red, bottom blue), toned for both themes. */
+.pcb {
+  --pcb-fs-corner: clamp(10.5px, 0.35vw + 6px, 13px);
+  --pcb-fs-read: clamp(11px, 0.3vw + 7px, 13px);
+  --pcb-pad-x: 18px;
+  --pcb-drive: var(--ft-signal);
+  --pcb-sense: var(--ft-hotspot);
+  --pcb-power: #8a8a90;
+  /* the board */
+  --pcb-top: #c4533a;
+  --pcb-pad: #d0704f;
+  --pcb-bot: #3567cf;
+  --pcb-sub: #edf1ea;
+  --pcb-edge: #98a693;
+  --pcb-metal: #a59f93;
+  --pcb-hole: var(--bg);
+  --pcb-silk: #3b3b40;
+  --pcb-mask: #2f7d4f;
+  /* the real schematic page (EasyEDA's colours) */
+  --sch-paper: #fffffc;
+  --sch-r: #8c1d1d;
+  --sch-g: #128237;
+  --sch-b: #1f3fc4;
+  --sch-n: #1b2a73;
+  --sch-k: #26262a;
+  --sch-v: #d61f1f;
+  --sch-j: #c21a1a;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  container: pcb / size;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--sans);
+}
+:root[data-theme="dark"] .pcb {
+  --pcb-power: #8e8e95;
+  --pcb-top: #ec8466;
+  --pcb-pad: #f29c7e;
+  --pcb-bot: #77a2f4;
+  --pcb-sub: #121714;
+  --pcb-edge: #3d4b40;
+  --pcb-metal: #8f8b83;
+  --pcb-silk: #d3d3d6;
+  --pcb-mask: #4fa36f;
+  --sch-paper: #141416;
+  --sch-r: #d47c7c;
+  --sch-g: #4cc277;
+  --sch-b: #8fa7ff;
+  --sch-n: #aeb8ef;
+  --sch-k: #d6d6da;
+  --sch-v: #ff7d7d;
+  --sch-j: #ff6b6b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pcb {
+    --pcb-power: #8e8e95;
+    --pcb-top: #ec8466;
+    --pcb-pad: #f29c7e;
+    --pcb-bot: #77a2f4;
+    --pcb-sub: #121714;
+    --pcb-edge: #3d4b40;
+    --pcb-metal: #8f8b83;
+    --pcb-silk: #d3d3d6;
+    --pcb-mask: #4fa36f;
+    --sch-paper: #141416;
+    --sch-r: #d47c7c;
+    --sch-g: #4cc277;
+    --sch-b: #8fa7ff;
+    --sch-n: #aeb8ef;
+    --sch-k: #d6d6da;
+    --sch-v: #ff7d7d;
+    --sch-j: #ff6b6b;
+  }
+}
+
+/* ---------------------------------------------------------------- the three forms, cross-faded */
+.pcb-view {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.26s var(--ease), visibility 0s linear 0.26s;
+}
+.pcb-view.is-on {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.26s var(--ease), visibility 0s;
+}
+.pcb.is-reduced .pcb-view {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pcb-view {
+    transition: none;
+  }
+}
+.pcb p {
+  margin: 0;
+}
+
+/* corner texts and controls */
+.pcb-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  padding: 10px var(--pcb-pad-x) 0;
+}
+.pcb-k {
+  font: 500 var(--pcb-fs-corner) / 1 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pcb-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 6px var(--pcb-pad-x) 12px;
+  min-height: 46px;
+}
+.pcb-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 500 var(--pcb-fs-corner) / 1.3 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pcb-read {
+  font: 400 var(--pcb-fs-read) / 1.35 var(--mono);
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pcb-read .lg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 14px;
+  white-space: nowrap;
+}
+.pcb-read .lg i {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--pcb-drive);
+}
+.pcb-read .lg.sense i {
+  background: var(--pcb-sense);
+}
+.pcb-read .lg.power i {
+  height: 2px;
+  background: var(--pcb-power);
+}
+
+/* the segmented buttons (top right) */
+.pcb-seg {
+  display: inline-flex;
+  flex: none;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--card);
+}
+.pcb-seg button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 500 11.5px / 1 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 7px 11px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+.pcb-seg button + button {
+  border-left: 1px solid var(--line);
+}
+.pcb-seg button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--bg);
+}
+.pcb-seg button:hover:not([aria-pressed="true"]) {
+  color: var(--ink);
+}
+.pcb-seg .sw {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+.pcb .sw.tt {
+  background: var(--pcb-top);
+}
+.pcb .sw.tb {
+  background: var(--pcb-bot);
+}
+.pcb :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* the drawing area */
+.pcb-area {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* the line under a drawing: the chosen part or net */
+.pcb .pcb-info {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  column-gap: 10px;
+  row-gap: 0;
+  min-height: 46px;
+  margin: 0 var(--pcb-pad-x);
+  padding-top: 4px;
+  font-size: 13.5px;
+  line-height: 20px;
+  color: var(--text);
+}
+.pcb-info[hidden] {
+  display: none;
+}
+.pcb-info-ico {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-top: -3px;
+  border-radius: 7px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.pcb-info-ico .icon {
+  width: 16px;
+  height: 16px;
+}
+.pcb-info-s {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.pcb-info-s.is-muted {
+  color: var(--muted);
+}
+/* a net's own name, after the sentence that names it in words */
+.pcb-info-n {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 500 0.88em var(--mono);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pcb-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--pcb-drive);
+  flex: none;
+}
+.pcb-dot.sense {
+  background: var(--pcb-sense);
+}
+.pcb-dot.power {
+  background: var(--pcb-power);
+}
+
+/* the zoom pill (bottom left, before the hint, as Fig 3's view bar) */
+.pcb-zoom {
+  flex: none;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--face);
+  box-shadow: var(--shadow);
+}
+.pcb-zoom button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+.pcb-zoom button:hover {
+  background: var(--card-2);
+  color: var(--ink);
+}
+.pcb-zoom svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* the zoom buttons only on the real page; the foot keeps their height either way, so the line under the drawing
+   does not jump when the page is switched (6 + 36 + 12 px) */
+.pcb-sch[data-mode="simple"] .pcb-zoom {
+  display: none;
+}
+.pcb-sch .pcb-foot {
+  min-height: 54px;
+}
+
+/* ---------------------------------------------------------------- the simplified schematic */
+.pcb-simple {
+  position: absolute;
+  inset: 0 calc(var(--pcb-pad-x) - 6px);
+}
+.pcb-simple[hidden],
+.pcb-real[hidden] {
+  display: none;
+}
+.pcb-sch-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  -webkit-tap-highlight-color: transparent;
+}
+.pcb-sch-svg text {
+  font-family: var(--mono);
+}
+/* (a CSS text-anchor would beat the text-anchor attributes of the pin names and bus labels) */
+.pcb-sch-svg text:not([text-anchor]) {
+  text-anchor: middle;
+}
+.pcb-sch-svg .w {
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity 0.18s var(--ease);
+}
+.pcb-sch-svg .w.drive {
+  stroke: var(--pcb-drive);
+}
+.pcb-sch-svg .w.sense {
+  stroke: var(--pcb-sense);
+}
+.pcb-sch-svg .w.bus {
+  stroke-width: 5.5;
+  stroke-linecap: butt;
+}
+.pcb-sch-svg .ah.drive,
+.pcb-sch-svg .jn.drive {
+  fill: var(--pcb-drive);
+}
+.pcb-sch-svg .ah.sense,
+.pcb-sch-svg .jn.sense {
+  fill: var(--pcb-sense);
+}
+.pcb-sch-svg .sl {
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.pcb-sch-svg .sl-t {
+  font-size: 13px;
+  font-weight: 600;
+}
+.pcb-sch-svg text.sl-t {
+  text-anchor: start;
+}
+.pcb-sch-svg .w-l.drive .sl,
+.pcb-sch-svg .w-l .drive .sl {
+  stroke: var(--pcb-drive);
+}
+.pcb-sch-svg .w-l.drive .sl-t,
+.pcb-sch-svg .w-l.drive .wl,
+.pcb-sch-svg .wl.drive {
+  fill: var(--pcb-drive);
+}
+.pcb-sch-svg .w-l.sense .sl {
+  stroke: var(--pcb-sense);
+}
+.pcb-sch-svg .w-l.sense .sl-t,
+.pcb-sch-svg .w-l.sense .wl,
+.pcb-sch-svg .wl.sense {
+  fill: var(--pcb-sense);
+}
+.pcb-sch-svg .wl {
+  font-size: 13px;
+  font-weight: 500;
+}
+.pcb-sch-svg .w-l,
+.pcb-sch-svg .jn,
+.pcb-sch-svg .pw,
+.pcb-sch-svg .pins,
+.pcb-sch-svg .pw-w {
+  transition: opacity 0.18s var(--ease);
+}
+.pcb-sch-svg .pw path,
+.pcb-sch-svg .pw-w {
+  fill: none;
+  stroke: var(--pcb-power);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+.pcb-sch-svg .pw-t {
+  font-size: 12px;
+  font-weight: 500;
+  fill: var(--pcb-power);
+}
+.pcb-sch-svg .stub {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.7;
+}
+.pcb-sch-svg .pn {
+  font-size: 13px;
+  font-weight: 500;
+  fill: var(--text);
+}
+.pcb-sch-svg .part {
+  cursor: pointer;
+  outline: none;
+  transition: opacity 0.18s var(--ease);
+}
+.pcb-sch-svg .part .hit {
+  fill: transparent;
+}
+.pcb-sch-svg .part .body {
+  fill: var(--face);
+  stroke: var(--line-strong);
+  stroke-width: 1.6;
+  transition: stroke 0.15s, stroke-width 0.15s;
+}
+.pcb-sch-svg .part .body.zz {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.pcb-sch-svg .part .nm {
+  font-size: 16px;
+  font-weight: 600;
+  fill: var(--ink);
+}
+.pcb-sch-svg .part .nm.sm {
+  font-size: 14px;
+}
+.pcb-sch-svg .part .sb {
+  font-size: 12.5px;
+  fill: var(--muted);
+}
+.pcb-sch-svg .part.is-hover .body,
+.pcb-sch-svg .part:focus-visible .body {
+  stroke: var(--accent);
+  stroke-width: 2.2;
+}
+.pcb-sch-svg .part.is-picked .body {
+  stroke: var(--accent);
+  stroke-width: 2.8;
+}
+.pcb-sch-svg .part.is-picked .body:not(.zz) {
+  fill: color-mix(in srgb, var(--accent) 7%, var(--face));
+}
+/* a part chosen: its wires and the parts at their other ends stay, the rest steps back; hovering, a lighter step */
+.pcb-sch-svg[data-pick] [data-parts]:not(.is-on) {
+  opacity: 0.13;
+}
+.pcb-sch-svg[data-pick] .part:not(.is-picked):not(.is-near) {
+  opacity: 0.42;
+}
+.pcb-sch-svg[data-hover] [data-parts]:not(.is-on) {
+  opacity: 0.4;
+}
+
+/* ---------------------------------------------------------------- the real schematic page */
+.pcb-real {
+  position: absolute;
+  inset: 0;
+}
+.pcb-sheet {
+  position: absolute;
+  inset: 0 calc(var(--pcb-pad-x) - 8px);
+  display: grid;
+  place-items: center;
+}
+.pcb-load {
+  font-size: 12px;
+  color: var(--muted);
+}
+.pcb-page {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+  outline: none;
+}
+.pcb-page.is-dragging,
+.pcb-board.is-dragging {
+  cursor: grabbing;
+}
+.pcb-page:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.pcb-page .pcb-paper {
+  fill: var(--sch-paper);
+  stroke: var(--line-strong);
+  stroke-width: 0.8px;
+  vector-effect: non-scaling-stroke;
+}
+.pcb-page :is(.r, .g, .k, .k0, .v) {
+  fill: none;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pcb-page .r {
+  stroke: var(--sch-r);
+}
+.pcb-page .g {
+  stroke: var(--sch-g);
+}
+.pcb-page .k {
+  stroke: var(--sch-k);
+}
+.pcb-page .k0 {
+  stroke: var(--sch-k);
+  stroke-width: 0.1;
+}
+.pcb-page .v {
+  stroke: var(--sch-v);
+}
+.pcb-page .j {
+  fill: var(--sch-j);
+}
+.pcb-page .rd {
+  fill: var(--sch-r);
+  stroke: var(--sch-r);
+}
+.pcb-page .tb,
+.pcb-page .fb {
+  fill: var(--sch-b);
+}
+.pcb-page .tn {
+  fill: var(--sch-n);
+}
+.pcb-page .tr,
+.pcb-page .fr {
+  fill: var(--sch-r);
+}
+.pcb-page .tk,
+.pcb-page .fk {
+  fill: var(--sch-k);
+}
+.pcb-page .tv,
+.pcb-page .fv {
+  fill: var(--sch-v);
+}
+.pcb-page .pcb-ring {
+  fill: color-mix(in srgb, var(--accent) 10%, transparent);
+  stroke: var(--accent);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+/* ---------------------------------------------------------------- the copper layout */
+.pcb-board {
+  position: absolute;
+  inset: 0 calc(var(--pcb-pad-x) - 8px);
+  display: block;
+  width: calc(100% - 2 * (var(--pcb-pad-x) - 8px));
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pcb-board:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.pcb-board .bd-sub {
+  fill: var(--pcb-sub);
+  stroke: var(--pcb-edge);
+  stroke-width: 0.16;
+}
+.pcb-board .t {
+  fill: none;
+  stroke-width: 0.254;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity 0.16s var(--ease);
+}
+.pcb-board .tt {
+  stroke: var(--pcb-top);
+}
+.pcb-board .tb {
+  stroke: var(--pcb-bot);
+}
+.pcb-board .pad {
+  fill: var(--pcb-pad);
+  transition: opacity 0.16s var(--ease);
+}
+.pcb-board .pad.tab {
+  fill: color-mix(in srgb, var(--pcb-pad) 55%, var(--pcb-sub));
+}
+.pcb-board .th,
+.pcb-board .via > circle:first-child {
+  fill: var(--pcb-metal);
+  transition: opacity 0.16s var(--ease);
+}
+.pcb-board .hole {
+  fill: var(--pcb-hole);
+}
+.pcb-board .via {
+  transition: opacity 0.16s var(--ease);
+}
+.pcb-board .sk {
+  fill: none;
+  stroke: var(--pcb-silk);
+  stroke-width: 0.15;
+  opacity: 0.8;
+}
+.pcb-board .sk-dot {
+  fill: var(--pcb-silk);
+  opacity: 0.8;
+}
+.pcb-board .sk-t {
+  font: 600 1.55px var(--mono);
+  fill: var(--pcb-silk);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--pcb-sub);
+  stroke-width: 0.45;
+  stroke-linejoin: round;
+}
+.pcb-board .sk-t.sm {
+  font-size: 1.3px;
+}
+.pcb-board .nano {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 0.16;
+  stroke-dasharray: 0.8 0.55;
+}
+.pcb-board .nano-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 1.4;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.pcb-board .nano-t {
+  font: 500 1.2px var(--mono);
+  fill: var(--muted);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--pcb-sub);
+  stroke-width: 0.4;
+  stroke-linejoin: round;
+  cursor: pointer;
+}
+.pcb-board .hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: stroke;
+}
+.pcb-board .bd-silk,
+.pcb-board .bd-nano {
+  transition: opacity 0.16s var(--ease);
+}
+/* layers */
+.pcb-lay[data-layer="top"] :is(.bd-bottom, .h-tb) {
+  display: none;
+}
+.pcb-lay[data-layer="bottom"] :is(.bd-top, .h-tt) {
+  display: none;
+}
+.pcb-lay[data-layer="bottom"] .bd-pads {
+  opacity: 0.3;
+}
+/* a net lit: the rest steps back */
+.pcb-board[data-lit] :is(.t, .pad, .th, .via):not(.is-on) {
+  opacity: 0.16;
+}
+.pcb-board[data-lit] :is(.bd-silk, .bd-nano) {
+  opacity: 0.45;
+}
+.pcb-board .t.is-on {
+  stroke-width: 0.36;
+}
+.pcb-board .tt.is-on {
+  filter: drop-shadow(0 0 0.35px var(--pcb-top));
+}
+.pcb-board .tb.is-on {
+  filter: drop-shadow(0 0 0.35px var(--pcb-bot));
+}
+.pcb-board[data-nano] .nano {
+  stroke: var(--accent);
+  stroke-width: 0.24;
+}
+.pcb-board[data-nano] .nano-t {
+  fill: var(--accent);
+}
+/* a lit net's vias: an ink ring, so the places where it changes sides show */
+.pcb-board .via.is-on > circle:first-child {
+  stroke: var(--ink);
+  stroke-width: 0.2;
+}
+/* the net a step lit as the view opened: the rest steps back less, so the board still reads as a board */
+.pcb-board[data-intro] :is(.t, .pad, .th, .via, .rat):not(.is-on) {
+  opacity: 0.36;
+}
+
+/* "Before the copper": the parts on their footprints and a straight line (ratline) for every connection to draw;
+   no traces, no vias, the layer buttons rest */
+.pcb-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.pcb-tog {
+  flex: none;
+  font: 500 11.5px / 1 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 7px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+}
+.pcb-tog:hover:not([aria-pressed="true"]) {
+  color: var(--ink);
+}
+.pcb-tog[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+.pcb-seg button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.pcb-board :is(.bd-rats, .bd-rat-hit) {
+  display: none;
+}
+.pcb-lay[data-stage="rats"] .pcb-board :is(.bd-top, .bd-bottom, .via, .bd-hit) {
+  display: none;
+}
+.pcb-lay[data-stage="rats"] .pcb-board :is(.bd-rats, .bd-rat-hit) {
+  display: inline;
+}
+.pcb-board .rat {
+  stroke: var(--muted);
+  stroke-width: 1px;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.8;
+  transition: opacity 0.16s var(--ease);
+}
+.pcb-board .rat.is-on {
+  stroke: var(--pcb-drive);
+  stroke-width: 2px;
+  opacity: 1;
+}
+.pcb-board[data-job="sense"] .rat.is-on {
+  stroke: var(--pcb-sense);
+}
+.pcb-board[data-job="power"] .rat.is-on {
+  stroke: var(--pcb-power);
+}
+.pcb-board .bd-rat-hit .hit {
+  stroke-width: 10px;
+  vector-effect: non-scaling-stroke;
+}
+.pcb-board[data-lit] .rat:not(.is-on) {
+  opacity: 0.16;
+}
+.pcb-board[data-lit][data-intro] .rat:not(.is-on) {
+  opacity: 0.36;
+}
+
+/* a wide stage: the line about the lit net goes beside the board, which then gets the whole height */
+@container pcb (min-width: 760px) and (min-aspect-ratio: 4 / 3) {
+  .pcb-lay {
+    grid-template-columns: minmax(0, 1fr) clamp(220px, 26cqw, 320px);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "bar bar" "area info" "foot foot";
+  }
+  .pcb-lay > .pcb-bar {
+    grid-area: bar;
+  }
+  .pcb-lay > .pcb-area {
+    grid-area: area;
+  }
+  .pcb-lay > .pcb-foot {
+    grid-area: foot;
+  }
+  .pcb .pcb-lay > .pcb-info {
+    grid-area: info;
+    align-self: center;
+    flex-wrap: nowrap;
+    min-height: 0;
+    margin: 0 var(--pcb-pad-x) 0 6px;
+    padding: 0;
+  }
+  .pcb-lay > .pcb-info .pcb-info-s {
+    flex: 1 1 0;
+  }
+}
+
+/* ---------------------------------------------------------------- the order */
+.pcb-ord-area {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  row-gap: 14px;
+  padding: 4px var(--pcb-pad-x) 0;
+}
+.pcb-flow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 24px;
+}
+.pcb-flow li {
+  position: relative;
+  min-width: 0;
+}
+/* a chevron between two stages */
+.pcb-flow li + li::before {
+  content: "";
+  position: absolute;
+  left: -16px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border: solid var(--line-strong);
+  border-width: 1.6px 1.6px 0 0;
+  transform: translateY(-50%) rotate(45deg);
+}
+.pcb-stage {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  row-gap: 3px;
+  align-items: center;
+  align-content: start;
+  width: 100%;
+  height: 100%;
+  padding: 10px 12px 11px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+.pcb-stage:hover {
+  border-color: var(--line-strong);
+  background: var(--face);
+}
+.pcb-stage[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--face);
+  box-shadow: inset 0 0 0 1px var(--accent), var(--shadow);
+}
+.pcb-stage-ico {
+  grid-row: 1 / 3;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.pcb-stage-ico .icon {
+  width: 18px;
+  height: 18px;
+}
+.pcb-stage-t {
+  font: 600 11.5px / 1.25 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.pcb-stage-s {
+  font-size: 12.5px;
+  line-height: 1.38;
+  color: var(--muted);
+}
+/* the open stage's panel: in the middle of the free height (a size container: the pictures size by it) */
+.pcb-detail {
+  container: pcbd / size;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 0 10px;
+  border-top: 1px solid var(--line);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.pcb-detail > * {
+  flex: none;
+  margin-block: auto;
+}
+.pcb-detail p {
+  margin: 0;
+}
+.pcb-src {
+  color: var(--muted);
+  font-size: 12px;
+}
+/* 1: the three kinds of file, each a small picture over a caption */
+.pcb-files {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 28px;
+  align-items: start;
+}
+.pcb-file {
+  margin: 0;
+  display: grid;
+  row-gap: 12px;
+  min-width: 0;
+}
+.pcb-pic {
+  height: clamp(140px, calc(100cqh - 112px), 300px);
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+.pcb-pic > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.pcb-file figcaption {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.pcb-file-t {
+  font: 600 13.5px / 1.35 var(--sans);
+  color: var(--ink);
+}
+/* the Gerber layers, drawn apart */
+.pcb-gs .gs-sheet {
+  fill: color-mix(in srgb, var(--card) 70%, transparent);
+  stroke: var(--line-strong);
+  stroke-width: 1px;
+  vector-effect: non-scaling-stroke;
+}
+.pcb-gs .gs-core {
+  fill: var(--pcb-sub);
+  stroke: var(--pcb-edge);
+}
+.pcb-gs .gs-mask {
+  fill: var(--pcb-mask);
+  fill-opacity: 0.94;
+  stroke: color-mix(in srgb, var(--pcb-mask) 70%, #000);
+}
+.pcb-gs .gs-silkbg {
+  fill: color-mix(in srgb, var(--card) 45%, transparent);
+}
+.pcb-gs :is(.gs-tt, .gs-tb) polyline {
+  fill: none;
+  stroke-width: 0.62;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pcb-gs .gs-tt polyline {
+  stroke: var(--pcb-top);
+}
+.pcb-gs .gs-tb polyline {
+  stroke: var(--pcb-bot);
+}
+.pcb-gs :is(.gs-pads, .gs-open) :is(rect, circle) {
+  fill: var(--pcb-pad);
+}
+.pcb-gs .gs-holes circle {
+  fill: var(--bg);
+  stroke: var(--pcb-metal);
+  stroke-width: 0.3;
+}
+.pcb-gs .gs-silk rect {
+  fill: none;
+  stroke: var(--pcb-silk);
+  stroke-width: 0.5;
+}
+/* the BOM, in plain words */
+.pcb-bom {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+.pcb-bom li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.pcb-bom li:last-child {
+  border-bottom: 0;
+}
+.pcb-bom-ico {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.pcb-bom-ico .icon {
+  width: 16px;
+  height: 16px;
+}
+.pcb-bom-n {
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.3;
+  /* (a Chinese name breaks between words, not inside 移位寄存器) */
+  word-break: keep-all;
+}
+.pcb-bom-r {
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pcb-bom-q {
+  min-width: 2em;
+  text-align: right;
+  font-size: 12px;
+  color: var(--ink);
+}
+/* the pick-and-place file, as a picture */
+.pcb-pp .pp-board {
+  fill: var(--pcb-sub);
+  stroke: var(--pcb-edge);
+  stroke-width: 0.3;
+}
+.pcb-pp .pp-holes circle {
+  fill: none;
+  stroke: var(--pcb-metal);
+  stroke-width: 0.25;
+}
+.pcb-pp .pp-part {
+  cursor: pointer;
+  outline: none;
+  transition: opacity 0.15s var(--ease);
+}
+.pcb-pp .pp-hit {
+  fill: transparent;
+}
+.pcb-pp .pp-out {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 0.3;
+}
+.pcb-pp .pp-x {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 0.35;
+}
+.pcb-pp .pp-c {
+  fill: var(--accent);
+}
+.pcb-pp .pp-t {
+  font: 600 2.6px var(--mono);
+  fill: var(--ink);
+}
+.pcb-pp[data-on] .pp-part:not(.is-on) {
+  opacity: 0.35;
+}
+.pcb-pp .pp-part.is-on .pp-out,
+.pcb-pp .pp-part:focus-visible .pp-out {
+  stroke: var(--accent);
+  stroke-width: 0.5;
+}
+.pcb-pp .pp-axes path {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 0.3;
+}
+.pcb-pp .pp-axes :is(.pp-ah, circle) {
+  fill: var(--muted);
+  stroke: none;
+}
+.pcb-pp .pp-axes text {
+  font: 500 2.5px var(--mono);
+  fill: var(--muted);
+}
+.pcb-pp-line {
+  min-height: 2.9em;
+}
+/* 2: the factory */
+.pcb-fac {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  column-gap: 28px;
+  align-items: center;
+}
+.pcb-fac-text p + p {
+  margin-top: 7px;
+}
+.pcb-big {
+  font-size: 19px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.pcb-big b {
+  font-weight: 650;
+}
+.pcb-split {
+  font: 12.5px / 1.4 var(--mono);
+  color: var(--muted);
+}
+.pcb-own a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pcb-own a:hover {
+  text-decoration: underline;
+}
+/* the two screenshots, side by side at one height (each grows by its own width / height) */
+.pcb-shots {
+  display: flex;
+  gap: 14px;
+  justify-self: center;
+  width: min(100%, calc((100cqh - 56px) * 1.907 + 14px));
+}
+.pcb-thumb {
+  flex: var(--g) 1 0;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto auto;
+  align-content: start;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--face);
+  color: var(--muted);
+  font: inherit;
+  text-align: left;
+  cursor: zoom-in;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.pcb-thumb:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow);
+}
+.pcb-thumb img {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--ar);
+  object-fit: cover;
+  background: #f1f2f4;
+  border-bottom: 1px solid var(--line);
+}
+.pcb-thumb span {
+  padding: 6px 9px 7px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+/* a screenshot, larger: over the whole order view */
+.pcb-shot {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 14px 56px;
+  background: var(--bg);
+}
+.pcb-shot[hidden] {
+  display: none;
+}
+.pcb-shot figure {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin: 0;
+  min-height: 0;
+}
+.pcb-shot img {
+  display: block;
+  max-width: calc(100cqw - 112px);
+  max-height: calc(100cqh - 76px);
+  object-fit: contain;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.5);
+}
+.pcb-shot figcaption {
+  font-size: 12.5px;
+  color: var(--text);
+  text-align: center;
+}
+.pcb-shot-x {
+  position: absolute;
+  top: 12px;
+  right: var(--pcb-pad-x);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--face);
+  color: var(--text);
+  cursor: pointer;
+}
+.pcb-shot-x .icon {
+  width: 16px;
+  height: 16px;
+}
+/* 3: by hand */
+.pcb-hand {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 30px;
+  align-items: center;
+  justify-content: center;
+}
+/* Fig 3's realistic board, the Nano held above its sockets, framed like a photo: the frame is the colour the board
+   layer was rendered on, so the picture has no edge of its own. It sizes by the free height too (--ar: the picture's
+   width / height; 28 and 36 px: the frame's padding, 2 px its border) */
+.pcb-real-pic {
+  justify-self: center;
+  width: min(340px, 46cqw, calc((100cqh - 30px) * var(--ar, 1) + 38px));
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fcfbfc;
+}
+:root[data-theme="dark"] .pcb-real-pic {
+  background: #131313;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pcb-real-pic {
+    background: #131313;
+  }
+}
+.pcb-real-in {
+  position: relative;
+  width: 100%;
+}
+.pcb-real-in img {
+  position: absolute;
+  display: block;
+}
+.pcb-hand-text {
+  max-width: 46ch;
+  font-size: 14px;
+  line-height: 1.55;
+}
+/* 4: flash (laid out as By hand: the board, now with its Nano in, beside the words and the two commands) */
+.pcb-flash-text {
+  max-width: 46ch;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.pcb-term {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card-2);
+  color: var(--ink);
+  font: 13px / 1.75 var(--mono);
+  white-space: pre;
+  overflow-x: auto;
+}
+.pcb-term code {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+.pcb-term .pr {
+  color: var(--muted);
+  user-select: none;
+}
+
+/* a big stage (a 1920 px window: ~1330 x 770): the words a size up */
+@container pcb (min-width: 1100px) and (min-height: 680px) {
+  .pcb .pcb-info {
+    font-size: 14.5px;
+    line-height: 22px;
+  }
+  .pcb-stage-t {
+    font-size: 12.5px;
+  }
+  .pcb-stage-s {
+    font-size: 13.5px;
+  }
+  .pcb-detail {
+    font-size: 14.5px;
+  }
+  .pcb-file figcaption {
+    font-size: 14px;
+  }
+  .pcb-file-t {
+    font-size: 15px;
+  }
+  .pcb-pic {
+    height: clamp(140px, calc(100cqh - 124px), 430px);
+  }
+  .pcb-fac {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  }
+  .pcb-bom li {
+    padding: 9px 0;
+  }
+  .pcb-bom-n {
+    font-size: 14px;
+  }
+  .pcb-bom-r,
+  .pcb-bom-q {
+    font-size: 12.5px;
+  }
+  .pcb-big {
+    font-size: 23px;
+  }
+  .pcb-split {
+    font-size: 13.5px;
+  }
+  .pcb-thumb span {
+    font-size: 13px;
+  }
+  .pcb-real-pic {
+    width: min(440px, 46cqw, calc((100cqh - 30px) * var(--ar, 1) + 38px));
+  }
+  .pcb-hand-text,
+  .pcb-flash-text {
+    font-size: 15px;
+  }
+  .pcb-term {
+    font-size: 14px;
+  }
+}
+/* a short stage (a 1366 x 768 window): the four stages' cards take less height */
+@container pcb (max-height: 560px) {
+  .pcb-stage {
+    padding: 8px 10px 9px 8px;
+    column-gap: 8px;
+  }
+  .pcb-stage-ico {
+    width: 28px;
+    height: 28px;
+  }
+  .pcb-stage-s {
+    font-size: 12px;
+    line-height: 1.32;
+  }
+  .pcb-ord-area {
+    row-gap: 10px;
+  }
+  .pcb-bom li {
+    padding: 5px 0;
+  }
+}
+
+/* a touch screen: bigger targets; a one-finger swipe up or down still scrolls the page (a stacked layout), sideways it
+   moves the drawing, two fingers zoom it */
+@media (pointer: coarse) {
+  .pcb-page,
+  .pcb-board {
+    touch-action: pan-y;
+  }
+  .pcb-zoom button {
+    width: 36px;
+    height: 34px;
+  }
+}
+/* narrow boxes (a phone): a smaller margin, the stages two by two, the panels stacked */
+@container stage (max-width: 640px) {
+  .pcb {
+    --pcb-pad-x: 10px;
+  }
+  .pcb-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 8px;
+  }
+  .pcb-flow li:nth-child(3)::before {
+    display: none;
+  }
+  .pcb-files,
+  .pcb-fac,
+  .pcb-hand,
+  .pcb-flash {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 14px;
+  }
+  .pcb-stage-s {
+    display: none;
+  }
+}

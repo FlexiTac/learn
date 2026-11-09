@@ -1,7 +1,7 @@
 // The course, in order. To add a lesson: create src/lessons/NN-slug.ts exporting `lesson`, add it to LESSONS (its `n` is
 // its place there) and to its chapter in SECTIONS.
 import { t } from "../i18n/strings";
-import type { Chapter, Lesson, Section } from "../types";
+import type { Chapter, FigId, Lesson, Section } from "../types";
 import { lesson as l01 } from "./01-meet-flexitac";
 import { lesson as l02 } from "./02-the-sandwich";
 // Lessons 4-6 ("The crossing": 04-one-crossing, 05-voltage-divider, 06-volts-to-byte) are set aside for now (their
@@ -25,6 +25,11 @@ import { lesson as l21 } from "./21-put-on-a-robot";
 // for real robot footage. Section 2 is the reading board (2.1 Meet the reading board, 2.2 One frame). Section 3 is as it
 // was. Lesson numbers follow their place (lessonNo), so the numbers in the lessons' texts were updated with it.
 import { lesson as l23 } from "./23-real-robot";
+// 2026-11-09 (user, PLAN-section2-basics.md): Section 2 opens with two lessons on the basics before the board: 2.1
+// "Arduino reads one force sensor" and 2.2 "Chips and connectors". "Meet the reading board" (2.3) became how the board
+// was made, from those parts; "One frame" is 2.4. The lessons after them moved up two places (n 7-12 -> 9-14).
+import { lesson as lA } from "./03-arduino-fsr";
+import { lesson as lB } from "./08-chips-and-connectors";
 import { lesson as l31 } from "./31-why-simulate-touch";
 import { lesson as l32 } from "./32-pad-made-of-points";
 import { lesson as l33 } from "./33-how-deep-how-hard";
@@ -33,7 +38,7 @@ import { lesson as l33 } from "./33-how-deep-how-hard";
 // lessons still in the course (src/state/store.ts MOVED).
 import { lesson as l36 } from "./36-sim-playground";
 
-export const LESSONS: Lesson[] = [l01, l02, l11, l12, l21, l23, l07, l09, l31, l32, l33, l36];
+export const LESSONS: Lesson[] = [l01, l02, l11, l12, l21, l23, lA, lB, l07, l09, l31, l32, l33, l36];
 
 export const byId = (id: string): Lesson | undefined => LESSONS.find((l) => l.id === id);
 
@@ -72,12 +77,20 @@ export const SECTIONS: Section[] = [
   {
     n: 2,
     title: "The reading board",
-    blurb: "The small board that reads the pad: its parts, and how it reads a whole frame, row by row.",
+    blurb: "From one sensor on an Arduino to the board that reads all 384: the parts, how the board was made and how it reads a frame.",
     chapters: [
+      {
+        title: "The basics",
+        lessons: ["arduino-fsr", "chips-and-connectors"],
+        text: "Read one force sensor with an Arduino, then meet the chips and connectors that let one pin read the whole pad.",
+        // lesson 2.1's bench render with its wires, cropped (public/media/covers/bench-{light,dark}.webp, no words)
+        cover: { still: "bench" },
+        alt: "An Arduino Nano on a breadboard, wired to one round force sensor and a resistor.",
+      },
       {
         title: "The board",
         lessons: ["meet-the-board", "one-frame"],
-        text: "Lift the Arduino and meet every part of the reading board, then plug in the pad and watch it read a whole frame, row by row.",
+        text: "See how the reading board was designed, ordered and made from those parts, then plug in the pad and watch it read a whole frame, row by row.",
         cover: { loop: "board" },
         alt: "The pad plugged into the reading board by two flat cables. A fingertip presses it while the board scans its lines, one at a time.",
       },
@@ -152,7 +165,29 @@ export function chapterRange(c: Chapter): string {
  *  a string its number then ("2.1", Fig 5). They keep those, so they are read through that course's order here. */
 const FIGURE_COURSE = ["meet-flexitac", "the-sandwich", "meet-the-board", "one-frame", "bytes-to-touch", "build-your-own", "put-on-a-robot", "put-on-a-robot", "why-simulate-touch", "pad-made-of-points", "how-deep-how-hard", "sim-playground"];
 const FIGURE_NOS: Record<string, string> = { "2.1": "put-on-a-robot", "2.2": "put-on-a-robot" };
-export function lessonForPart(ref: number | string | undefined): Lesson | undefined {
+/** Parts a lesson written after the figures now teaches (2026-11-09: Section 2's basics and how the board was made), by
+ *  figure and part id: these win over the number the figure carries, so the figures need no rebuild for it. */
+const PART_LESSONS: Partial<Record<FigId, Record<string, string>>> = {
+  board: {
+    nano: "arduino-fsr",
+    usb: "arduino-fsr",
+    r1: "arduino-fsr",
+    shift: "chips-and-connectors",
+    u2: "chips-and-connectors",
+    u3: "chips-and-connectors",
+    u4: "chips-and-connectors",
+    u5: "chips-and-connectors",
+    u6: "chips-and-connectors",
+    fpc1: "chips-and-connectors",
+    fpc2: "chips-and-connectors",
+    vias: "meet-the-board",
+    pcb: "meet-the-board",
+  },
+  pad: { fingers_t: "chips-and-connectors", fingers_b: "chips-and-connectors" },
+};
+export function lessonForPart(ref: number | string | undefined, fig?: FigId, part?: string): Lesson | undefined {
+  const now = fig && part ? PART_LESSONS[fig]?.[part] : undefined;
+  if (now) return byId(now);
   if (typeof ref === "string") return FIGURE_NOS[ref] ? byId(FIGURE_NOS[ref]) : byNo(ref);
   return ref ? byId(FIGURE_COURSE[ref - 1] ?? "") : undefined;
 }

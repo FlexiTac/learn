@@ -52,6 +52,9 @@ export function stepsBar(
   figure: FigureHost | null,
   onComplete: () => void,
   onStep?: (k: number, on: boolean) => void,
+  /** The restart button was pressed (after the figure's reset acts, before the first step is reported again): the lesson
+   *  view resets its widgets (WidgetInstance.reset). */
+  onRestart?: () => void,
 ): StepsBar {
   const steps = lesson.steps ?? [];
   /** The steps' words in the site's language (same steps, same order). */
@@ -232,6 +235,7 @@ export function stepsBar(
     shown = reachedNow && !hasShow(0);
     fresh = false;
     paint();
+    onRestart?.();
     onStep?.(0, reachedNow);
   });
   paint();

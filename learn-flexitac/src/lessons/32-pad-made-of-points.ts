@@ -11,7 +11,7 @@ const VT = "VT-Refine (Huang et al., CoRL 2025), App. B.1";
 
 export const lesson: Lesson = {
   id: "pad-made-of-points",
-  n: 10,
+  n: 12,
   title: "A pad made of points",
   kicker: "Touch as points",
   lede: `To a simulator, a FlexiTac pad is not a sandwich of films. It is ${TAXELS} points on the finger's face, numbered exactly like a real frame.`,

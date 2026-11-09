@@ -1171,6 +1171,12 @@
   .stage-body[data-stage] > .stage-over[data-stage="robot-grasp"]:empty {
     min-height: calc(180px + 0.772 * (100cqw - 24px) + 0.1875 * (100cqw - 42px));
   }
+  /* the PCB design picture (widgets/pcb-design.ts, lesson 2.3) lays itself out in the box it is given and has no height
+     of its own: a phone gives it one, its drawings (the schematic and the board, wider than tall) at the box's width with
+     their corner texts and controls above and below, the factory view's cards stacked (they scroll inside it) */
+  .stage-body[data-stage] > .stage-over[data-stage="pcb-design"] {
+    height: min(86svh, 620px, 100cqw * 0.9 + 220px);
+  }
   @container stage (min-width: 604px) {
     .stage-body[data-stage] > .stage-over {
       min-height: 0;
@@ -1184,6 +1190,10 @@
        taller, or a tablet in portrait shows it in a band of empty stage (768 x 1024: 640 px for ~430 px of picture) */
     .stage-body[data-stage] > .stage-over[data-stage="robot-grasp"] {
       height: min(70svh, 640px, 62cqw + 64px);
+    }
+    /* (the PCB design picture: the stacked stage's default height, as for any other picture) */
+    .stage-body[data-stage] > .stage-over[data-stage="pcb-design"] {
+      height: min(70svh, 640px);
     }
   }
   /* a short widget under the figure (data-row, above) takes its own height here too. Not as a size container: size

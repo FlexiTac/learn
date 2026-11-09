@@ -9,7 +9,7 @@ const base = import.meta.env.BASE_URL;
 /** The lesson pictures with words in them (a touch map's title and legend, a card's labels): in Chinese their Chinese
  *  picture, L<nn>-zh-<theme>.webp (scripts/thumbs.mjs and scripts/covers.mjs with --lang zh). The others are the same in
  *  both languages. (The views that show thumbnails draw again on a language switch.) */
-const ZH_THUMBS = new Set(["L01", "L04", "L09", "L10", "L11"]);
+const ZH_THUMBS = new Set(["L01", "L04", "L09", "L10", "L11", "L16"]);
 
 function pair(name: string, alt: string): string {
   return `<img class="thumb thumb-light" src="${base}thumbs/${name}-light.webp" alt="${alt}" loading="lazy" decoding="async">` +
@@ -33,6 +33,10 @@ const THUMB: Record<string, string> = {
   "put-on-a-robot": "L07",
   // the 1.6 placeholder (real robot footage to come): the "what comes next" sketch, until the video gives it a frame
   "real-robot": "media/covers/next",
+  // 2026-11-09: Section 2's basics. 2.1 is a crop of its own bench render (public/media/bench: the base and the wires),
+  // 2.2 a capture of its chips-lab widget (step 1, the multiplexer on channel 8; it has words, so a Chinese one too)
+  "arduino-fsr": "L15",
+  "chips-and-connectors": "L16",
   "why-simulate-touch": "L09",
   "pad-made-of-points": "L10",
   "how-deep-how-hard": "L11",
