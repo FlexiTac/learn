@@ -140,7 +140,7 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 | BOM | BOM | BOM（物料清单） | `bom` | |
 | PCBA | PCBA | PCBA（贴片成品板） | `pcba` | |
 | Gerber | Gerber 文件 | Gerber 文件 | `gerber` | |
-| schematic | 原理图 | 原理图（schematic） | `schematic` | the PCB drawing next to it: PCB 版图 (lesson 2.3, below) |
+| schematic | 原理图 | 原理图（schematic） | `schematic` | the PCB drawing next to it: PCB 版图 (lesson 2.5, below) |
 
 ### Arduino and one sensor (lesson 2.1)
 
@@ -160,7 +160,21 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 | jumper wire | 跳线 | 跳线（jumper wire） | `jumper-wire` | also called 杜邦线 |
 | Serial Monitor / Serial Plotter | 串口监视器 / 串口绘图器 | 串口监视器（Serial Monitor） | `serial-monitor` | tools in the Arduino IDE |
 
-### Chips and connectors (lesson 2.2)
+### Building the circuit (lesson 2.2)
+
+| English | 中文 | First mention | Glossary id | Notes |
+|---|---|---|---|---|
+| (breadboard) strip | 小排 | 小排（strip） | `strip` | five holes joined by one clip inside: a–e or f–j of one column |
+| power rail | 电源轨 | 电源轨（power rail） | `power-rail` | the + and − strips along the edges |
+| groove (down the middle of a breadboard) | 凹槽 | 凹槽 | | the Nano sits across it: 跨在凹槽上 |
+| short circuit | 短路 | 短路（short circuit） | `short-circuit` | |
+| floating (pin) | 悬空 | 悬空（floating） | `floating` | a floating pin: 悬空的引脚 |
+| parts tray | 零件盘 | 零件盘 | | where the parts wait under the board |
+| code tile | 代码块 | 代码块 | | one line of the sketch to drag into place |
+| decoy (tile) | 干扰项 | 干扰项 | | |
+| Verify (the IDE's compile button) | 验证 | 验证 | | as in the Arduino IDE's Chinese menus |
+
+### Chips and connectors (lessons 2.3 and 2.4)
 
 | English | 中文 | First mention | Glossary id | Notes |
 |---|---|---|---|---|
@@ -172,11 +186,14 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 | LED | LED | LED | | stays English |
 | ZIF connector (flat-cable socket) | ZIF 座子 | ZIF 座子（ZIF connector） | `zif-connector` | ZIF = 零插拔力（zero insertion force）. A socket alone: 座子. The BOM tables of lesson 1.4 say 排线插座 |
 | latch (of a ZIF connector) | 锁扣 | 锁扣 | | open / close: 打开 / 合上 (flip up / press down: 掀开 / 压下) |
+| ear lock (of the guide's FFC extenders) | 抽屉式锁扣 | 抽屉式锁扣 | | pulls out to open, pushes in to close; the two ears: 两只耳朵. Open / close: 打开 / 合上 |
+| the map (lesson 2.3 step 3: one cell per crossing) | 读数图 | 读数图 | | |
+| up close (a close-up panel) | 近看 | 近看 | | |
 | contact | 触点 | 触点 | | the springy contacts inside a socket: 弹片. Contacts facing up / down: 触点朝上 / 朝下 |
 | memory stick / graphics card / game cartridge | 内存条 / 显卡 / 游戏卡带 | | | gold fingers elsewhere |
 | laptop / printer / camera module | 笔记本电脑 / 打印机 / 相机模组 | | | where flat cables are used |
 
-### Making the board (lesson 2.3)
+### Making the board (lesson 2.5)
 
 | English | 中文 | First mention | Glossary id | Notes |
 |---|---|---|---|---|
@@ -195,7 +212,7 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 | assembly (the factory solders the parts on) | 贴片 | 贴片 | | solder / soldering: 焊锡 / 焊接; stencil 钢网; reflow 回流焊 |
 | ratline | 飞线 | 飞线（ratline） | `ratline` | the layout view's toggle "Before the copper": 布线之前 |
 | setup fee / extended-part fee (JLCPCB) | 开机费 / 扩展库费 | | | once per order, not per board |
-| drive path / sense path | 驱动通路 / 感应通路 | | | colours: pink 粉色 (powered), teal 青绿色 (listened to), as in lesson 2.4 |
+| drive path / sense path | 驱动通路 / 感应通路 | | | colours: pink 粉色 (powered), teal 青绿色 (listened to), as in lesson 2.6 |
 
 ### On the computer: from bytes to a picture
 
@@ -279,7 +296,7 @@ the term appears in a lesson. **Glossary id** is the value for `<dfn data-term="
 
 ## 3a. Course structure
 
-The section and chapter names (`src/lessons/zh/_sections.ts`) and the lesson titles, as of 2026-11-09. A chapter's
+The section and chapter names (`src/lessons/zh/_sections.ts`) and the lesson titles, as of 2026-11-12. A chapter's
 name is also the kicker of its lessons; lesson 1.1's kicker is “Start here” / 从这里开始.
 
 | English | 中文 |
@@ -290,9 +307,10 @@ name is also the kicker of its lessons; lesson 1.1's kicker is “Start here” 
 | 1.3 Bytes to touch: the heatmap · 1.4 Build your own in ~3 minutes | 从字节到触觉：热力图 · 自己动手做：约 3 分钟 |
 | 1.5 Put FlexiTac on a robot · 1.6 FlexiTac on a real robot | 把 FlexiTac 装到机器人上 · 真实机器人上的 FlexiTac |
 | Section 2 · The reading board | 第 2 部分 · 读取板 |
-| The basics / The board | 基础 / 读取板 |
-| 2.1 Arduino reads one force sensor · 2.2 Chips and connectors | 用 Arduino 读一个力传感器 · 芯片和连接器 |
-| 2.3 How the reading board was made · 2.4 One frame | 读取板是怎么做出来的 · 一帧数据 |
+| Arduino basics / Chips and connectors / The board | Arduino 基础 / 芯片和连接器 / 读取板 |
+| 2.1 Arduino reads one force sensor · 2.2 Build it and make it work | 用 Arduino 读一个力传感器 · 亲手搭起来，让它工作 |
+| 2.3 Two chips that take turns · 2.4 Gold fingers and flat cables | 轮流工作的两颗芯片 · 金手指和排线 |
+| 2.5 How the reading board was made · 2.6 One frame | 读取板是怎么做出来的 · 一帧数据 |
 | Section 3 · In simulation | 第 3 部分 · 在仿真中 |
 | Touch as points / Contact to signal / Train with it (coming soon) | 用点表示触觉 / 从接触到信号 / 用它训练 |
 | 3.1 Why simulate touch · 3.2 A pad made of points | 为什么要仿真触觉 · 由点组成的传感垫 |
@@ -300,7 +318,7 @@ name is also the kicker of its lessons; lesson 1.1's kicker is “Start here” 
 
 The lesson ids (the URL `#/lesson/<id>`, never changed): 1.1 `meet-flexitac`, 1.2 `the-sandwich`, 1.3
 `bytes-to-touch`, 1.4 `build-your-own`, 1.5 `put-on-a-robot`, 1.6 `real-robot`; 2.1 `arduino-fsr`, 2.2
-`chips-and-connectors`, 2.3 `meet-the-board`, 2.4 `one-frame`; 3.1 `why-simulate-touch`, 3.2 `pad-made-of-points`,
+`build-the-circuit`, 2.3 `two-chips`, 2.4 `fingers-and-cables`, 2.5 `meet-the-board`, 2.6 `one-frame`; 3.1 `why-simulate-touch`, 3.2 `pad-made-of-points`,
 3.3 `how-deep-how-hard`, 3.4 `sim-playground`.
 
 ## 4. Fixed phrases

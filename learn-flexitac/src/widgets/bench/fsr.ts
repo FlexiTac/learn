@@ -1,5 +1,5 @@
 // One force-sensing resistor (FSR) read through a 10 kΩ pull-down on an Arduino's A0 (Lesson 2.1, the arduino-bench
-// widget; Lesson 2.2's multiplexer reuses R_LIGHT). ILLUSTRATIVE: the press -> resistance curve goes through the four
+// widget; Lesson 2.3's multiplexer reuses R_LIGHT). ILLUSTRATIVE: the press -> resistance curve goes through the four
 // points of Adafruit's table for an Interlink FSR 402 (learn.adafruit.com/force-sensitive-resistor-fsr), joined on
 // log-log axes (a power law between each pair of neighbouring points, which is how Adafruit draws it); the guide says
 // real sensors vary by about 10 %. Untouched, the FSR is an open circuit (Interlink: more than 10 MΩ), so A0 reads 0.
@@ -37,7 +37,7 @@ export function fsrOhms(force: number): number {
   return r0 * Math.pow(force / f0, b);
 }
 
-/** A light press (1 N): 6 kΩ, Adafruit's table. Lesson 2.2's multiplexer shows its pressed FSRs at this value, so the
+/** A light press (1 N): 6 kΩ, Adafruit's table. Lesson 2.3's multiplexer shows its pressed FSRs at this value, so the
  *  two lessons read the same sensor the same way. */
 export const R_LIGHT = fsrOhms(1);
 

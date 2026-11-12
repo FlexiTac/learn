@@ -1,4 +1,4 @@
-// PCB design: how the reading board was made (lesson 2.3, steps 2-4), a picture that fills the whole stage
+// PCB design: how the reading board was made (lesson 2.5, steps 2-4), a picture that fills the whole stage
 // (GuidedStep.stage "pcb-design"; views/lesson.ts gives it each step's widgetView through view()). Three forms, one
 // at a time, cross-faded:
 //   {view: "schematic"}  the circuit: a simplified schematic drawn from shared/data/board.json (choose a part to see its

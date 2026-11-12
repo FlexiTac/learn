@@ -61,6 +61,11 @@
   --ft-lesson-13-soft: rgba(46, 122, 60, .1);
   --ft-lesson-14: #ab3a55;
   --ft-lesson-14-soft: rgba(171, 58, 85, .1);
+  /* lessons 15-16 (2026-11-12, the course grew to 16): copper brown and indigo, the two hues still free */
+  --ft-lesson-15: #8a5a36;
+  --ft-lesson-15-soft: rgba(138, 90, 54, .1);
+  --ft-lesson-16: #4a5db5;
+  --ft-lesson-16-soft: rgba(74, 93, 181, .1);
   --ft-hotspot: #15918f;
   --ft-hotspot-soft: rgba(21, 145, 143, .22);
   /* materials for the site's own small drawings (the Velostat demo card, src/widgets/velostat-demo.ts), copied from
@@ -156,6 +161,10 @@
     --ft-lesson-13-soft: rgba(79, 164, 92, .16);
     --ft-lesson-14: #d4627e;
     --ft-lesson-14-soft: rgba(212, 98, 126, .16);
+    --ft-lesson-15: #b98256;
+    --ft-lesson-15-soft: rgba(185, 130, 86, .16);
+    --ft-lesson-16: #7c8ee0;
+    --ft-lesson-16-soft: rgba(124, 142, 224, .16);
     --ft-hotspot: #2cc2bf;
     --ft-hotspot-soft: rgba(44, 194, 191, .26);
     --ft-gold-top: #cbb990;
@@ -231,6 +240,10 @@
   --ft-lesson-13-soft: rgba(79, 164, 92, .16);
   --ft-lesson-14: #d4627e;
   --ft-lesson-14-soft: rgba(212, 98, 126, .16);
+  --ft-lesson-15: #b98256;
+  --ft-lesson-15-soft: rgba(185, 130, 86, .16);
+  --ft-lesson-16: #7c8ee0;
+  --ft-lesson-16-soft: rgba(124, 142, 224, .16);
   --ft-hotspot: #2cc2bf;
   --ft-hotspot-soft: rgba(44, 194, 191, .26);
   --ft-gold-top: #cbb990;

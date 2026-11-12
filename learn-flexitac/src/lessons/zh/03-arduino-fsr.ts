@@ -12,7 +12,7 @@ const ohms = (r: number) => (r >= 1000 ? `${r / 1000} kΩ` : `${r} Ω`);
 export const zh: LessonZh = {
   id: "arduino-fsr",
   title: "用 Arduino 读一个力传感器",
-  kicker: "基础",
+  kicker: "Arduino 基础",
   lede: `先认识读取板上的那台小电脑 Arduino Nano，再给它接一个力传感器，把你按的力度读成 0 到 ${STEPS - 1} 之间的一个数。`,
   features: [
     { title: "Arduino Nano", text: "一块在电脑上写好程序、上传进去就能运行的小板" },
@@ -28,7 +28,7 @@ export const zh: LessonZh = {
 <p>所以要给 FSR 配一个搭档，就是从 A0 接到地的一个 10 kΩ 电阻，叫<dfn data-term="pull-down-resistor">下拉电阻（pull-down resistor）</dfn>。电流从 5V 出发，先经过 FSR，再经过这个 10 kΩ 电阻，回到地。A0 就在两者中间。</p>
 <p>它们一起组成一个<dfn data-term="voltage-divider">分压电路（voltage divider）</dfn>。两个电阻分这 5 V，电阻大的分得多。没人按时，FSR 大得几乎把 5 V 全占了，A0 上只有大约 0 V。一按下去，FSR 变小，更多的电压落到 10 kΩ 电阻上，A0 就在这个电阻的上端，跟着升向 5 V。</p>
 <p>写成公式，A0 上的电压是 V = 5 V × 10 kΩ / (10 kΩ + R<sub>FSR</sub>)，R<sub>FSR</sub> 是 FSR 的电阻。按到它降到 10 kΩ、和下拉电阻一样大时，A0 正好在 2.5 V，一半的位置。第 1.2 课的触摸点用的也是这个电路、这个 10 kΩ 电阻，它在读取板上叫 R1。</p>
-<p>微控制器里有一个 <dfn data-term="adc">ADC（模数转换器）</dfn>，负责把电压变成数字。它把 0–5 V 分成 ${STEPS} 格，每格约 ${STEP_MV.toFixed(1)} mV，所以 <dfn data-term="analogread">analogRead()</dfn> 返回 0 到 ${STEPS - 1} 之间的一个整数。读一次大约要 100 µs，所以 Nano 一秒钟大约能读 A0 一万次。照这个速度，FlexiTac 每秒把 ${TAXELS} 个交叉点（crossing）读 ${FRAME_HZ} 遍是来不及的。它的固件（firmware）把 ADC 调快了 ${FASTER} 倍，读一次只要大约 ${FIRMWARE_US} µs（第 2.4 课）。</p>
+<p>微控制器里有一个 <dfn data-term="adc">ADC（模数转换器）</dfn>，负责把电压变成数字。它把 0–5 V 分成 ${STEPS} 格，每格约 ${STEP_MV.toFixed(1)} mV，所以 <dfn data-term="analogread">analogRead()</dfn> 返回 0 到 ${STEPS - 1} 之间的一个整数。读一次大约要 100 µs，所以 Nano 一秒钟大约能读 A0 一万次。照这个速度，FlexiTac 每秒把 ${TAXELS} 个交叉点（crossing）读 ${FRAME_HZ} 遍是来不及的。它的固件（firmware）把 ADC 调快了 ${FASTER} 倍，读一次只要大约 ${FIRMWARE_US} µs（第 2.6 课）。</p>
 <p>要看到这些数字，程序用 <code>Serial.println()</code> 把每个数通过 USB 发回电脑。Arduino IDE 可以在<dfn data-term="serial-monitor">串口监视器（Serial Monitor）</dfn>里把它们一行一行列出来，也可以在串口绘图器（Serial Plotter）里画成一条移动的曲线。</p>
 <p>FlexiTac 自己的固件为了快，发的是原始字节而不是文字。所以第 1.4 课提醒你，用串口监视器看只会是乱码。一个字节最大只到 255，所以固件发送前先把每个读数除以 4，这就是你在第 1.3 课见到的 0 到 255 的读数。</p>
 <p>FlexiTac 传感垫上的每个交叉点，都像一个小小的 FSR。它是一条上层的线和一条下层的线，中间夹着 Velostat，按下去电阻就变小。只有一点不同：Velostat 没人按时也会导一点电，所以没人按的交叉点，读数从来不会正好是 0。</p>
@@ -86,7 +86,7 @@ export const zh: LessonZh = {
     },
     {
       title: "一个传感器占一个引脚",
-      text: `Nano 只有 8 个模拟引脚，一块 FlexiTac 传感垫却有 ${TAXELS} 个交叉点，每个都是一个小力传感器。一个引脚读一个，根本读不完。第 2.2 课讲怎样用一个 A0 全部读完。`,
+      text: `Nano 只有 8 个模拟引脚，一块 FlexiTac 传感垫却有 ${TAXELS} 个交叉点，每个都是一个小力传感器。一个引脚读一个，根本读不完。第 2.3 课讲怎样用一个 A0 全部读完。`,
     },
   ],
   quiz: [

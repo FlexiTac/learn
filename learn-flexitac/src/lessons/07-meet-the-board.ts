@@ -1,5 +1,5 @@
-// Lesson 2.3: how the reading board was made (2026-11-09, PLAN-section2-basics.md; it was "Meet the reading board").
-// Every part on the board was met in Lessons 2.1 (the Nano, R1) and 2.2 (the shift registers, the multiplexer, the
+// Lesson 2.5: how the reading board was made (2026-11-09, PLAN-section2-basics.md; it was "Meet the reading board").
+// Every part on the board was met in Lessons 2.1 (the Nano, R1), 2.3 (the shift registers, the multiplexer) and 2.4 (the
 // sockets); this lesson follows them from a drawing to a board: what a PCB is, the schematic, the PCB layout (and how
 // EasyEDA turns one into the other), the factory order, the work by hand, and at the end the two paths that read one
 // crossing.
@@ -16,7 +16,7 @@
 // one crossing" (src/state/store.ts migrateIds) and stay where they are; new questions go at the end.
 // Facts from shared/data/sources.json and board.json; the price and times from the hardware guide (./pcb/cost.ts); how
 // EasyEDA goes from schematic to layout from its own documentation (external, with its URLs in Specs). FPC1's part
-// number is left out of its value, as in Lesson 2.2: the BOM names one part and its LCSC code another (the note says
+// number is left out of its value, as in Lesson 2.4: the BOM names one part and its LCSC code another (the note says
 // which was fitted).
 import { COLS, FRAME_HZ, MUX_OFFSET, R1, ROWS } from "@shared/data/constants.mjs";
 import { driveLineInfo } from "@shared/models/scan.mjs";
@@ -47,7 +47,7 @@ const EDA_DRC = "https://docs.easyeda.com/en/PCB/Design-Rule-Check/";
 
 export const lesson: Lesson = {
   id: "meet-the-board",
-  n: 9,
+  n: 11,
   title: "How the reading board was made",
   kicker: "The board",
   lede: `How the reading board went from a drawing of its circuit, to copper on a board, to ${ORDER.boards} boards from a factory.`,
@@ -73,7 +73,7 @@ ${LINES} for the pad's lines alone.</p>
 
 <p>Its parts are ones you have met, and each has a short name that the drawings use. The Nano from Lesson 2.1 is U1.
 R1 is a ${KOHM} resistor doing the job of the one in that lesson: it turns a change in resistance into a voltage on A0.
-The four shift registers of Lesson 2.2 are U2 to U5, and its multiplexer is U6. The two cable sockets are FPC1, for the
+The four shift registers of Lesson 2.3 are U2 to U5, and its multiplexer is U6. The two cable sockets are FPC1, for the
 Top FPC's ${ROWS} sense lines, and FPC2, for the Bottom FPC's ${COLS} drive lines.</p>
 
 <p>A board starts as a <dfn>schematic</dfn>: a drawing that shows which pin connects to which, and nothing about where
@@ -82,7 +82,7 @@ with the same tag are joined. The board was drawn in EasyEDA, an <dfn>EDA</dfn> 
 that runs in a web browser.</p>
 
 <p>One choice you can read in the schematic: each shift register's #OE (output enable) pin is wired to ground. The #
-means active LOW, as in Lesson 2.2: the pin does its job at 0&nbsp;V, so the outputs are always on. The chosen drive
+means active LOW, as in Lesson 2.3: the pin does its job at 0&nbsp;V, so the outputs are always on. The chosen drive
 line sits at 5&nbsp;V and the other ${COLS - 1} are held at 0&nbsp;V instead of being left unconnected. That drains
 much of the current that could sneak through other pressed crossings and make an untouched one look pressed, which is
 called <dfn>ghosting</dfn>. It limits ghosting but does not remove it.</p>
@@ -116,13 +116,13 @@ order the same board, use the Gerber, BOM and pick-and-place files linked from t
 
 <p>Put together, the parts make two paths. The drive path powers one drive line: D2 and D3, then U2–U5, then FPC2 and
 the pad. The sense path listens to one sense line: the pad, then FPC1, U6 and A0, with R1. The reading belongs to the
-one crossing where the two lines meet. Lesson 2.4 shows how the board walks through all ${TAXELS} of them,
+one crossing where the two lines meet. Lesson 2.6 shows how the board walks through all ${TAXELS} of them,
 ${FRAME_HZ} times a second.</p>`,
   wiring: {
-    intro: "The schematic as a table: every connection on the board. All but the cable mapping come from the board schematic and were checked against its copper traces. Lesson 2.4 shows what travels on each wire during a frame.",
+    intro: "The schematic as a table: every connection on the board. All but the cable mapping come from the board schematic and were checked against its copper traces. Lesson 2.6 shows what travels on each wire during a frame.",
     rows: [
       { from: "Nano D2", to: "U2 SER (data in)", note: "The data pin: the 1 or 0 that goes into the first shift register." },
-      { from: "Nano D3", to: "SRCLK and RCLK of U2–U5", note: "Shift clock and latch clock on one wire: each tick moves the bits and latches them (Lesson 2.2)." },
+      { from: "Nano D3", to: "SRCLK and RCLK of U2–U5", note: "Shift clock and latch clock on one wire: each tick moves the bits and latches them (Lesson 2.3)." },
       { from: "QH′ of U2, U3, U4", to: "SER of the next chip", note: `The chain: ${CHIPS} × 8 boxes act as one row of ${COLS}. U5's QH′ is not connected.` },
       ...[0, 1, 2, 3].map((g) => {
         const a = driveLineInfo(g * 8);
@@ -194,7 +194,7 @@ ${FRAME_HZ} times a second.</p>`,
       title: "One board, parts you know",
       // keep every step text to 3 lines in the text column at 1366-1440 px windows: the bar takes its longest step's
       // height, and the figure keeps the rest
-      text: `The parts here are the ones from Lessons 2.1 and 2.2: the Nano, R1, two kinds of chip and two cable sockets. <span class="only-mouse">Click</span><span class="only-touch">Tap</span> the board to lift the Nano and see each one named.`,
+      text: `The parts here are the ones from Lessons 2.1, 2.3 and 2.4: the Nano, R1, two kinds of chip and two cable sockets. <span class="only-mouse">Click</span><span class="only-touch">Tap</span> the board to lift the Nano and see each one named.`,
       // the lesson opens here (figure.initial is this pose): the board closed and the hint. Show me lifts the Nano;
       // the learner's own click on the board does the same and counts (src/ui/steps.ts)
       start: true,
@@ -224,7 +224,7 @@ ${FRAME_HZ} times a second.</p>`,
     },
     {
       title: "Two paths",
-      text: `The shift registers power one drive line (pink); the multiplexer passes one sense line to A0 (teal). The two meet at one crossing on the pad, which Lesson 2.4 plugs in.`,
+      text: `The shift registers power one drive line (pink); the multiplexer passes one sense line to A0 (teal). The two meet at one crossing on the pad, which Lesson 2.6 plugs in.`,
       // the cards go (their teal leaders would read as the sense path), the Nano up, the scan paused on the first
       // reading: both paths lit and the only colour on the board
       act: [{ name: "labels", arg: null }, { name: "lift" }, { name: "seek", arg: 1 }],

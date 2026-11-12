@@ -3,7 +3,7 @@
 // assembly (PCBA) $38.41, $40.41 in all, before shipping (the board quote, image13, estimates DHL at $24.25); of the
 // assembly, two fees are per order, not per board: setup $8.12 and the extended-components fee $12.16 (four of the five
 // parts are JLCPCB "Extended" library parts, image2); build time: boards 24 hours, assembly 2-3 days; the guide:
-// "expect a delivery time of approximately one week". Shared by lesson 2.3 (src/lessons/07-meet-the-board.ts) and its
+// "expect a delivery time of approximately one week". Shared by lesson 2.5 (src/lessons/07-meet-the-board.ts) and its
 // picture (src/widgets/pcb/order.ts), so the number is typed once.
 export const ORDER = { boards: 5, pcb: 2.0, pcba: 38.41, setup: 8.12, extended: 12.16 } as const;
 export const ORDER_SRC = "material/FlexiTac Hardware Guide.docx Reading Board Manufacturing Guide Step 4 (JLCPCB quote, screenshot image5)";

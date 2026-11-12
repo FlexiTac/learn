@@ -1,4 +1,4 @@
-// The gold-fingers view of chips-lab (Lesson 2.2 step 3): the ends of the pad's two tails, side by side and TO SCALE
+// The gold-fingers view of chips-lab (Lesson 2.4 step 1): the ends of the pad's two tails, side by side and TO SCALE
 // (18.5 design units per mm): the Top FPC's 12 fingers and the Bottom FPC's 32, 0.3 × 3.0 mm each at a 0.5 mm pitch
 // (shared/data: fpc_top.fingers.*, fpc_bot.fingers.*), in the amber polyimide of the FPC photo look with ENIG fingers
 // (src/ui/enig.ts) and the copper traces under the coverlay running up from each finger. A tail is 0.5 mm × (fingers + 1)

@@ -14,7 +14,7 @@ const LOUD = 6;
 
 export const lesson: Lesson = {
   id: "sim-playground",
-  n: 14,
+  n: 16,
   title: "Playground",
   kicker: "Contact to signal",
   lede: `The whole model in one place. Pick an object, turn the knobs, add noise, and compare a simulated frame with a real-style one.`,

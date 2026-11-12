@@ -1,4 +1,4 @@
-// The layout view of the PCB design picture (src/widgets/pcb-design.ts, lesson 2.3 step 3): the reading board's real
+// The layout view of the PCB design picture (src/widgets/pcb-design.ts, lesson 2.5 step 3): the reading board's real
 // copper, drawn from flexitac-anatomy/shared/data/board.json (itself read from the Gerbers, the pick-and-place file and
 // the schematic, every net checked against the copper): the 56.75 x 39.86 mm outline, the traces of both copper
 // layers (all 0.254 mm wide; the top red, the bottom blue, seen from above), the 39 vias, the pads of the 8 soldered
@@ -8,7 +8,7 @@
 // to draw (each net's pads joined by the shortest set of lines, as an EDA program's ratlines; no traces, no vias).
 // Pointing at a trace (or a line, a pad, a via) lights its whole net and steps everything else back; the line under the
 // board says what it carries, in a sentence that names it. A click keeps it lit (a tap on a touch screen), ← → walk
-// through the nets when the board has focus. A step can open the view with one net lit (view({net}): lesson 2.3 lights
+// through the nets when the board has focus. A step can open the view with one net lit (view({net}): lesson 2.5 lights
 // the clock, D3_CLK, whose vias then show): it shows while nothing else is lit, and goes with the first click or Escape.
 // (The ground pour that fills the rest of both copper layers is not drawn: the line under the board says so.)
 import { MUX_OFFSET, ROWS } from "@shared/data/constants.mjs";

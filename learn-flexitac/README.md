@@ -3,16 +3,17 @@
 An interactive course on the FlexiTac tactile sensor and its reading board. It is a static single-page app
 (Vite + vanilla TypeScript, no framework) built around the anatomy figures in `../flexitac-anatomy/figures` (Fig 1–3,
 Fig 5 the gripper) and, for Section 3, small in-browser simulation cards on the shared touch engine
-(`../flexitac-anatomy/shared/models/touchsim.mjs`). Three sections and 14 lessons (`src/lessons/index.ts` `LESSONS`
-and `SECTIONS`, as of 2026-11-09):
+(`../flexitac-anatomy/shared/models/touchsim.mjs`). Three sections and 16 lessons (`src/lessons/index.ts` `LESSONS`
+and `SECTIONS`, as of 2026-11-12):
 
 | Section | Chapter | Lessons |
 |---|---|---|
 | 1 The sensor | The pad | 1.1 Meet FlexiTac · 1.2 The sandwich |
 | | Use it | 1.3 Bytes to touch: the heatmap · 1.4 Build your own in ~3 minutes |
 | | On a robot | 1.5 Put FlexiTac on a robot · 1.6 FlexiTac on a real robot |
-| 2 The reading board | The basics | 2.1 Arduino reads one force sensor · 2.2 Chips and connectors |
-| | The board | 2.3 How the reading board was made · 2.4 One frame |
+| 2 The reading board | Arduino basics | 2.1 Arduino reads one force sensor · 2.2 Build it and make it work |
+| | Chips and connectors | 2.3 Two chips that take turns · 2.4 Gold fingers and flat cables |
+| | The board | 2.5 How the reading board was made · 2.6 One frame |
 | 3 In simulation | Touch as points | 3.1 Why simulate touch · 3.2 A pad made of points |
 | | Contact to signal | 3.3 How deep, how hard · 3.4 Playground |
 | | Train with it | coming soon |
@@ -229,8 +230,8 @@ The `id` is the URL and the progress key: never change it once published.
 ### Lesson colours
 
 Every lesson has a colour, `--ft-lesson-<n>` (and `-soft`), copied from `../flexitac-anatomy/figures/palette.css` into
-`src/styles/tokens.css` for both themes (`npm run sync-figures` warns when they drift); 13 and 14 (3.5, 3.6) are the
-site's own (no figure uses them). `lc(n)` from
+`src/styles/tokens.css` for both themes (`npm run sync-figures` warns when they drift); 13 to 16 are the site's own
+(no figure uses them). `lc(n)` from
 `src/ui/lessoncolor.ts` returns the inline `--lc` style; `src/styles/explore.css` maps `--lc` onto `--accent` inside
 `.lesson-view`, the strip and lesson cards, so links, focus rings, step dots, quiz marks and the primary buttons of a
 lesson all take its colour. `--on-lc` is the text colour on a lesson-colour fill (number chips). Every accent is

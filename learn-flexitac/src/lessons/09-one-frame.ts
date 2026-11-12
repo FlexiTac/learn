@@ -1,4 +1,4 @@
-// Lesson 2.4: one frame. The pad plugged into the board, the scan row by row that makes the 386-byte frame, a press.
+// Lesson 2.6: one frame. The pad plugged into the board, the scan row by row that makes the 386-byte frame, a press.
 // It holds the scanning (it came from "Pick one crossing", src/lessons/_retired/07-pick-one-crossing.ts, 2026-10-25).
 // Since 2026-11-09 Lesson 2.1 teaches analogRead and raw bytes, 2.2 the chips (select pins and binary, the walking 1,
 // the output latch, the clocks tied on D3) and 2.3 the board and its two paths: this lesson points back to them and
@@ -8,7 +8,7 @@
 // template.ino). Figure: Fig 3 in connect mode (figures/EMBED.md "Fig 3 board: connect mode"): the FlexiTac pad wired to
 // the board by its two flat cables, the sense line listened to (teal) and the drive line powered (pink) lit on the pad
 // as on the board, and a 12 x 32 map of the readings beside it that fills row by row. The Nano stays lifted and
-// see-through, as at the end of Lesson 2.3. Widget: the frame runner in its strip form on every step (the frame bar
+// see-through, as at the end of Lesson 2.5. Widget: the frame runner in its strip form on every step (the frame bar
 // AA 55 + 12 blocks and one status line, following the figure; a click on a block seeks the figure there): one row
 // height for the whole lesson, so a step change never resizes the figure.
 import { BAUD, COLS, FRAME_BYTES, FRAME_HZ, HEADER, MUX_OFFSET, ROWS } from "@shared/data/constants.mjs";
@@ -57,7 +57,7 @@ const band = (r: number) => `${byteIndex(r, 0) + 1}–${byteIndex(r, COLS - 1) +
 
 export const lesson: Lesson = {
   id: "one-frame",
-  n: 10,
+  n: 12,
   title: "One frame",
   kicker: "The board",
   lede: `Plug in the pad and watch the board read it, row by row: one sense line, all ${COLS} drive lines, then the next. The ${TAXELS} readings, with <code>${HDR}</code> in front, make one ${FRAME_BYTES}-byte frame, sent ${FRAME_HZ} times a second.`,
@@ -69,7 +69,7 @@ export const lesson: Lesson = {
   ],
   figure: {
     fig: "board",
-    // step 1's pose (the lesson opens there): the board alone, the Nano lifted (as Lesson 2.3 ends); step 1's Show me
+    // step 1's pose (the lesson opens there): the board alone, the Nano lifted (as Lesson 2.5 ends); step 1's Show me
     // plugs the pad in (Fig 3 connect)
     initial: [{ name: "reset" }, { name: "lift" }],
     // restart: everything back to the start (reset: the scan at power-on, speed 1/10,000×, paused, the map and its
@@ -87,17 +87,17 @@ export const lesson: Lesson = {
   // src/state/store.ts migrateSteps.
   stepsAdded: [0, { keep: 2 }, { keep: 4 }, { merge: 1 }],
   overview: `
-<p>Two flat cables join the pad to the board of Lesson 2.3: the Bottom FPC's ${COLS} drive lines go to FPC2, next to the
-shift registers, and the Top FPC's ${ROWS} sense lines to FPC1, next to the multiplexer. Lesson 2.3 ended on the board's
+<p>Two flat cables join the pad to the board of Lesson 2.5: the Bottom FPC's ${COLS} drive lines go to FPC2, next to the
+shift registers, and the Top FPC's ${ROWS} sense lines to FPC1, next to the multiplexer. Lesson 2.5 ended on the board's
 two paths; now they reach the pad. The sense line the board listens to glows teal on the pad, the drive line it powers
-glows pink, and each reading lands in one square of the map beside the pad. Taking turns like this, which Lesson 2.2
+glows pink, and each reading lands in one square of the map beside the pad. Taking turns like this, which Lesson 2.3
 began, is called <dfn>time-multiplexing</dfn>: a few wires shared by many crossings, one after another.</p>
 
-<p>The drive lines get Lesson 2.2's walking 1. The firmware puts a single 1 into U2, then clocks in 0s, and every rising
+<p>The drive lines get Lesson 2.3's walking 1. The firmware puts a single 1 into U2, then clocks in 0s, and every rising
 edge on D3 moves the 1 one drive line along. Because D3 also latches, the outputs show the boxes one clock behind: the
 first clock puts the 1 into the first box, the second makes drive line 1 HIGH.</p>
 
-<p>The sense lines get Lesson 2.2's channel numbers on D4–D7, with one twist. They sit on channels ${MUX_OFFSET}–${LAST},
+<p>The sense lines get Lesson 2.3's channel numbers on D4–D7, with one twist. They sit on channels ${MUX_OFFSET}–${LAST},
 so the firmware adds <code>MUX_CHANNEL_OFFSET = ${MUX_OFFSET}</code> to the sense line's number. It counts the sense lines
 from 0 (<code>i</code>), so sense line 1 is <code>i = 0</code>, channel ${MUX_OFFSET}. The enable pin E# (D8) stays LOW, which
 keeps the multiplexer on, apart from one short HIGH pulse at the start of every frame.</p>
@@ -139,7 +139,7 @@ ${FRAME_MS} ms.</p>
 ${REPO16_BYTES} bytes. The computer has to expect the same size as the board sends, or frames won't line up. Try it in the
 code card: set <code>ROW_COUNT</code> to ${repo16.rows} and the offset to ${repo16.muxOffset}.</p>`,
   wiring: {
-    intro: `What each Nano pin does during one frame, and where each byte of the ${FRAME_BYTES} comes from (counting bytes from 1). Lesson 2.3's Wiring tab has every connection on the board.`,
+    intro: `What each Nano pin does during one frame, and where each byte of the ${FRAME_BYTES} comes from (counting bytes from 1). Lesson 2.5's Wiring tab has every connection on the board.`,
     rows: [
       { from: "Nano D2", to: "U2 SER (data in)", note: "HIGH for one clock at the start of each sense line (the 1 goes in), LOW otherwise." },
       { from: "Nano D3", to: "SRCLK + RCLK of U2–U5", note: `${PER_ROW} ticks per sense line: 2 to load and latch the 1, then one per drive line. The outputs lag the boxes by one tick.` },
@@ -194,8 +194,8 @@ void loop() {
       { name: "offset", label: "MUX_CHANNEL_OFFSET", min: 0, max: 15, step: 1, value: MUX_OFFSET },
     ],
     notes: [
-      `<code>setRow(i)</code> is Lesson 2.2's <code>setChannel</code> with the offset added: it writes channel <code>i + ${MUX_OFFSET}</code> onto D4–D7, and the multiplexer connects that sense line to A0: the teal line on the pad. (The real setRow also pulses E# on D8 once per frame; left out here.)`,
-      `One <code>shiftColumn</code> call is one rising edge on D3, like Lesson 2.2's <code>clockOnce()</code>. <code>SET_SR_DATA_HIGH()</code> and friends flip one bit of the Nano's port D register, much faster than <code>digitalWrite</code>. That matters: a frame takes ${CALLS} calls.`,
+      `<code>setRow(i)</code> is Lesson 2.3's <code>setChannel</code> with the offset added: it writes channel <code>i + ${MUX_OFFSET}</code> onto D4–D7, and the multiplexer connects that sense line to A0: the teal line on the pad. (The real setRow also pulses E# on D8 once per frame; left out here.)`,
+      `One <code>shiftColumn</code> call is one rising edge on D3, like Lesson 2.3's <code>clockOnce()</code>. <code>SET_SR_DATA_HIGH()</code> and friends flip one bit of the Nano's port D register, much faster than <code>digitalWrite</code>. That matters: a frame takes ${CALLS} calls.`,
       "Because the shift clock and the latch clock share D3, the outputs show the boxes one clock late: it takes two calls before drive line 1 (<code>j = 0</code>) is HIGH. After that, each call moves the HIGH one drive line on: the pink line on the pad.",
       `The inner loop runs ${COLS} times for every pass of the outer loop, which is why the map fills row by row and the bytes come out sense line by sense line: <code>index = 2 + i × ${COLS} + j</code>.`,
       "<code>raw &gt;&gt; 2</code> is Lesson 2.1's divide by 4: it drops the two lowest bits of the 10-bit reading, turning 0–1023 into 0–255 so it fits one byte.",

@@ -36,7 +36,11 @@ const THUMB: Record<string, string> = {
   // 2026-11-09: Section 2's basics. 2.1 is a crop of its own bench render (public/media/bench: the base and the wires),
   // 2.2 a capture of its chips-lab widget (step 1, the multiplexer on channel 8; it has words, so a Chinese one too)
   "arduino-fsr": "L15",
-  "chips-and-connectors": "L16",
+  "two-chips": "L16",
+  // 2026-11-12: 2.2 is its finished build seen from above (the step-5 view after "Show me", the sensor pressed), 2.4 the
+  // Bottom FPC's 32 gold fingers from its step 1 (neither has words)
+  "build-the-circuit": "L17",
+  "fingers-and-cables": "L18",
   "why-simulate-touch": "L09",
   "pad-made-of-points": "L10",
   "how-deep-how-hard": "L11",

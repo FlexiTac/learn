@@ -17,7 +17,7 @@ import { figThumb } from "../ui/thumbs";
 // opens its chapter's first lesson; "Coming next" (no lessons yet) is not a link and is styled as coming soon.
 // In Chinese, the stills with words in them (the figure's map titles, the cards' labels) have a Chinese picture,
 // <name>-zh-<theme>.webp (scripts/covers.mjs --lang zh); the others are the same in both languages.
-const ZH_COVERS = new Set(["mount", "grasp", "points", "springs", "loop"]);
+const ZH_COVERS = new Set(["mount", "grasp", "points", "springs", "loop", "chips"]);
 const STILL = (name: string, t: Theme) =>
   `${import.meta.env.BASE_URL}media/covers/${name}${lang() === "zh" && ZH_COVERS.has(name) ? "-zh" : ""}-${t}.webp`;
 

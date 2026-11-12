@@ -1,7 +1,7 @@
-// The words of the PCB design picture (src/widgets/pcb-design.ts, lesson 2.3), English and Chinese (docs/i18n.md;
+// The words of the PCB design picture (src/widgets/pcb-design.ts, lesson 2.5), English and Chinese (docs/i18n.md;
 // terms per docs/i18n-terms-zh.md and the glossary: 原理图, PCB 版图, 走线, 过孔, 封装, 飞线, 坐标文件). {name} slots are
 // filled from the shared data (numbers never typed here), the guide's prices from ./cost.ts ORDER. The lines under the
-// drawings are sentences that name what they are about (no bold label in front: lesson 2.3's review, 2026-11-09).
+// drawings are sentences that name what they are about (no bold label in front: lesson 2.5's review, 2026-11-09).
 import { strings } from "../../i18n";
 
 export const S = strings(

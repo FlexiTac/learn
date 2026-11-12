@@ -1,4 +1,4 @@
-// The schematic view of the PCB design picture (src/widgets/pcb-design.ts, lesson 2.3 step 2).
+// The schematic view of the PCB design picture (src/widgets/pcb-design.ts, lesson 2.5 step 2).
 //  - Simplified: the reading board's circuit drawn by hand from shared/data/board.json's nets: the Nano (U1), the four
 //    chained 74HC595s (U2-U5), the CD74HC4067 (U6), R1 and the two sockets. Wires are coloured by their job: the drive
 //    path pink (D2 data, D3 clock, the chain, the 32 outputs), the sense path teal (D4-D7 select, D8 enable, the 12

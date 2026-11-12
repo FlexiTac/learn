@@ -54,9 +54,9 @@
       const which = q.get("w") || "sim-points";
       const theme = q.get("theme") || "light";
       const [W, H] = (q.get("size") || "640x680").split("x").map(Number);
-      // the lesson's colour, as its lesson view sets it (its n: 2026-11-09, 3.1 = lesson 11 ... 3.4 = lesson 14; the
+      // the lesson's colour, as its lesson view sets it (its n: 2026-11-12, 3.1 = lesson 13 ... 3.4 = lesson 16; the
       // set-aside calibration and results cards keep the colours they had)
-      const N = { teleop: 8, "sim-loop": 11, "sim-points": 12, "sim-springs": 13, "sim-calibrate": 12, "sim-results": 13, "sim-playground": 14 };
+      const N = { teleop: 8, "sim-loop": 13, "sim-points": 14, "sim-springs": 15, "sim-calibrate": 12, "sim-results": 13, "sim-playground": 16 };
       document.body.style.setProperty("--lc", `var(--ft-lesson-${N[which] ?? 10})`);
       document.body.style.setProperty("--accent", `var(--ft-lesson-${N[which] ?? 10})`);
       const ctx = (figure) => ({ lesson: { id: "covers" }, figure, theme: () => theme, onTheme: () => () => {}, reducedMotion: () => false, lang, onLang });

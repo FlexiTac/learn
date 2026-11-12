@@ -1,4 +1,4 @@
-// The shift-register view of chips-lab (Lesson 2.2 step 2, "Eight boxes in a row"): the 74HC595 drawn as a row of
+// The shift-register view of chips-lab (Lesson 2.3 step 2, "Eight boxes in a row"): the 74HC595 drawn as a row of
 // eight boxes, QA to QH. DATA (the Nano's D2) is the bit waiting at the left; CLOCK moves every bit one box along and
 // lets DATA into QA (its digit slides from DATA's box straight into QA), the bit in QH falling out to QH′; LATCH copies
 // the boxes at once into a second row of eight under them, the output latch, which drives the eight outputs, each

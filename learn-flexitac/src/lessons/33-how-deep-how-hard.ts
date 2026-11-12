@@ -11,7 +11,7 @@ const VT = "VT-Refine (Huang et al., CoRL 2025) §3, App. B.2";
 
 export const lesson: Lesson = {
   id: "how-deep-how-hard",
-  n: 13,
+  n: 15,
   title: "How deep, how hard",
   kicker: "Contact to signal",
   lede: `When an object presses into the pad, the simulator asks two questions for every point: how deep is it pressed, and how hard does it push back?`,

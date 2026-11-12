@@ -1,4 +1,4 @@
-// The order view of the PCB design picture (src/widgets/pcb-design.ts, lesson 2.3 step 4): from the design files to a
+// The order view of the PCB design picture (src/widgets/pcb-design.ts, lesson 2.5 step 4): from the design files to a
 // working board, in four stages, one shown at a time (the first at the start; the line under them says a stage can be
 // clicked, and sums the order up):
 //   Export   the three kinds of file EasyEDA exports, each as a small picture from the real board data

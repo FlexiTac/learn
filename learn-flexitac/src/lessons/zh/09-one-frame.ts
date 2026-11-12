@@ -47,11 +47,11 @@ export const zh: LessonZh = {
     { title: `${FRAME_HZ} 帧/秒`, text: `每 ${FRAME_MS} ms 一幅完整图像，经 USB 发送` },
   ],
   overview: `
-<p>两根 FFC 排线把传感垫接到第 2.3 课的读取板（reading board）上：底层 FPC 的 ${COLS} 条驱动线接到 FPC2，在移位寄存器（shift register）旁边；顶层 FPC 的 ${ROWS} 条感应线接到 FPC1，在多路选择器（multiplexer，简称 mux）旁边。第 2.3 课最后讲到读取板上的两条通路，现在它们通到了传感垫上。读取板正在监听的感应线在传感垫上发青绿色的光，正在通电的驱动线发粉色的光，每个读数落进传感垫旁边那张图的一个方格里。像这样轮流读，第 2.2 课里就开始了。这种做法叫作<dfn data-term="time-multiplexing">分时复用（time multiplexing）</dfn>：几根线按先后顺序，为许多交叉点（crossing）服务。</p>
+<p>两根 FFC 排线把传感垫接到第 2.5 课的读取板（reading board）上：底层 FPC 的 ${COLS} 条驱动线接到 FPC2，在移位寄存器（shift register）旁边；顶层 FPC 的 ${ROWS} 条感应线接到 FPC1，在多路选择器（multiplexer，简称 mux）旁边。第 2.5 课最后讲到读取板上的两条通路，现在它们通到了传感垫上。读取板正在监听的感应线在传感垫上发青绿色的光，正在通电的驱动线发粉色的光，每个读数落进传感垫旁边那张图的一个方格里。像这样轮流读，第 2.3 课里就开始了。这种做法叫作<dfn data-term="time-multiplexing">分时复用（time multiplexing）</dfn>：几根线按先后顺序，为许多交叉点（crossing）服务。</p>
 
-<p>驱动线用的是第 2.2 课那个“走动的 1”。固件往 U2 里放进一个 1，然后一直送 0；D3 上每出现一个上升沿（rising edge），这个 1 就往后走一条驱动线。因为 D3 同时也管锁存，输出总比格子晚一个时钟：第一个时钟把 1 放进第一个格子，第二个时钟才让驱动线 1 变成 HIGH。</p>
+<p>驱动线用的是第 2.3 课那个“走动的 1”。固件往 U2 里放进一个 1，然后一直送 0；D3 上每出现一个上升沿（rising edge），这个 1 就往后走一条驱动线。因为 D3 同时也管锁存，输出总比格子晚一个时钟：第一个时钟把 1 放进第一个格子，第二个时钟才让驱动线 1 变成 HIGH。</p>
 
-<p>感应线用的是第 2.2 课的通道号，写在 D4–D7 上，只是有一点不同。它们接在通道 ${MUX_OFFSET}–${LAST} 上，所以固件要把感应线的编号加上 <code>MUX_CHANNEL_OFFSET = ${MUX_OFFSET}</code>。固件从 0 开始给感应线编号（<code>i</code>），所以感应线 1 就是 <code>i = 0</code>，对应通道 ${MUX_OFFSET}。使能引脚 E#（D8）一直保持 LOW，让多路选择器开着，只在每一帧开始时有一个短短的 HIGH 脉冲。</p>
+<p>感应线用的是第 2.3 课的通道号，写在 D4–D7 上，只是有一点不同。它们接在通道 ${MUX_OFFSET}–${LAST} 上，所以固件要把感应线的编号加上 <code>MUX_CHANNEL_OFFSET = ${MUX_OFFSET}</code>。固件从 0 开始给感应线编号（<code>i</code>），所以感应线 1 就是 <code>i = 0</code>，对应通道 ${MUX_OFFSET}。使能引脚 E#（D8）一直保持 LOW，让多路选择器开着，只在每一帧开始时有一个短短的 HIGH 脉冲。</p>
 
 <p>固件的循环逐行进行。先发送两个帧头字节。然后对 ${ROWS} 条感应线中的每一条：让多路选择器指向它，往移位寄存器里放进一个 1 并锁存（2 个时钟）。接下来重复 ${COLS} 次：读 A0，把读数缩成一个字节，发送出去，再把 HIGH 移到下一条驱动线（1 个时钟）。这样每条感应线要 ${PER_ROW} 个时钟，每一轮有 ${TAXELS} 个读数。每一轮组成一帧，然后循环重新开始。</p>
 
@@ -67,7 +67,7 @@ export const zh: LessonZh = {
 
 <p>硬件仓库里还有一个 ${repo16.rows} 行的固件，它会读取多路选择器的每一个通道：2 + ${repo16.rows} × ${COLS} = ${REPO16_BYTES} 字节。电脑期望的帧大小必须和读取板发送的一致，否则帧就对不齐。在代码卡片里试试：把 <code>ROW_COUNT</code> 设为 ${repo16.rows}，偏移量设为 ${repo16.muxOffset}。</p>`,
   wiring: {
-    intro: `一帧期间，Nano 的每个引脚在做什么，以及 ${FRAME_BYTES} 个字节里每个字节从哪里来（字节从 1 开始数）。第 2.3 课的“接线”栏列出了读取板上的每一处连接。`,
+    intro: `一帧期间，Nano 的每个引脚在做什么，以及 ${FRAME_BYTES} 个字节里每个字节从哪里来（字节从 1 开始数）。第 2.5 课的“接线”栏列出了读取板上的每一处连接。`,
     rows: [
       { to: "U2 SER（数据输入）", note: "每条感应线开始时为 HIGH，持续一个时钟（放进那个 1）；其余时间为 LOW。" },
       { to: "U2–U5 的 SRCLK + RCLK", note: `每条感应线 ${PER_ROW} 拍：2 拍用来放入并锁存那个 1，然后每条驱动线一拍。输出比格子晚一拍。` },
@@ -87,8 +87,8 @@ export const zh: LessonZh = {
     caption: "C++ · Arduino · PyFlexiTac template.ino（节选）",
     params: [{ label: "ROW_COUNT（感应线数）" }, { label: "MUX_CHANNEL_OFFSET（通道偏移量）" }],
     notes: [
-      `<code>setRow(i)</code> 就是第 2.2 课的 <code>setChannel</code>，只是加上了偏移量：它把通道号 <code>i + ${MUX_OFFSET}</code> 写到 D4–D7 上，多路选择器再把这条感应线接到 A0：就是传感垫上青绿色的那条线。（真正的 setRow 还会每帧给 D8 上的 E# 一个脉冲；这里省略了。）`,
-      `每调用一次 <code>shiftColumn</code>，D3 上就出现一个上升沿，和第 2.2 课的 <code>clockOnce()</code> 一样。<code>SET_SR_DATA_HIGH()</code> 这一类宏直接翻转 Nano 的 D 端口寄存器中的一位，比 <code>digitalWrite</code> 快得多。这很重要：一帧要调用它 ${CALLS} 次。`,
+      `<code>setRow(i)</code> 就是第 2.3 课的 <code>setChannel</code>，只是加上了偏移量：它把通道号 <code>i + ${MUX_OFFSET}</code> 写到 D4–D7 上，多路选择器再把这条感应线接到 A0：就是传感垫上青绿色的那条线。（真正的 setRow 还会每帧给 D8 上的 E# 一个脉冲；这里省略了。）`,
+      `每调用一次 <code>shiftColumn</code>，D3 上就出现一个上升沿，和第 2.3 课的 <code>clockOnce()</code> 一样。<code>SET_SR_DATA_HIGH()</code> 这一类宏直接翻转 Nano 的 D 端口寄存器中的一位，比 <code>digitalWrite</code> 快得多。这很重要：一帧要调用它 ${CALLS} 次。`,
       "因为移位时钟和锁存时钟共用 D3，输出总比格子晚一个时钟：要调用两次，驱动线 1（<code>j = 0</code>）才变成 HIGH。之后每调用一次，HIGH 就往后移一条驱动线：就是传感垫上粉色的那条线。",
       `外层循环每走一轮，内层循环就跑 ${COLS} 次。所以图是逐行填满的，字节也是一条感应线接一条感应线地发出：<code>index = 2 + i × ${COLS} + j</code>。`,
       "<code>raw &gt;&gt; 2</code> 就是第 2.1 课说的除以 4：去掉 10 位读数中最低的两位，把 0–1023 变成 0–255，正好放进一个字节。",

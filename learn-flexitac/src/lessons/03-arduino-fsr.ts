@@ -4,7 +4,7 @@
 // read FlexiTac's 384 crossings. The stage is src/widgets/arduino-bench.ts (a realistic render of the bench,
 // flexitac-anatomy/figures/bench); each step picks its view. Numbers: the Arduino and Interlink docs (external), the
 // shared data (R1, the ADC, the frame rate), and an illustrative FSR curve through Adafruit's table
-// (src/widgets/bench/fsr.ts, which Lesson 2.2 reuses).
+// (src/widgets/bench/fsr.ts, which Lesson 2.3 reuses).
 import { COLS, FRAME_HZ, ROWS } from "@shared/data/constants.mjs";
 import { adcCode, CONVERSION_S, PRESCALER, STEPS } from "@shared/models/adc.mjs";
 import { fact } from "../content/facts";
@@ -25,7 +25,7 @@ export const lesson: Lesson = {
   id: "arduino-fsr",
   n: 7,
   title: "Arduino reads one force sensor",
-  kicker: "The basics",
+  kicker: "Arduino basics",
   lede: `Meet the Arduino Nano, the small computer on the reading board. Then wire one force sensor to it and read how hard you press, as a number from 0 to ${STEPS - 1}.`,
   status: "ready",
   features: [
@@ -65,7 +65,7 @@ same circuit with the same 10 kΩ, which the reading board calls R1.</p>
 0–5 V into ${STEPS} steps of about ${STEP_MV.toFixed(1)} mV each, so <dfn>analogRead()</dfn> returns a whole number from 0
 to ${STEPS - 1}. One reading takes about 100 µs, so the Nano can read A0 about 10,000 times a second. That is too slow for
 FlexiTac, which reads all ${TAXELS} crossings ${FRAME_HZ} times a second. Its firmware runs the ADC ${FASTER} times faster,
-about ${FIRMWARE_US} µs a reading (Lesson 2.4).</p>
+about ${FIRMWARE_US} µs a reading (Lesson 2.6).</p>
 <p>To see the numbers, the sketch sends each one back over USB with <code>Serial.println()</code>. The Arduino IDE shows
 them as lines of text in its <dfn>Serial Monitor</dfn>, or draws them as a moving line in its Serial Plotter.</p>
 <p>FlexiTac's own firmware sends raw bytes instead of text, because that is faster. That is why Lesson 1.4 warns that the
@@ -150,7 +150,7 @@ void loop() {
     },
     {
       title: "One sensor, one pin",
-      text: `The Nano has 8 analog pins, but a FlexiTac pad has ${TAXELS} crossings, each one a tiny force sensor. One pin per sensor can't read them all. Lesson 2.2 shows how one A0 does.`,
+      text: `The Nano has 8 analog pins, but a FlexiTac pad has ${TAXELS} crossings, each one a tiny force sensor. One pin per sensor can't read them all. Lesson 2.3 shows how one A0 does.`,
       widgetView: { view: "pins" },
     },
   ],

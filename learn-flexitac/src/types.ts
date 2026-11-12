@@ -348,7 +348,7 @@ export interface MediaItem {
 export interface Lesson {
   /** URL id: #/lesson/<id>. Lowercase-kebab, never change once published (progress is keyed by it). */
   id: string;
-  /** 1-based place in the whole course (LESSONS order: 1-14). It picks the lesson's colour (--ft-lesson-n) and its
+  /** 1-based place in the whole course (LESSONS order: 1-16). It picks the lesson's colour (--ft-lesson-n) and its
    *  thumbnail (public/thumbs/L<nn>-*.webp). The number shown to learners is its section number, lessonNo() in
    *  src/lessons/index.ts ("1.1" ... "3.6"). */
   n: number;

@@ -2,7 +2,7 @@
 //  - the wiring pictures: the Nano drawn as a labelled pin strip on the left, the chip on the right with its pin names,
 //    one straight coloured wire per connection, as the reading board has them (shared/data facts board.muxSelect,
 //    board.A0, board.595chain, board.clockTie, board.OE; #SRCLR to 5 V per the schematic). Each wire in the colour of
-//    its job, as Lesson 2.3's schematic and Fig 3 have them: the drive path pink (D2's DATA, D3's clocks, the chain,
+//    its job, as Lesson 2.5's schematic and Fig 3 have them: the drive path pink (D2's DATA, D3's clocks, the chain,
 //    the outputs), the sense path teal (D4-D7 to the select pins, D8 to E#, COM to A0), power and ground grey (5 V, GND,
 //    and #SRCLR and #OE tied to them). Wires carry the state (chips-lab.ts): a wire at 1 (a select pin, E#, DATA) and
 //    a clock just ticked are lit in their path's colour, a 0 is a quiet tint of it; A0's wire goes quiet while E# is

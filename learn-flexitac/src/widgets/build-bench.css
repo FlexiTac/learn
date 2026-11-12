@@ -1,0 +1,1182 @@
+/* Lesson 2.2's workbench (src/widgets/build-bench.ts). Scoped to .w-bb, except the code tiles (.bb-tile), whose
+   dragged copy lives in <body>. The look follows lesson 2.1's bench (arduino-bench.css): the stage painted like a figure
+   card, mono uppercase captions, quiet white cards; teal (--ft-hotspot) for what is joined, the lesson colour for what
+   the learner holds or picks. */
+.w-bb {
+  --bb-bad: #c2392f;
+  --bb-bad-soft: rgba(194, 57, 47, 0.1);
+  --bb-note: #a46400;
+  --bb-card-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 8px 18px -8px rgba(0, 0, 0, 0.16);
+  --bb-press: 0;
+  --bb-panel: 280px;
+  --bb-mat: var(--card-2);
+  --bb-mat-line: var(--line);
+  position: relative;
+  height: 100%;
+  min-height: 340px;
+  overflow: hidden;
+  background: var(--card);
+  color: var(--text);
+  -webkit-user-select: none;
+  user-select: none;
+}
+:root[data-theme="dark"] .w-bb {
+  --bb-bad: #f2786d;
+  --bb-bad-soft: rgba(242, 120, 109, 0.13);
+  --bb-note: #e6a64a;
+  --bb-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+  /* (a mid-grey mat, light enough that the FSR's black disc and the black USB cable both show on it) */
+  --bb-mat: #606168;
+  --bb-mat-line: #6d6e75;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .w-bb {
+    --bb-bad: #f2786d;
+    --bb-bad-soft: rgba(242, 120, 109, 0.13);
+    --bb-note: #e6a64a;
+    --bb-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+    --bb-mat: #606168;
+    --bb-mat-line: #6d6e75;
+  }
+}
+.w-bb [hidden] {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------------- the workbench */
+.bb-stage {
+  position: absolute;
+  inset: 0 var(--bb-panel) 0 0;
+  overflow: hidden;
+  outline: none;
+  touch-action: none;
+}
+.w-bb.is-moving .bb-stage {
+  transition: right 0.55s var(--ease);
+}
+.bb-cam {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+.w-bb.is-moving .bb-cam {
+  transition: transform 0.55s var(--ease);
+}
+.bb-img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+.bb-board {
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+}
+.w-bb.is-ready .bb-board {
+  opacity: 1;
+}
+/* the parts tray: a quiet mat under the board */
+.bb-tray {
+  position: absolute;
+  box-sizing: border-box;
+  border: 3px solid var(--bb-mat-line);
+  border-radius: 44px;
+  background: var(--bb-mat);
+  transition: opacity 0.35s var(--ease);
+}
+.bb-tray.is-empty {
+  opacity: 0;
+}
+.bb-tray-usb {
+  position: absolute;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 34%);
+  mask-image: linear-gradient(to right, transparent, #000 34%);
+}
+.bb-tray-usb img {
+  top: 0;
+}
+.bb-lit,
+.bb-ov {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+.bb-ghost {
+  opacity: 0.5;
+}
+.bb-float {
+  opacity: 0.94;
+}
+
+/* holes joined inside the board: a soft capsule along each strip, a ring on each hole */
+.bb-lit-strip {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 42;
+  stroke-linecap: round;
+  opacity: 0.16;
+}
+.bb-lit-hole {
+  fill: var(--ft-hotspot-soft);
+  stroke: var(--ft-hotspot);
+  stroke-width: 4;
+  opacity: 0.9;
+}
+.bb-lit-strip.is-soft {
+  opacity: 0.1;
+}
+.bb-lit-hole.is-soft {
+  opacity: 0.45;
+}
+
+/* wires (build-ui/wires.ts) */
+.bb-wire path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bb-wire-hit {
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.bb-wire.is-ghost .bb-wire-hit,
+.w-bb.is-holding .bb-wire-hit {
+  pointer-events: none;
+}
+.bb-wire-sel {
+  stroke: var(--accent);
+  opacity: 0;
+  transition: opacity 0.15s var(--ease);
+}
+.bb-wire.is-selected .bb-wire-sel {
+  opacity: 0.5;
+}
+.bb-wire-glint {
+  stroke: #ffffff;
+  opacity: 0.26;
+}
+.bb-wire.is-ghost {
+  opacity: 0.8;
+}
+.bb-wire-shadow {
+  fill: none;
+  stroke: #000000;
+  stroke-linecap: round;
+}
+.bb-wire-shadow.is-ghost {
+  opacity: 0.6;
+}
+.bb-end.is-ghost {
+  opacity: 0.85;
+}
+
+/* marks: the pins of a part held over the board, the keyboard's hole, a wire's first end, the part picked */
+.bb-pin-ok {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 5;
+}
+.bb-pin-bad {
+  fill: var(--bb-bad-soft);
+  stroke: var(--bb-bad);
+  stroke-width: 5;
+}
+.bb-cursor {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 6;
+}
+.bb-start {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 6;
+  stroke-dasharray: 10 8;
+}
+.bb-sel {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5;
+  stroke-dasharray: 16 12;
+  opacity: 0.85;
+}
+
+/* the press: a pink glow over the disc; a teal ring breathes round it once the sketch works, until the first press */
+.bb-press-glow {
+  opacity: calc(var(--bb-press) * 0.95);
+}
+.bb-press-ring {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 2.5px;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.w-bb[data-view="run"].is-works:not(.was-pressed) .bb-press-ring {
+  opacity: 1;
+  animation: bb-ring 2.4s ease-in-out infinite;
+}
+@keyframes bb-ring {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/* what the pointer is over */
+.w-bb[data-cursor="grab"] .bb-stage {
+  cursor: grab;
+}
+.w-bb[data-cursor="hole"] .bb-stage {
+  cursor: crosshair;
+}
+.w-bb[data-cursor="pointer"] .bb-stage,
+.w-bb[data-cursor="press"] .bb-stage {
+  cursor: pointer;
+}
+.w-bb.is-holding .bb-stage {
+  cursor: grabbing;
+}
+
+/* a hole's name and what it joins, by the pointer */
+.bb-chip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  max-width: 260px;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s var(--ease);
+}
+.bb-chip.is-on {
+  opacity: 0.92;
+}
+.w-bb.is-holding .bb-chip {
+  opacity: 0;
+}
+
+/* the picked thing's tools (turn it, put it back, remove a wire) */
+.bb-tools {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+  transform: translate(-50%, -100%);
+}
+.bb-tool {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--face);
+  color: var(--ink);
+  box-shadow: var(--bb-card-shadow);
+  cursor: pointer;
+}
+.bb-tool svg,
+.bb-tool .icon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bb-tool:hover {
+  color: var(--accent);
+}
+.bb-tool:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.w-bb.is-moving .bb-tools,
+.w-bb.is-moving .bb-keys {
+  visibility: hidden;
+}
+
+/* the tray's parts and the plug as buttons for the keyboard: invisible until focused */
+.bb-keys {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.bb-key {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  pointer-events: none;
+}
+.bb-key:focus {
+  outline: none;
+}
+.bb-key:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* corner texts and buttons */
+.bb-kicker {
+  position: absolute;
+  left: 16px;
+  top: 12px;
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+}
+.bb-kicker:lang(zh) {
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.bb-corner {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bb-icon-btn,
+.bb-text-btn,
+.bb-show,
+.bb-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  margin: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+.bb-icon-btn {
+  justify-content: center;
+  width: 28px;
+  padding: 0;
+}
+.bb-icon-btn .icon,
+.bb-show .icon,
+.bb-pill .icon,
+.bb-upload .icon {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bb-icon-btn .icon {
+  transform: scaleX(-1);
+}
+.bb-icon-btn .bb-undo-icon {
+  transform: none;
+}
+.bb-text-btn,
+.bb-show,
+.bb-pill {
+  padding: 0 11px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.bb-text-btn:lang(zh),
+.bb-show:lang(zh),
+.bb-pill:lang(zh),
+.bb-upload:lang(zh) {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.bb-icon-btn:hover:not(:disabled),
+.bb-text-btn:hover,
+.bb-show:hover,
+.bb-pill:hover {
+  border-color: var(--accent);
+}
+.bb-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.bb-icon-btn:focus-visible,
+.bb-text-btn:focus-visible,
+.bb-show:focus-visible,
+.bb-pill:focus-visible,
+.bb-upload:focus-visible,
+.bb-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.bb-show-icon {
+  display: inline-flex;
+}
+.bb-foot {
+  position: absolute;
+  left: 16px;
+  right: 14px;
+  bottom: 11px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 28px;
+}
+.bb-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+/* (beside the wire colours, a little tighter, so step 3's hint keeps to one line at 1366 px) */
+.w-bb.has-palette .bb-hint:not(.is-why):not(:lang(zh)) {
+  letter-spacing: 0.05em;
+}
+.bb-hint:lang(zh) {
+  letter-spacing: 0.02em;
+}
+.bb-hint.is-why {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--bb-bad);
+}
+.bb-show {
+  flex: 0 0 auto;
+}
+/* the wire colours (step 3, or with a wire picked) */
+.bb-palette {
+  display: none;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  padding-right: 4px;
+}
+.w-bb.has-palette .bb-palette {
+  display: flex;
+}
+.bb-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 2px solid var(--card);
+  border-radius: 50%;
+  background: var(--sw);
+  box-shadow: 0 0 0 1px var(--line-strong);
+  cursor: pointer;
+}
+.bb-swatch[aria-checked="true"] {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+/* a short note over the workbench: why a part or a wire can't go there */
+.bb-note {
+  position: absolute;
+  left: 50%;
+  bottom: 52px;
+  z-index: 5;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(440px, calc(100% - 40px));
+  padding: 9px 13px;
+  border-radius: 8px;
+  background: var(--face);
+  color: var(--ink);
+  box-shadow: var(--bb-card-shadow);
+  font-size: 12.5px;
+  line-height: 1.45;
+  opacity: 0;
+  transform: translate(-50%, 6px);
+  pointer-events: none;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.bb-note.is-on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.bb-note p {
+  margin: 0;
+}
+.bb-note p + p {
+  margin-top: 4px;
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------- the panel */
+.bb-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--bb-panel);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 18px;
+  border-left: 1px solid var(--line);
+  background: var(--card);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.w-bb.is-moving .bb-panel {
+  transition: width 0.55s var(--ease);
+}
+.bb-sec {
+  display: none;
+  margin: 0;
+}
+.w-bb[data-view="nano"] .bb-inside,
+.w-bb[data-view="parts"] .bb-inside,
+.w-bb[data-view="nano"] .bb-conn,
+.w-bb[data-view="parts"] .bb-conn,
+.w-bb[data-view="wires"] .bb-conn,
+.w-bb[data-view="nano"] .bb-check,
+.w-bb[data-view="parts"] .bb-check,
+.w-bb[data-view="wires"] .bb-check {
+  display: block;
+}
+.w-bb[data-view="sketch"] .bb-sketch,
+.w-bb[data-view="run"] .bb-run {
+  display: flex;
+  flex-direction: column;
+}
+.w-bb[data-view="run"] .bb-run {
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 12px;
+}
+.bb-run > :not(.bb-mon) {
+  flex-shrink: 0;
+}
+.bb-cap {
+  margin: 0 0 7px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.bb-cap:lang(zh) {
+  font-family: var(--sans);
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.bb-small {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+}
+/* the board's inside, drawn small */
+.bb-inside-fig svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.bb-in-board {
+  fill: var(--face);
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+.bb-in-groove {
+  fill: var(--card-2);
+}
+.bb-in-plus,
+.bb-in-minus {
+  fill: none;
+  stroke-width: 1.4;
+}
+.bb-in-plus {
+  stroke: #e05a4f;
+}
+.bb-in-minus {
+  stroke: #4f7fd8;
+}
+.bb-in-lit {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 7.5;
+  stroke-linecap: round;
+  opacity: 0.32;
+}
+.bb-in-lit.is-b {
+  opacity: 0.2;
+}
+.bb-in-holes rect {
+  fill: var(--muted);
+  opacity: 0.75;
+}
+.bb-in-lead {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 0.8;
+}
+.bb-inside-fig text {
+  font: 10px var(--mono);
+  fill: var(--text);
+}
+.bb-inside-fig text:lang(zh) {
+  font-family: var(--sans);
+  font-size: 10.5px;
+}
+/* what is joined */
+.bb-conn-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--ink);
+}
+.bb-conn-list li {
+  padding: 6px 6px;
+  margin: 0 -6px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 4px;
+}
+.bb-conn-list li:last-child {
+  border-bottom: 0;
+}
+.bb-conn-list li[data-net]:hover {
+  background: var(--ft-hotspot-soft);
+}
+.bb-conn-list .bb-empty {
+  font-family: var(--sans);
+  color: var(--muted);
+}
+/* a verdict: a mark, the line, the hint */
+.bb-sym {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  column-gap: 9px;
+  align-items: start;
+}
+.bb-sym-mark {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 20px;
+}
+.bb-sym-mark .icon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bb-dot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bb-bad);
+}
+.bb-sym.is-note .bb-dot {
+  background: var(--bb-note);
+}
+/* (not placed yet: a step still to do, not a fault) */
+.bb-sym.is-todo .bb-dot {
+  background: var(--muted);
+  opacity: 0.6;
+}
+.bb-sym-line {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.bb-sym-line .badge {
+  font-size: 9px;
+  vertical-align: 1px;
+}
+.bb-sym-hint {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.bb-err {
+  margin: 0 0 6px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  background: var(--bb-bad-soft);
+  color: var(--bb-bad);
+  font-size: 10.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.bb-plain {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.bb-changed {
+  margin-top: 8px;
+  color: var(--bb-note);
+}
+.bb-done {
+  margin: 0 0 8px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bb-done:lang(zh) {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ---------------------------------------------------------------- step 4: the sketch */
+.bb-sketch-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.bb-sketch-head .bb-cap {
+  margin: 0;
+}
+.bb-sketch-host {
+  position: relative;
+}
+.bb-ide {
+  padding: 8px 10px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card-2);
+}
+.bb-sig {
+  margin: 0;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--text);
+}
+.bb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 2px 0 4px 14px;
+  padding: 0;
+  list-style: none;
+}
+.bb-tray-list {
+  margin: 0;
+}
+.bb-tiles-cap {
+  margin-top: 14px;
+}
+.bb-slot-empty {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  box-sizing: border-box;
+  padding: 0 9px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.bb-tray-list .bb-slot-empty {
+  border-style: solid;
+  border-color: var(--line);
+}
+.bb-tray-list.is-target {
+  outline: 2px dashed var(--accent-line);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.bb-insert {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.bb-insert.is-on {
+  opacity: 1;
+}
+.bb-sketch-host.is-dragging,
+.bb-sketch-host.is-dragging * {
+  cursor: grabbing !important;
+}
+.bb-vout:not(:empty) {
+  margin-top: 12px;
+}
+/* a code tile (also its dragged copy, which lives in <body>) */
+.bb-tile {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  min-height: 26px;
+  padding: 2px 9px 2px 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--face);
+  color: var(--ink);
+  list-style: none;
+  cursor: grab;
+  touch-action: none;
+  transition: opacity 0.12s var(--ease), border-color 0.12s var(--ease);
+}
+.bb-tile:hover {
+  border-color: var(--accent-line);
+}
+.bb-tile:focus {
+  outline: none;
+}
+.bb-tile:focus-visible,
+.bb-tile.is-held {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.bb-tile.is-lifted {
+  opacity: 0.32;
+}
+.bb-tile.is-error {
+  border-color: var(--bb-bad, #c2392f);
+  background: var(--bb-bad-soft, rgba(194, 57, 47, 0.1));
+}
+.bb-tile-float {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  margin: 0;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 10px 24px -8px rgba(0, 0, 0, 0.3);
+}
+.bb-grip {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 14px;
+  background-image: radial-gradient(circle, var(--faint) 1px, transparent 1.3px);
+  background-size: 4px 4.6px;
+  opacity: 0.7;
+}
+.bb-code {
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.bb-field {
+  box-sizing: content-box;
+  width: var(--w, 2ch);
+  height: 18px;
+  margin: 0 1px;
+  padding: 0 5px;
+  border: 1px solid var(--accent-line);
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: 600 12px/18px var(--mono);
+  text-align: center;
+  vertical-align: 0;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.bb-field:hover {
+  border-color: var(--accent);
+}
+.bb-field:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------------- step 5: upload, monitor, plotter */
+.bb-run-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.bb-usb-btn.is-on {
+  border-color: var(--ft-hotspot);
+  color: var(--ink);
+}
+.bb-usb-btn.is-on .icon {
+  stroke: var(--ft-hotspot);
+}
+.bb-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.bb-upload .icon {
+  transform: rotate(-90deg);
+}
+.bb-upload:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.bb-upload:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+.bb-status {
+  min-height: 58px;
+}
+.bb-busy p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+.bb-bar {
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+  position: relative;
+}
+.bb-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform-origin: left center;
+  animation: bb-fill 1.1s linear forwards;
+}
+.bb-bar.is-compiling::after {
+  animation-duration: 0.65s;
+}
+@keyframes bb-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.bb-press-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bb-press-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.bb-lab {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.bb-mon {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.bb-mon-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.bb-mon-head .bb-cap {
+  margin: 0;
+}
+.bb-baud select {
+  height: 24px;
+  padding: 0 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  background: var(--card);
+  color: var(--ink);
+  font: 11px var(--mono);
+}
+.bb-mon-box {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  min-height: 92px;
+  margin: 0;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card-2);
+  overflow: hidden;
+  list-style: none;
+  font-size: 11.5px;
+  line-height: 1.42;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 2.2em);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 2.2em);
+}
+.bb-mon-box li:last-child {
+  color: var(--accent);
+}
+.bb-plot {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+}
+.bb-plot-box {
+  position: relative;
+  box-sizing: border-box;
+  height: clamp(110px, 19vh, 180px);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card-2);
+}
+.bb-plot-box svg {
+  position: absolute;
+  left: 30px;
+  right: 6px;
+  top: 8px;
+  bottom: 8px;
+  width: calc(100% - 36px);
+  height: calc(100% - 16px);
+  overflow: visible;
+}
+.bb-ax {
+  position: absolute;
+  left: 5px;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--faint);
+}
+.bb-ax-hi {
+  top: 4px;
+}
+.bb-ax-lo {
+  bottom: 4px;
+}
+.bb-grid {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  vector-effect: non-scaling-stroke;
+}
+.bb-trace {
+  fill: none;
+  stroke: var(--ft-hotspot);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* for screen readers only */
+.bb-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- failure, narrow, reduced motion */
+.w-bb.is-failed .bb-kicker {
+  text-transform: none;
+}
+/* (a stacked layout: the panel under the workbench; checked properly in the phone pass) */
+.w-bb[data-narrow] {
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.w-bb[data-narrow] .bb-stage {
+  position: relative;
+  inset: auto;
+  aspect-ratio: 1 / 1;
+}
+.w-bb[data-narrow] .bb-panel {
+  position: static;
+  width: auto;
+  border-left: 0;
+  border-top: 1px solid var(--line);
+  overflow: visible;
+}
+.w-bb.is-reduced *,
+.w-bb.is-reduced *::before,
+.w-bb.is-reduced *::after {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .w-bb *,
+  .w-bb *::before,
+  .w-bb *::after,
+  .bb-tile {
+    animation: none !important;
+    transition: none !important;
+  }
+}

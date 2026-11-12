@@ -1,4 +1,4 @@
-// The multiplexer view of chips-lab (Lesson 2.2 step 1, "A switch that picks one"): the CD74HC4067 drawn as a 16-way
+// The multiplexer view of chips-lab (Lesson 2.3 step 1, "A switch that picks one"): the CD74HC4067 drawn as a 16-way
 // rotary switch inside a dashed outline (the chip). Its 16 contacts (the channels) sit on an arc left of the hub; the
 // blade points at the picked one and the hub's common pin, COM, runs right to A0, with Lesson 2.1's 10 kΩ pull-down from
 // A0 to ground. Three FSRs are wired between a +5 V rail and channels 5, 8 and 11 (inside the reading board's range,

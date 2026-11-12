@@ -1,10 +1,10 @@
-/* Chips lab (src/widgets/chips-lab.ts): Lesson 2.2's stage. The widget fills the stage body like a figure: the figure
+/* Chips lab (src/widgets/chips-lab.ts): the stage of Lessons 2.3 and 2.4. The widget fills the stage body like a figure: the figure
    pages' paper (--card), a kicker row in the figures' corner style, the drawing, and a card beside it in the demo cards'
    look (white face, the lesson colour across the top). The drawings use the demo cards' vocabulary (src/widgets/
    grid-demo.css): mono labels, quiet chip boxes, ink wires, the lesson colour for what the learner sets (a toggle at 1,
    a pressed FSR), teal for the line A0 listens to, pink for current and for an LED that is on, and a quieter pink for a
    powered drive line (the +5 V rail, which stands for one; an output at 1). The card's wiring pictures colour each wire
-   by its job, as Lesson 2.3's schematic and Fig 3 do: the drive path pink, the sense path teal, power and ground grey.
+   by its job, as Lesson 2.5's schematic and Fig 3 do: the drive path pink, the sense path teal, power and ground grey.
    Materials in their photo colours (copied from
    flexitac-anatomy/figures/palette.css, light then dark): polyimide amber, ENIG gold (src/ui/enig.ts), the stiffener's
    brown, the board's green solder mask, the socket's ivory housing and black latch, the white flat cable and its blue
@@ -36,6 +36,8 @@
   --cl-ic-edge: #101116;
   --cl-nano: #2f8068;
   --cl-nano-edge: #0d4a3a;
+  --cl-ext: #2a2f3a;
+  --cl-ext-edge: #0f1218;
   --cl-led-off: color-mix(in oklab, var(--ink) 6%, var(--face));
   --cl-glow: color-mix(in oklab, var(--ft-signal) 40%, transparent);
   /* a powered drive line (step 1's +5 V rail and the FSRs' outer leads, which stand for it; an output at 1): the drive
@@ -84,6 +86,8 @@
   --cl-ic-edge: #898a8f;
   --cl-nano: #2a6f5b;
   --cl-nano-edge: #86ac9e;
+  --cl-ext: #3a404c;
+  --cl-ext-edge: #8d929b;
   --cl-glow: color-mix(in oklab, var(--ft-signal) 45%, transparent);
   --cl-drive-q: color-mix(in oklab, var(--ft-signal) 50%, var(--face));
   --cl-sense-q: color-mix(in oklab, var(--ft-hotspot) 50%, var(--face));
@@ -114,6 +118,8 @@
     --cl-ic-edge: #898a8f;
     --cl-nano: #2a6f5b;
     --cl-nano-edge: #86ac9e;
+    --cl-ext: #3a404c;
+    --cl-ext-edge: #8d929b;
     --cl-glow: color-mix(in oklab, var(--ft-signal) 45%, transparent);
     --cl-drive-q: color-mix(in oklab, var(--ft-signal) 50%, var(--face));
     --cl-sense-q: color-mix(in oklab, var(--ft-hotspot) 50%, var(--face));
@@ -913,17 +919,17 @@
 .cl-ffc-view .cl-flow-glow {
   opacity: 0;
 }
-.cl[data-view="ffc"] .cl-flow,
-.cl[data-view="ffc"] .cl-flow-glow,
+.cl:is([data-view="ffc"], [data-view="plug"]) .cl-flow,
+.cl:is([data-view="ffc"], [data-view="plug"]) .cl-flow-glow,
 .cl-spark,
 .cl-miss {
   opacity: 0;
   transition: opacity 0.3s var(--ease);
 }
-.cl[data-view="ffc"] .cl-flow.is-on {
+.cl:is([data-view="ffc"], [data-view="plug"]) .cl-flow.is-on {
   opacity: 1;
 }
-.cl[data-view="ffc"] .cl-flow-glow.is-on {
+.cl:is([data-view="ffc"], [data-view="plug"]) .cl-flow-glow.is-on {
   opacity: 0.7;
 }
 .cl-spark {
@@ -993,7 +999,7 @@
   font-weight: 500;
   fill: var(--muted);
 }
-/* each wire in the colour of its job, as Lesson 2.3's schematic and Fig 3 have them: the drive path pink, the sense path
+/* each wire in the colour of its job, as Lesson 2.5's schematic and Fig 3 have them: the drive path pink, the sense path
    teal, power and ground grey. A wire at 1 (or a clock just ticked) is lit in its path's colour; a 0 is a quiet tint */
 .cl-w {
   fill: none;
@@ -1181,6 +1187,132 @@
 .cl-dot:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* ---- both chips together (chips/together.ts): the drive lines quiet until one is powered (the drive path's quieter
+   pink, as an output at 1), the sense lines quiet until one is picked (teal); a ring on the crossing the chips point at
+   (the lesson colour, pink once current flows through it); the crossings are step 1's FSR discs, small */
+.cl-wire.cl-drv,
+.cl-wire.cl-sns {
+  stroke: var(--cl-wire-dim);
+  transition: stroke 0.2s var(--ease), stroke-width 0.2s var(--ease);
+}
+.cl-wire.cl-drv.is-on {
+  stroke: var(--cl-power);
+  stroke-width: 2;
+}
+.cl-wire.cl-sns.is-on {
+  stroke: var(--ft-hotspot);
+  stroke-width: 2;
+}
+.cl-lbox.is-1 {
+  stroke: var(--cl-power);
+  stroke-width: 1.8;
+}
+.cl-v5 {
+  fill: var(--ft-signal);
+}
+.cl-xring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-dasharray: 3 2.4;
+  pointer-events: none;
+  transition: stroke 0.2s var(--ease);
+}
+.cl-xring.is-live {
+  stroke: var(--ft-signal);
+  stroke-dasharray: none;
+}
+.cl-xfsr .cl-fsr-body {
+  fill: color-mix(in oklab, var(--ft-velostat-top) 74%, var(--face));
+  stroke-width: 1.1;
+}
+/* the side card's map */
+.cl-msvg {
+  margin: 2px 0 0;
+}
+.cl-m-axis {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  fill: var(--muted);
+}
+.cl-m-n {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  fill: var(--muted);
+}
+
+/* ---- the chain, pad to board (chips/plug.ts): the tail and the cable from the side, the extender's tiny board, the
+   line lit from the pad as far as it connects */
+.cl-pi-side {
+  stroke: var(--cl-pi-edge);
+  stroke-width: 0.8;
+}
+.cl-finger-side {
+  stroke-width: 0.6;
+}
+.cl-extpcb {
+  fill: var(--cl-ext);
+  stroke: var(--cl-ext-edge);
+  stroke-width: 1;
+}
+.cl-ffc-culine {
+  fill: none;
+  stroke: var(--cl-ffc-cu);
+  stroke-width: 1.6;
+  opacity: 0.8;
+}
+.cl-spring.cl-spring-sm {
+  stroke-width: 1.8;
+  vector-effect: non-scaling-stroke;
+}
+.cl-spring-edge.cl-spring-sm {
+  stroke-width: 3.4;
+  vector-effect: non-scaling-stroke;
+}
+.cl-plug-lit {
+  fill: none;
+  stroke: var(--cl-power);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cl-jhalo {
+  fill: var(--accent-soft);
+  opacity: 0.55;
+  transition: opacity 0.3s var(--ease);
+}
+/* the side card: which tail goes to which socket */
+.cl-tails {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.cl-tails li {
+  position: relative;
+  padding-left: 16px;
+}
+.cl-tails li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.5em;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+.cl-tail-top::before {
+  background: var(--ft-hotspot);
+}
+.cl-tail-bot::before {
+  background: var(--ft-signal);
 }
 
 /* ---- a narrow stage (a phone, a narrow window): the card under the drawing; the drawing takes its height from its

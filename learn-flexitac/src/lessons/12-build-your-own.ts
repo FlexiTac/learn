@@ -261,7 +261,7 @@ build checklist, <b>Flash</b> and <b>Fix</b>, go with the two sections below.</p
 
 ${h3("Flash the firmware")}
 <p>To <dfn title="copy a program into a microcontroller's memory">flash</dfn> the Nano means to copy the
-<dfn>firmware</dfn>, the scanning program of Lesson 2.4, into its memory over USB. You do it once; the Nano keeps
+<dfn>firmware</dfn>, the scanning program of Lesson 2.6, into its memory over USB. You do it once; the Nano keeps
 the program when unplugged and starts scanning as soon as it gets power. Four settings must match your pad and your
 viewer:</p>
 <ul>

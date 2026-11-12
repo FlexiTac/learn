@@ -29,7 +29,12 @@ import { lesson as l23 } from "./23-real-robot";
 // "Arduino reads one force sensor" and 2.2 "Chips and connectors". "Meet the reading board" (2.3) became how the board
 // was made, from those parts; "One frame" is 2.4. The lessons after them moved up two places (n 7-12 -> 9-14).
 import { lesson as lA } from "./03-arduino-fsr";
-import { lesson as lB } from "./08-chips-and-connectors";
+// 2026-11-12 (user, PLAN-section2-build.md): 2.2 is a hands-on build of 2.1's circuit, and the old "Chips and
+// connectors" became its own chapter of two lessons: 2.3 the two chips, 2.4 gold fingers and flat cables. The board is
+// 2.5 and 2.6; Section 3 moved up two places again (n 13-16).
+import { lesson as lBuild } from "./10-build-the-circuit";
+import { lesson as lB } from "./08-two-chips";
+import { lesson as lC } from "./13-fingers-and-cables";
 import { lesson as l31 } from "./31-why-simulate-touch";
 import { lesson as l32 } from "./32-pad-made-of-points";
 import { lesson as l33 } from "./33-how-deep-how-hard";
@@ -38,7 +43,7 @@ import { lesson as l33 } from "./33-how-deep-how-hard";
 // lessons still in the course (src/state/store.ts MOVED).
 import { lesson as l36 } from "./36-sim-playground";
 
-export const LESSONS: Lesson[] = [l01, l02, l11, l12, l21, l23, lA, lB, l07, l09, l31, l32, l33, l36];
+export const LESSONS: Lesson[] = [l01, l02, l11, l12, l21, l23, lA, lBuild, lB, lC, l07, l09, l31, l32, l33, l36];
 
 export const byId = (id: string): Lesson | undefined => LESSONS.find((l) => l.id === id);
 
@@ -77,15 +82,24 @@ export const SECTIONS: Section[] = [
   {
     n: 2,
     title: "The reading board",
-    blurb: "From one sensor on an Arduino to the board that reads all 384: the parts, how the board was made and how it reads a frame.",
+    blurb: "From one sensor you wire to an Arduino yourself to the board that reads all 384: the chips, the cables, how the board was made and how it reads a frame.",
     chapters: [
       {
-        title: "The basics",
-        lessons: ["arduino-fsr", "chips-and-connectors"],
-        text: "Read one force sensor with an Arduino, then meet the chips and connectors that let one pin read the whole pad.",
+        title: "Arduino basics",
+        lessons: ["arduino-fsr", "build-the-circuit"],
+        text: "Read one force sensor with an Arduino, then build the circuit yourself, write the sketch and make it work.",
         // lesson 2.1's bench render with its wires, cropped (public/media/covers/bench-{light,dark}.webp, no words)
         cover: { still: "bench" },
         alt: "An Arduino Nano on a breadboard, wired to one round force sensor and a resistor.",
+      },
+      {
+        title: "Chips and connectors",
+        lessons: ["two-chips", "fingers-and-cables"],
+        text: "The two chips that let one pin read the whole pad, and the gold fingers, flat cables and sockets that carry its lines.",
+        // lesson 2.3 step 3, "Together", after a scan: the ringed crossing pressed and A0 reading it (the drawing only,
+        // public/media/covers/chips{,-zh}-{light,dark}.webp; it has words, so a Chinese one too)
+        cover: { still: "chips" },
+        alt: "A shift register powers one line of a small grid and a multiplexer picks another. Where the two cross, a pressed spot sends its reading to A0.",
       },
       {
         title: "The board",
@@ -172,18 +186,18 @@ const PART_LESSONS: Partial<Record<FigId, Record<string, string>>> = {
     nano: "arduino-fsr",
     usb: "arduino-fsr",
     r1: "arduino-fsr",
-    shift: "chips-and-connectors",
-    u2: "chips-and-connectors",
-    u3: "chips-and-connectors",
-    u4: "chips-and-connectors",
-    u5: "chips-and-connectors",
-    u6: "chips-and-connectors",
-    fpc1: "chips-and-connectors",
-    fpc2: "chips-and-connectors",
+    shift: "two-chips",
+    u2: "two-chips",
+    u3: "two-chips",
+    u4: "two-chips",
+    u5: "two-chips",
+    u6: "two-chips",
+    fpc1: "fingers-and-cables",
+    fpc2: "fingers-and-cables",
     vias: "meet-the-board",
     pcb: "meet-the-board",
   },
-  pad: { fingers_t: "chips-and-connectors", fingers_b: "chips-and-connectors" },
+  pad: { fingers_t: "fingers-and-cables", fingers_b: "fingers-and-cables" },
 };
 export function lessonForPart(ref: number | string | undefined, fig?: FigId, part?: string): Lesson | undefined {
   const now = fig && part ? PART_LESSONS[fig]?.[part] : undefined;

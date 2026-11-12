@@ -1,10 +1,8 @@
-// Chinese for src/lessons/08-chips-and-connectors.ts (docs/i18n.md; words per docs/i18n-terms-zh.md). Lists go by place,
+// Chinese for src/lessons/08-two-chips.ts (docs/i18n.md; words per docs/i18n-terms-zh.md). Lists go by place,
 // as in the English file; an empty slot shows the English. The stage's own words are in src/widgets/chips-lab.ts.
 import { COLS, MUX_OFFSET, R1, ROWS } from "@shared/data/constants.mjs";
-import { stack } from "@shared/data/index.mjs";
 import { adcCode } from "@shared/models/adc.mjs";
 import { R_ON, vA0 } from "@shared/models/divider.mjs";
-import { getFact } from "../../content/facts";
 import type { LessonZh } from "../../i18n/localize";
 import { PRESS_N, R_PRESSED } from "../../widgets/chips/press";
 
@@ -13,12 +11,8 @@ const LINES = ROWS + COLS;
 const LAST = MUX_OFFSET + ROWS - 1;
 const CHIPS = COLS / 8;
 const KOHM = `${R1 / 1000}&nbsp;kΩ`;
-const NF_T = getFact("fpc_top.fingers.count").value as number;
-const NF_B = getFact("fpc_bot.fingers.count").value as number;
-const FW = (getFact("fpc_top.fingers.size").value as [number, number])[0];
-const PITCH = getFact("fpc_top.fingers.pitch").value as number;
-const FPC_T = getFact("fpc_top.thickness").value as number;
-const THICK = stack.fpcBuild.goldFingerThickness;
+const G_S = 4; // (the English file's step 3 grid)
+const G_D = 8;
 const R_FSR_K = Math.round(R_PRESSED / 100) / 10;
 const A0_HERE = adcCode(vA0(R_PRESSED, { rOn: R_ON }));
 const A0_BENCH = adcCode(vA0(R_PRESSED, { rOn: 0 }));
@@ -27,19 +21,20 @@ const nw = (t: string) => `<span style="white-space:nowrap">${t}</span>`;
 const WALK_MS = 500; // (the English sketch's delay)
 
 export const zh: LessonZh = {
-  id: "chips-and-connectors",
-  title: "芯片和连接器",
-  kicker: "基础",
-  lede: `两种小芯片让一个模拟引脚轮流读完全部 ${TAXELS} 个交叉点。金手指、FFC 排线和座子把传感垫的 ${LINES} 条线接到读取板上。`,
+  id: "two-chips",
+  title: "轮流工作的两颗芯片",
+  kicker: "芯片和连接器",
+  lede: `两种小芯片让一个模拟引脚读完全部 ${TAXELS} 个交叉点：一种一次只给一条驱动线通电，另一种一次只听一条感应线，两者轮流换下去。`,
   features: [
     { title: "多路选择器", text: "16 档开关：四个引脚决定 A0 听哪一条线" },
     { title: "移位寄存器", text: "八个格子传递一个 1，一次只开一个输出" },
-    { title: "金手指、排线和座子", text: `把传感垫的 ${LINES} 条线接到读取板` },
+    { title: "两颗芯片一起", text: "一条线通电，一条线被选中，读一个交叉点" },
   ],
   overview: `
-<p>第 2.1 课最后留下一个问题：传感垫上有 ${TAXELS} 个交叉点（crossing），每个都是一个很小的力传感器，Nano 却只有 8
-个模拟引脚。好在传感垫的接线已经帮了一半：${ROWS} 条感应线（sense line）和 ${COLS} 条驱动线（drive line）两两相交，所以读取板（reading
-board）只要给一条驱动线通电、听一条感应线，读到的就是这两条线相交的那一个交叉点（第 1.2 课）。读完一个再换下一个，快到一秒钟能把整块传感垫读上很多遍。</p>
+<p>在第 2.1 课和第 2.2 课里，一个力传感器就占用一个模拟引脚。Nano 只有 8 个模拟引脚，传感垫上却有 ${TAXELS}
+个交叉点（crossing），每个都是一个很小的力传感器。好在传感垫的接线已经帮了一半：${ROWS} 条感应线（sense line）和 ${COLS}
+条驱动线（drive line）两两相交，所以读取板（reading board）只要给一条驱动线通电、听一条感应线，读到的就是这两条线相交的那一个交叉点（第 1.2
+课）。读完一个再换下一个，快到一秒钟能把整块传感垫读上很多遍。</p>
 
 <p>可这还是 ${LINES} 条线。Nano 只有 8 个模拟引脚来接 ${ROWS} 条感应线，14 个数字引脚来接 ${COLS} 条驱动线，哪边都不够。于是用两种便宜的芯片来切换：<dfn
 data-term="multiplexer">多路选择器（multiplexer，简称 mux）</dfn>挑出 A0 要听的那条感应线，<dfn data-term="shift-register">移位寄存器（shift
@@ -65,19 +60,12 @@ QA 到 QH 八个输出；这排格子叫<dfn data-term="output-latch">输出锁�
 A0。电流只能从这两条线相交的那个交叉点流到 A0。第 1 步的图，就是从多路选择器这一侧看到的这一刻：图里的 +5 V 就是通电的那条驱动线，每个 FSR
 都是它上面的一个交叉点。</p>
 
-<p>本课的另一半，是从传感垫到读取板的这段路，一共 ${LINES} 条线。每块 FPC 的尾线末端都有一排<dfn data-term="gold-fingers">金手指（gold
-fingers）</dfn>：镀了金的裸露触点。金不会氧化变色，所以触点一直接触良好。顶层 FPC（Top FPC）有 ${NF_T} 根，底层 FPC 有 ${NF_B}
-根，每根宽 ${FW} mm，相邻两根中心相距 ${PITCH} mm。背面贴着的<dfn data-term="stiffener">补强板（stiffener）</dfn>把 ${FPC_T} mm
-的薄膜加厚到 ${THICK} mm，正是座子要求的厚度。内存条、显卡和游戏卡带也是这样插进去的。</p>
+<p>第 3 步把两颗芯片放到一小块网格上：${G_S} 条感应线乘 ${G_D} 条驱动线，就像把第 1.2 课的 2 × 2 卡片放大了。走动的 1
+一条接一条地给驱动线通电，走完一遍，多路选择器就换到下一条感应线。每读一次就填好读数图的一格，所以按下一个交叉点，正好亮起一格。读取板读它的
+${ROWS} × ${COLS} 个交叉点，也是这样。</p>
 
-<p>每条尾线先插进一块小小的转接板（extender），板子两边各有一个座子，和第 1.5 课用的一样。从转接板的另一边，再由一根 <dfn
-data-term="ffc">FFC 排线（flat flexible cable）</dfn>接到读取板，这样读取板可以离传感垫远一些。排线里是一条条并排的扁铜线，外面包着塑料膜，两端露出触点，每一端背面都贴着一块补强板。笔记本电脑、相机和打印机里用的也是这种排线。</p>
-
-<p>在读取板上，每根排线插进一个 <dfn data-term="zif-connector">ZIF 座子（ZIF connector）</dfn>。ZIF
-的意思是零插拔力：掀开锁扣，不用使劲就能把排线滑进去，再压下锁扣，座子里的弹片就压在裸露触点上。触点必须对着弹片。排线翻过来也一样插得进去，却什么都接不通。读取板上的两个座子标作
-FPC1（接顶层 FPC 的 ${ROWS} 条感应线）和 FPC2（接底层 FPC 的 ${COLS} 条驱动线）。</p>
-
-<p>第 2.3 课把 Nano、这两种芯片和两个这样的座子放到一块小电路板上，再跟着这块板从一张图纸走到工厂。</p>`,
+<p>第 2.4 课沿着传感垫的 ${LINES} 条线，从两条尾线一直走到读取板：金手指、FFC 排线和它们的座子。第 2.5 课再在真正的读取板上找到这些芯片，第
+2.6 课读出一整帧。</p>`,
   specs: [
     { label: "多路选择器", note: "16 个通道和一个公共引脚 COM" },
     { label: "选择与使能", value: "D4–D7 接 S0–S3 · D8 接 E#" },
@@ -86,18 +74,8 @@ FPC1（接顶层 FPC 的 ${ROWS} 条感应线）和 FPC2（接底层 FPC 的 ${C
     { label: "移位寄存器", note: "每片 8 个输出；QH′ 把最后一位传给下一片" },
     { label: "时钟", value: "D3 → U2–U5 的 SRCLK 和 RCLK", note: "每次时钟也同时锁存，所以输出晚一个时钟" },
     { label: "输出使能", value: "#OE → GND", note: `输出始终有效：没选中的 ${COLS - 1} 条驱动线保持 0 V` },
-    { label: "顶层 FPC 金手指", note: "每条感应线一根" },
-    { label: "底层 FPC 金手指", note: "每条驱动线一根" },
-    { label: "金手指尺寸", note: "宽 × 长，两条尾线一样" },
-    { label: "金手指间距", note: "中心到中心" },
-    { label: "金手指处的厚度", note: `${FPC_T} mm 的 FPC 加上补强板（下单时的选项）` },
-    { label: "FPC2 座子", value: "THD0515-32CL-SN · 32 针", note: `${COLS} 条驱动线` },
-    { label: "FPC2 类型", value: "间距 0.5 mm · 翻盖锁扣 · 下接触", note: "适配 0.3 mm 厚的排线" },
-    { label: "FPC1 座子", value: "16 针 · 间距 0.5 mm", note: `${ROWS} 条感应线，接在第 ${MUX_OFFSET + 1}–${LAST + 1} 针；和 FPC2 一样是翻盖锁扣（据读取板照片）` },
-    { label: "排线触点处", value: "厚 0.3 mm · 间距 0.5 mm", note: "读取板的座子要求的厚度（LCSC C283153；Hirose FH12 也是 0.3 ± 0.05 mm）" },
-    { label: "排线类型", value: "两端的触点在同一面", note: "称为 A 型（Type A）" },
-    { label: "常见 ZIF 座子的额定寿命", value: "约 20 次插拔", note: "Hirose FH12（0.5 mm）。资料里没有读取板自己那两个座子的额定值：插拔要轻，次数别太多" },
     { label: "图中的 FSR", value: `按下（${PRESS_N} N）${R_FSR_K} kΩ · 不按时断开`, note: `第 2.1 课的轻按，取自 Adafruit 的表格。A0 在这里读到 ${A0_HERE}，在第 2.1 课的实验台上读到 ${A0_BENCH}：开关的 ${R_ON} Ω 让它少了 ${A0_BENCH - A0_HERE}` },
+    { label: "第 3 步的网格", value: `${G_S} 条感应线 × ${G_D} 条驱动线`, note: `传感垫 ${ROWS} × ${COLS} 网格中的一小块，用了多路选择器 16 个通道中的 ${G_S} 个，读的顺序一样` },
   ],
   steps: [
     {
@@ -109,12 +87,8 @@ FPC1（接顶层 FPC 的 ${ROWS} 条感应线）和 FPC2（接底层 FPC 的 ${C
       text: `设好数据位，再按<b>时钟</b>，所有的位就往后挪一格。<b>锁存</b>把格子复制到下面的输出上。播放“走动的 1”，再级联 4 片：还是这两个 Nano 引脚，就有 ${COLS} 个输出。`,
     },
     {
-      title: "金手指",
-      text: `每条尾线末端都有一排金色触点，一条线一根：顶层 FPC ${NF_T} 根，底层 FPC ${NF_B} 根，间距 ${PITCH}&nbsp;mm。点一根金手指近看。内存条也这样插进去。`,
-    },
-    {
-      title: "排线和座子",
-      text: "掀开锁扣，插入排线，再压下锁扣，弹片就压在它的裸露触点上。再把排线翻过来试一次。触点背对着弹片，什么也接不通。",
+      title: "两颗芯片一起",
+      text: `移位寄存器给一条驱动线通电，多路选择器选中一条感应线，只有它们的交叉点接到 A0。点交叉点把它按下，再点<b>${nw("全部读一遍")}</b>：每按下一个，读数图就亮一格。`,
     },
   ],
   quiz: [
@@ -134,13 +108,13 @@ FPC1（接顶层 FPC 的 ${ROWS} 条感应线）和 FPC2（接底层 FPC 的 ${C
       why: "第一次时钟把 1 放进 QA，之后每打一次时钟它就往后挪一格：QB、QC、QD。再锁存一次，输出 QD 就会亮。",
     },
     {
-      q: "一根排线已经插到底、锁扣也压好了，可读取板在这些线上什么都读不到。先检查什么？",
-      choices: ["它的裸露触点是否朝着座子的弹片", "排线够不够长", "锁扣是不是还开着", "Nano 有没有 5 V 供电"],
-      why: "排线翻过来也一样插得进去，但裸露触点背对弹片，哪条线都接不通。掀开锁扣，把排线翻过来，再压下锁扣。",
+      q: "移位寄存器给驱动线 5 通电，多路选择器选中感应线 2。A0 能读到哪个交叉点？",
+      choices: ["只有驱动线 5 和感应线 2 相交的那一个", "驱动线 5 上的每个交叉点", "感应线 2 上的每个交叉点", "所有交叉点一起"],
+      why: "电流从通电的驱动线进来，从被选中的感应线出去。同时在这两条线上的交叉点只有一个，所以 A0 只读到它。然后扫描换到下一个。",
     },
   ],
   wiring: {
-    intro: "Nano 怎样控制读取板上的两种芯片，以及传感垫的线怎样接到它们。引脚名称沿用芯片厂家的叫法：SER 就是 DATA，SRCLK 是时钟，RCLK 是锁存。名字前面或后面的 # 表示低电平有效的引脚。U2–U5 是四片移位寄存器，U6 是多路选择器，和读取板上印的一样。第 2.3 课列出了全部连接。",
+    intro: "Nano 怎样控制读取板上的两种芯片。引脚名称沿用芯片厂家的叫法：SER 就是 DATA，SRCLK 是时钟，RCLK 是锁存。名字前面或后面的 # 表示低电平有效的引脚。U2–U5 是四片移位寄存器，U6 是多路选择器，和读取板上印的一样。第 2.5 课列出了全部连接。",
     rows: [
       { from: "Nano D4、D5、D6、D7", to: "Mux S0、S1、S2、S3", note: "用二进制表示通道号：S0 代表 1，S3 代表 8。" },
       { from: "Nano D8", to: "Mux E#（使能）", note: "低电平有效：LOW 时多路选择器工作。" },
@@ -152,7 +126,6 @@ FPC1（接顶层 FPC 的 ${ROWS} 条感应线）和 FPC2（接底层 FPC 的 ${C
       { from: "U2–U5 的 QA–QH", to: `${COLS} 条驱动线（FPC2）`, note: "每条驱动线一个输出。" },
       { from: "U2–U5 的 #OE", to: "GND", note: "低电平有效，所以输出始终有效。" },
       { from: "U2–U5 的 #SRCLR", to: "5 V", note: "低电平有效，所以格子从不清零。" },
-      { from: `传感垫尾线（${NF_T} 根和 ${NF_B} 根金手指）`, to: "FFC 转接板，再用 FFC 排线接到 FPC1 和 FPC2", note: `全程间距 ${PITCH} mm。` },
     ],
     foot: "引脚从 1 开始数，mux 通道从 0 开始数，和读取板上一致。",
   },
@@ -162,7 +135,7 @@ FPC1（接顶层 FPC 的 ${ROWS} 条感应线）和 FPC2（接底层 FPC 的 ${C
       "<code>digitalWrite(pin, HIGH)</code> 让引脚输出 5 V，<code>LOW</code> 输出 0 V。在 <code>setup()</code> 里，<code>pinMode(p, OUTPUT)</code> 把 D2–D8 设成输出。它们一开始都是 LOW，所以 D8 上的 E# 是 LOW，多路选择器打开。",
       "<code>setChannel(ch)</code> 把通道号写到 D4–D7，每个引脚一位。<code>bitRead(ch, b)</code> 取出 <code>ch</code> 的第 <code>b</code> 位，是 0 或 1：<code>setChannel(13)</code> 依次往 D4、D5、D6、D7 写 1、0、1、1。从 D7 读到 D4，正是 1101。",
       "接着 <code>analogRead(A0)</code> 读出多路选择器选中的那条线，范围 0 到 1023，和第 2.1 课一样。按<b>运行</b>：第 1 步图中的多路选择器会转到同一个通道，控制台显示串口监视器会打印的内容。",
-      "<code>clockOnce()</code> 在 D3 上发一个脉冲：先 HIGH，再 LOW。D3 跳到 HIGH 的那一刻叫<dfn data-term=\"rising-edge\">上升沿（rising edge）</dfn>，所有的位就在这一刻往后挪一格。在读取板上，D3 同时接锁存引脚，所以每个脉冲也会锁存（第 2.4 课会讲这带来什么变化）。",
+      "<code>clockOnce()</code> 在 D3 上发一个脉冲：先 HIGH，再 LOW。D3 跳到 HIGH 的那一刻叫<dfn data-term=\"rising-edge\">上升沿（rising edge）</dfn>，所有的位就在这一刻往后挪一格。在读取板上，D3 同时接锁存引脚，所以每个脉冲也会锁存（第 2.6 课会讲这带来什么变化）。",
       `每轮读一次 A0、打一次时钟。每 ${COLS} 轮才送进一个 1，于是这一个 1 沿着 ${CHIPS} 片芯片的全部 ${COLS} 个输出走一遍，一次只有一条驱动线通电，和读取板一样。按 <code>delay(${WALK_MS})</code>，走完一趟要 ${(COLS * WALK_MS) / 1000} 秒；在输出上接 LED，就能看着它走。`,
     ],
     params: [{ label: "setChannel（0–15）" }],

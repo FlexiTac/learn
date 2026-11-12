@@ -344,6 +344,28 @@ export const GLOSSARY_ZH: Record<string, TermZh> = {
     aka: "jumper · 杜邦线",
     def: "两头带插针或插孔的短导线。不用焊接，就能把两个点连起来，比如 Arduino 的一个引脚和面包板（breadboard）上的一排孔。",
   },
+  // (2026-11-12：第 2.2 课搭电路时教的几个词)
+  strip: {
+    term: "小排",
+    aka: "面包板小排 · strip",
+    def: "面包板里由同一片金属夹片连通的一组孔，插进去的东西都连在一起。半尺寸面包板的每一列有两个小排，各 5 个孔：a–e 和 f–j，中间隔着凹槽。",
+  },
+  "power-rail": {
+    term: "电源轨",
+    aka: "power rail · 电源排",
+    def: "沿面包板边缘的长条，标着 + 和 −。它把 5V 或 GND 引到整块面包板，任何零件只要一根短线就能接上电。",
+  },
+  "short-circuit": {
+    term: "短路",
+    aka: "short",
+    def: "本该分开的两点，比如 5V 和 GND，被一条几乎没有电阻的路径连在一起。电流很大，电源会被切断。先拔掉电源，再找出是哪根线把它们连起来的。",
+  },
+  floating: {
+    term: "悬空",
+    aka: "悬空引脚 · floating pin",
+    def: "输入引脚没有接到任何能确定它电压的地方，会受周围杂散电荷影响，读数随机漂移。一个接到 GND 的下拉电阻（pull-down resistor）能让它稳稳地停在 0 V。",
+  },
+
   "serial-monitor": {
     term: "串口监视器",
     def: "Arduino IDE 里的一个窗口，显示 Arduino 通过 USB 发来的文字；它的波特率（baud rate）要设成和程序里一样。FlexiTac 的固件发的是原始字节，不是文字，所以在这里只会看到乱码。",

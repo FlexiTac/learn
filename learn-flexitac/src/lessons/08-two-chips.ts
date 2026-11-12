@@ -1,23 +1,22 @@
-// Lesson 2.2: chips and connectors (2026-11-09, PLAN-section2-basics.md). Lesson 2.1 read one FSR through one analog pin
-// and ended on a question: how can one A0 read the pad's 384 crossings? The pad's grid already lets the board read one
-// crossing at a time (Lesson 1.2); two kinds of chip do the switching: the multiplexer picks the sense line A0 listens
-// to, the shift registers power one drive line at a time (the "pick one" and "drive" boxes of Lesson 1.2's cards). Then
-// the parts that carry the pad's 44 lines to the board: the tails' gold fingers, the FFC extender, the flat flexible
-// cable (FFC) and its ZIF socket, and where else each is used. Lesson 2.3 puts all of these on the reading board; 2.4
-// runs the scan.
+// Lesson 2.3: two chips that take turns (2026-11-12, PLAN-section2-build.md; split out of the old "Chips and
+// connectors", PLAN-section2-basics.md). Lessons 2.1 and 2.2 read one FSR through one analog pin and ended on a question:
+// how can one A0 read the pad's 384 crossings? The pad's grid already lets the board read one crossing at a time (Lesson
+// 1.2); two kinds of chip do the switching: the multiplexer picks the sense line A0 listens to, the shift registers power
+// one drive line at a time (the "pick one" and "drive" boxes of Lesson 1.2's cards). Step 3 puts the two together over a
+// 4 x 8 grid of crossings and reads them all, one at a time, into a small map: the scanning idea in its simplest form.
+// Lesson 2.4 carries the pad's 44 lines to the board (gold fingers, flat cables, sockets); 2.5 puts the chips and the
+// sockets on the reading board; 2.6 runs the scan on a whole frame.
 // Stage: the chips-lab widget (src/widgets/chips-lab.ts), no figure: one flat drawing per step (widgetView {view}) with
-// a card beside it (the wiring to the Nano, or where else the part is used and a photo from the hardware guide).
-// Numbers: the shared data (constants, sources.json facts, stack.json's order options); the chips' and the sockets'
-// datasheet facts are external, with their URLs (the research of 2026-11-09). The FSR in the drawing is Lesson 2.1's
-// model (src/widgets/bench/fsr.ts). FPC1's part number is left out on purpose: its BOM line names one part and its LCSC
-// code another (the board was assembled with the LCSC one).
+// a card beside it (the wiring to the Nano, or the map).
+// Numbers: the shared data (constants, sources.json facts); the chips' datasheet facts are external, with their URLs
+// (the research of 2026-11-09). The FSRs in the drawings are Lesson 2.1's model (src/widgets/bench/fsr.ts, through
+// src/widgets/chips/press.ts).
 // The sketch on the code card runs on the reading board's pins: one clock a loop, a 1 every 32nd loop, so one drive
 // line is HIGH at a time across the chain of four (as the board's firmware does), slow enough to watch.
 import { COLS, MUX_OFFSET, R1, ROWS } from "@shared/data/constants.mjs";
-import { stack } from "@shared/data/index.mjs";
 import { adcCode } from "@shared/models/adc.mjs";
 import { R_ON, vA0 } from "@shared/models/divider.mjs";
-import { fact, getFact } from "../content/facts";
+import { fact } from "../content/facts";
 import type { Lesson } from "../types";
 import { FSR_SRC, PRESS_N, R_PRESSED } from "../widgets/chips/press";
 
@@ -27,42 +26,36 @@ const LAST = MUX_OFFSET + ROWS - 1; // the last mux channel in use
 const CHIPS = COLS / 8; // a 74HC595 has 8 outputs
 const CHIPS_W = ["one", "two", "three", "four", "five", "six"][CHIPS - 1] ?? String(CHIPS); // (in prose)
 const KOHM = `${R1 / 1000}&nbsp;kΩ`;
-const NF_T = getFact("fpc_top.fingers.count").value as number;
-const NF_B = getFact("fpc_bot.fingers.count").value as number;
-const FW = (getFact("fpc_top.fingers.size").value as [number, number])[0];
-const PITCH = getFact("fpc_top.fingers.pitch").value as number;
-const FPC_T = getFact("fpc_top.thickness").value as number;
-const THICK = stack.fpcBuild.goldFingerThickness;
 const nb = (t: string) => t.replace(/ /g, "&nbsp;");
 const WALK_MS = 500; // the sketch's delay per loop: one drive line along every half second
+// step 3's grid (src/widgets/chips/together.ts SENSE_N × DRIVE_N): a small piece of the pad's grid
+const G_S = 4;
+const G_D = 8;
 // outside the FlexiTac materials (scratchpad research external-facts.md, 2026-11-09)
-const HIROSE = "https://www.hirose.com/api/v1/series/FH12/documents/product_series_catalog/content?lang=EN";
 const TI_4067 = "https://www.ti.com/lit/ds/symlink/cd74hc4067.pdf";
-const LCSC_FPC2 = "https://www.lcsc.com/product-detail/C283153.html";
-const PHOTO = "material/FlexiTac Hardware Guide.docx";
-// the pressed FSR of the drawing: Lesson 2.1's light press; the switch's resistance takes a few counts off A0
+// the pressed FSR of the drawings: Lesson 2.1's light press; the switch's resistance takes a few counts off A0
 const R_FSR_K = Math.round(R_PRESSED / 100) / 10;
 const A0_HERE = adcCode(vA0(R_PRESSED, { rOn: R_ON }));
 const A0_BENCH = adcCode(vA0(R_PRESSED, { rOn: 0 })); // Lesson 2.1's bench: no switch
 
 export const lesson: Lesson = {
-  id: "chips-and-connectors",
-  n: 8,
-  title: "Chips and connectors",
-  kicker: "The basics",
-  lede: `Two kinds of small chip let one analog pin read all ${TAXELS} crossings, one at a time. Gold fingers, a flat cable and its socket carry the pad's ${LINES} lines to the board.`,
+  id: "two-chips",
+  n: 9,
+  title: "Two chips that take turns",
+  kicker: "Chips and connectors",
+  lede: `Two kinds of small chip let one analog pin read all ${TAXELS} crossings. One powers a single drive line, the other listens to a single sense line, and they take turns.`,
   status: "ready",
   features: [
     { icon: "mux", title: "Multiplexer", text: "A 16-way switch: four pins pick what A0 hears" },
     { icon: "shift", title: "Shift register", text: "Eight boxes that pass a 1 along, one output at a time" },
-    { icon: "gold", title: "Fingers, cable, socket", text: `Carry the pad's ${LINES} lines to the board` },
+    { icon: "grid", title: "Together", text: "One powered line, one picked line, one crossing read" },
   ],
   widget: "chips-lab",
   overview: `
-<p>Lesson 2.1 ended on a problem. The pad has ${TAXELS} crossings, each a tiny force sensor, and the Nano has only 8
-analog pins. The pad's wiring already helps. Its ${ROWS} sense lines and ${COLS} drive lines meet at every crossing, so the
-board can power one drive line, listen to one sense line and read the one crossing where they meet (Lesson 1.2). Then it
-moves on to the next, fast enough to read the whole pad many times a second.</p>
+<p>In Lessons 2.1 and 2.2, one force sensor took one analog pin. The Nano has 8, and the pad has ${TAXELS} crossings, each
+a tiny force sensor. The pad's wiring already helps. Its ${ROWS} sense lines and ${COLS} drive lines meet at every
+crossing, so the board can power one drive line, listen to one sense line and read the one crossing where they meet
+(Lesson 1.2). Then it moves on to the next, fast enough to read the whole pad many times a second.</p>
 
 <p>That still leaves ${LINES} lines. The Nano has 8 analog pins for the ${ROWS} sense lines and 14 digital pins for the
 ${COLS} drive lines, too few for either. Two kinds of cheap chip do the switching. A <dfn>multiplexer</dfn> (mux for
@@ -93,27 +86,15 @@ the other ${COLS - 1} at 0 V. The multiplexer connects one sense line to A0. Cur
 where those two lines meet. Step 1's drawing shows that moment from the multiplexer's side: its +5 V is the powered drive
 line, and each FSR is a crossing on it.</p>
 
-<p>The rest of the lesson is the path from the pad to the board, ${LINES} lines in all. Each FPC ends in a tail with a
-row of <dfn>gold fingers</dfn>: bare contacts plated with gold, which does not tarnish, so they keep a clean contact. The
-Top FPC has ${NF_T}, the Bottom FPC ${NF_B}, each ${FW} mm wide, their centres ${PITCH} mm apart. A <dfn>stiffener</dfn>
-glued behind them brings the ${FPC_T} mm film to ${THICK} mm, the thickness a socket expects. Memory sticks, graphics cards
-and game cartridges plug in the same way.</p>
+<p>Step 3 puts both chips over a small grid, ${G_S} sense lines by ${G_D} drive lines, like Lesson 1.2's 2 × 2 card made
+bigger. The walking 1 powers the drive lines one by one, then the multiplexer moves to the next sense line. Each reading
+fills one cell of a map, so a press lights exactly one cell. The board reads its ${ROWS} × ${COLS} crossings the same
+way.</p>
 
-<p>Each tail plugs into a small extender, a tiny board with a socket on each side, as in Lesson 1.5. From its other side
-a <dfn>flat flexible cable</dfn> (FFC) runs on to the reading board, so the board can sit away from the pad. The cable is
-flat copper strips side by side in plastic film, bare at the ends, with a stiffener behind each end. Laptops, cameras and
-printers use the same cables inside.</p>
-
-<p>On the board, each cable plugs into a <dfn>ZIF connector</dfn>. ZIF stands for zero insertion force: you lift the
-latch, slide the cable in with no force against the contacts, and press the latch down, so springs inside press onto the
-bare contacts. The contacts must face the springs. A cable turned over goes in just as easily and connects nothing. The
-board's two sockets are labelled FPC1, for the Top FPC's ${ROWS} sense lines, and FPC2, for the Bottom FPC's ${COLS}
-drive lines.</p>
-
-<p>Lesson 2.3 puts the Nano, these two kinds of chip and two of these sockets on one small board, and follows that board
-from a drawing to a factory.</p>`,
+<p>Lesson 2.4 follows the pad's ${LINES} lines from its two tails to the board: gold fingers, flat cables and their
+sockets. Lesson 2.5 then shows these chips on the real reading board, and Lesson 2.6 reads a whole frame.</p>`,
   wiring: {
-    intro: "How the Nano drives the two kinds of chip on the reading board, and how the pad's lines reach them. Pins are named as the chip makers name them: SER is DATA, SRCLK the clock and RCLK the latch. A # before or after a name marks an active-LOW pin. U2–U5 are the four shift registers and U6 the multiplexer, as printed on the board. Lesson 2.3 has every connection.",
+    intro: "How the Nano drives the two kinds of chip on the reading board. Pins are named as the chip makers name them: SER is DATA, SRCLK the clock and RCLK the latch. A # before or after a name marks an active-LOW pin. U2–U5 are the four shift registers and U6 the multiplexer, as printed on the board. Lesson 2.5 has every connection.",
     rows: [
       { from: "Nano D4, D5, D6, D7", to: "Mux S0, S1, S2, S3", note: "The channel number in binary: S0 is worth 1, S3 is worth 8." },
       { from: "Nano D8", to: "Mux E# (enable)", note: "Active LOW: LOW switches the multiplexer on." },
@@ -125,7 +106,6 @@ from a drawing to a factory.</p>`,
       { from: "QA–QH of U2–U5", to: `The ${COLS} drive lines (FPC2)`, note: "One output per drive line." },
       { from: "#OE of U2–U5", to: "GND", note: "Active LOW, so the outputs always drive." },
       { from: "#SRCLR of U2–U5", to: "5 V", note: "Active LOW, so the boxes are never cleared." },
-      { from: `Pad tails (${NF_T} and ${NF_B} gold fingers)`, to: "FFC extenders, then flat cables to FPC1 and FPC2", note: `${PITCH} mm pitch all the way.` },
     ],
     foot: "Pins count from 1 and mux channels from 0, as on the board.",
   },
@@ -170,7 +150,7 @@ void loop() {
       "<code>digitalWrite(pin, HIGH)</code> puts 5 V on a pin, and <code>LOW</code> puts 0 V. In <code>setup()</code>, <code>pinMode(p, OUTPUT)</code> makes D2–D8 outputs. They start LOW, so E# on D8 is LOW and the multiplexer is on.",
       "<code>setChannel(ch)</code> writes the channel number onto D4–D7, one bit per pin. <code>bitRead(ch, b)</code> is bit <code>b</code> of <code>ch</code>, a 0 or a 1: <code>setChannel(13)</code> writes 1, 0, 1, 1 to D4, D5, D6, D7. Read from D7 down to D4, that is 1101.",
       "<code>analogRead(A0)</code> then reads whichever line the multiplexer picked, 0 to 1023, as in Lesson 2.1. Press <b>Run</b>: the multiplexer in step 1's drawing turns to the same channel, and the console shows what the Serial Monitor would print.",
-      "<code>clockOnce()</code> sends one pulse on D3: HIGH, then LOW. The moment D3 goes HIGH, called a <dfn>rising edge</dfn>, every bit moves one box along. On the reading board D3 also drives the latch, so each pulse latches too (Lesson 2.4 shows what that changes).",
+      "<code>clockOnce()</code> sends one pulse on D3: HIGH, then LOW. The moment D3 goes HIGH, called a <dfn>rising edge</dfn>, every bit moves one box along. On the reading board D3 also drives the latch, so each pulse latches too (Lesson 2.6 shows what that changes).",
       `Each loop reads A0 once and clocks once. Only every ${COLS}nd loop puts in a 1, so a single 1 walks along all ${COLS} outputs of the ${CHIPS_W} chips, one drive line at a time, as on the board. At <code>delay(${WALK_MS})</code> it takes ${(COLS * WALK_MS) / 1000} seconds to cross; LEDs on the outputs would show it walk.`,
     ],
   },
@@ -183,18 +163,8 @@ void loop() {
     fact("board.part.U2", "Shift registers", { value: (v) => `${CHIPS} × ${v.mpn} (U2–U5)`, note: "8 outputs each; QH′ passes the last bit to the next chip" }),
     fact("board.clockTie", "Clocks", { value: () => "D3 → SRCLK and RCLK of U2–U5", note: "Every clock also latches, so the outputs run one clock behind" }),
     fact("board.OE", "Output enable", { value: () => "#OE → GND", note: `The outputs always drive: the ${COLS - 1} drive lines not picked sit at 0 V` }),
-    fact("fpc_top.fingers.count", "Top FPC fingers", { note: "One per sense line" }),
-    fact("fpc_bot.fingers.count", "Bottom FPC fingers", { note: "One per drive line" }),
-    fact("fpc_top.fingers.size", "Finger size", { note: "Width × length, the same on both tails" }),
-    fact("fpc_top.fingers.pitch", "Finger pitch", { note: "Centre to centre" }),
-    { label: "Thickness at the fingers", value: `${THICK} mm`, src: stack.fpcBuild.src, note: `The ${FPC_T} mm FPC with its stiffener (an order option)` },
-    fact("board.part.FPC2", "FPC2 socket", { value: (v) => `${v.mpn} · 32 pins`, note: `The ${COLS} drive lines` }),
-    { label: "FPC2 type", value: "0.5 mm pitch · flip-top latch · bottom contacts", src: `${LCSC_FPC2} (THD0515-32CL-SN)`, badge: "external", note: "Takes a 0.3 mm thick cable" },
-    { label: "FPC1 socket", value: "16 pins · 0.5 mm pitch", src: getFact("board.part.FPC1").src, badge: "inferred", note: `The ${ROWS} sense lines, on pins ${MUX_OFFSET + 1}–${LAST + 1}; a flip-top latch like FPC2's (board photo)` },
-    { label: "Flat cable at the contacts", value: "0.3 mm thick · 0.5 mm pitch", src: `${LCSC_FPC2}; ${HIROSE}`, badge: "external", note: "What the board's sockets take (LCSC C283153; Hirose FH12 is the same, 0.3 ± 0.05 mm)" },
-    { label: "Cable type", value: "Contacts on the same side at both ends", src: `${PHOTO} image 32 (the blue stiffeners sit on one face at both ends)`, badge: "inferred", note: "Called Type A" },
-    { label: "Rated life of a common ZIF socket", value: "about 20 insertions", src: HIROSE, badge: "external", note: "Hirose FH12 (0.5 mm). The board's own sockets have no rating in the materials: unplug gently and not too often" },
-    { label: "FSR in the drawing", value: `${R_FSR_K} kΩ pressed (${PRESS_N} N) · open when not`, src: FSR_SRC, badge: "illustrative", note: `Lesson 2.1's light press, from Adafruit's table. A0 reads ${A0_HERE} here and ${A0_BENCH} on Lesson 2.1's bench: the switch's ${R_ON} Ω takes ${A0_BENCH - A0_HERE} off` },
+    { label: "FSR in the drawings", value: `${R_FSR_K} kΩ pressed (${PRESS_N} N) · open when not`, src: FSR_SRC, badge: "illustrative", note: `Lesson 2.1's light press, from Adafruit's table. A0 reads ${A0_HERE} here and ${A0_BENCH} on Lesson 2.1's bench: the switch's ${R_ON} Ω takes ${A0_BENCH - A0_HERE} off` },
+    { label: "Grid in step 3", value: `${G_S} sense × ${G_D} drive lines`, src: "in-browser model (src/widgets/chips/together.ts)", badge: "illustrative", note: `A small piece of the pad's ${ROWS} × ${COLS}, on ${G_S} of the multiplexer's 16 channels, read in the same order` },
   ],
   steps: [
     {
@@ -210,14 +180,9 @@ void loop() {
       widgetView: { view: "shift" },
     },
     {
-      title: "Gold fingers",
-      text: `Each tail ends in a row of gold contacts, one per line: ${NF_T} on the Top FPC, ${NF_B} on the Bottom FPC, one every ${nb(`${PITCH} mm`)}. Click a finger to see it up close. Memory sticks plug in the same way.`,
-      widgetView: { view: "fingers" },
-    },
-    {
-      title: "Flat cables and their sockets",
-      text: "Lift the latch, slide the cable in and press the latch down, and the springs press on its bare contacts. Then turn the cable over and try again. Its contacts face away, and nothing connects.",
-      widgetView: { view: "ffc" },
+      title: "Together",
+      text: `The shift register powers one drive line and the multiplexer picks one sense line: only their crossing reaches A0. Press a few crossings, then <b>${nb("Read them all")}</b>. Each press lights one cell of the map.`,
+      widgetView: { view: "together" },
     },
   ],
   // (saved answers are kept by question index, src/ui/quiz.ts: a new question goes at the END)
@@ -241,10 +206,10 @@ void loop() {
       why: "The first clock puts the 1 into QA. Each clock after that moves it one box along: QB, QC, QD. A latch would then show it on output QD.",
     },
     {
-      q: "A flat cable is fully in and latched, but the board reads nothing on those lines. What do you check first?",
-      choices: ["That its bare contacts face the socket's springs", "That the cable is long enough", "That the latch is still open", "That the Nano gets 5 V"],
+      q: "The shift register powers drive line 5, and the multiplexer picks sense line 2. Which crossing can A0 read?",
+      choices: ["Only the one where drive line 5 meets sense line 2", "Every crossing on drive line 5", "Every crossing on sense line 2", "All of them at once"],
       answer: 0,
-      why: "A cable turned over slides in just as easily, but its bare contacts face away from the springs, so no line connects. Lift the latch, turn the cable over and press the latch down again.",
+      why: "Current comes in on the powered drive line and leaves through the picked sense line. Only one crossing sits on both, so A0 reads that one alone. Then the scan moves on to the next.",
     },
   ],
 };
