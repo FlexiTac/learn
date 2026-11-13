@@ -149,7 +149,7 @@ void loop() {
     notes: [
       "<code>digitalWrite(pin, HIGH)</code> puts 5 V on a pin, and <code>LOW</code> puts 0 V. In <code>setup()</code>, <code>pinMode(p, OUTPUT)</code> makes D2–D8 outputs. They start LOW, so E# on D8 is LOW and the multiplexer is on.",
       "<code>setChannel(ch)</code> writes the channel number onto D4–D7, one bit per pin. <code>bitRead(ch, b)</code> is bit <code>b</code> of <code>ch</code>, a 0 or a 1: <code>setChannel(13)</code> writes 1, 0, 1, 1 to D4, D5, D6, D7. Read from D7 down to D4, that is 1101.",
-      "<code>analogRead(A0)</code> then reads whichever line the multiplexer picked, 0 to 1023, as in Lesson 2.1. Press <b>Run</b>: the multiplexer in step 1's drawing turns to the same channel, and the console shows what the Serial Monitor would print.",
+      "<code>analogRead(A0)</code> then reads whichever line the multiplexer picked, 0 to 1023, as in Lesson 2.1.",
       "<code>clockOnce()</code> sends one pulse on D3: HIGH, then LOW. The moment D3 goes HIGH, called a <dfn>rising edge</dfn>, every bit moves one box along. On the reading board D3 also drives the latch, so each pulse latches too (Lesson 2.6 shows what that changes).",
       `Each loop reads A0 once and clocks once. Only every ${COLS}nd loop puts in a 1, so a single 1 walks along all ${COLS} outputs of the ${CHIPS_W} chips, one drive line at a time, as on the board. At <code>delay(${WALK_MS})</code> it takes ${(COLS * WALK_MS) / 1000} seconds to cross; LEDs on the outputs would show it walk.`,
     ],

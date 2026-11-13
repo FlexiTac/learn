@@ -145,9 +145,8 @@ void loop() {
       `<b>setup()</b> picks one crossing, like the real firmware does before each reading: the multiplexer's select pins D4–D7 choose channel ${MUX_OFFSET} (sense line 1), D8 switches the mux on, and two clock pulses on D3 push a single 1 into the shift registers so only drive line 1 gets ${VCC} V (lessons 7 and 8 explain both chips).`,
       `<b>analogRead(A0)</b> returns the ${BITS}-bit ADC value, 0–${MAX_CODE}. <code>raw &gt;&gt; 2</code> keeps the top 8 bits, exactly what the FlexiTac firmware sends.`,
       `The last two lines run the divider backwards to estimate the taxel's resistance: R = R1 × (${VCC} ÷ V − 1). The answer includes the mux's R<sub>on</sub>.`,
-      `<b>R1 is display only.</b> The board has a ${R1K} kΩ resistor soldered on. Changing <code>R1</code> here does not change the circuit or the byte; it only changes the estimate, which is then wrong. Try 20000 and Run.`,
+      `<b>R1 is display only.</b> The board has a ${R1K} kΩ resistor soldered on. Changing <code>R1</code> in the code would not change the circuit or the byte; it would only change the estimate, which would then be wrong.`,
       `This sketch leaves the ADC clock at Arduino's default (${kHz(DEFAULT_ADC_HZ)}, full accuracy) and prints text at 115200 baud for the Serial Monitor. The real firmware uses a ${kHz(ADC_CLOCK_HZ)} ADC clock and sends raw bytes at ${BAUD.toLocaleString("en-US")} baud.`,
-      "<b>Run</b> reads the crossing in the figure: press the plunger first, then Run.",
     ],
     run(p, ctx) {
       const st = ctx.figure?.lastState;

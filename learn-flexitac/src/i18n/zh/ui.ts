@@ -59,7 +59,7 @@ export const UI_ZH: Partial<Record<keyof typeof UI_EN, string>> = {
   "wiring.to": "到",
   "wiring.note": "传输的内容",
   "wiring.none": "本课没有接线。",
-  "code.what": "<b>动手试试</b>里的代码做了什么：",
+  "code.what": "这段代码做了什么：",
   "code.none": "本课没有代码。",
   "sources.aria": "来源",
   "specs.foot": "灰色标签注明每个数字的来源。标记：",

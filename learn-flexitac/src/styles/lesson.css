@@ -620,6 +620,14 @@
   font-family: var(--mono);
   color: var(--accent);
 }
+/* the code itself above its notes, while the code card is away (src/views/lesson.ts SHOW_CODE_CARD, codeBlock): the
+   card's caption and code box, set flush with the pane's text */
+#pane-code .code-caption {
+  padding: 0 0 8px;
+}
+#pane-code .code-wrap {
+  margin: 0 0 18px;
+}
 
 /* specs */
 .spec-list {
@@ -723,7 +731,8 @@
   border-right: 1px solid var(--line);
   color: var(--faint);
   font-size: 12px;
-  line-height: 1.75;
+  /* the code's own line (12.5 px × 1.75, .code below), so each number stays level with its line all the way down */
+  line-height: calc(12.5px * 1.75);
   text-align: right;
   user-select: none;
   position: sticky;

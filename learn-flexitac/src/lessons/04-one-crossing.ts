@@ -97,7 +97,6 @@ print(f"R_taxel = {r / 1000:.1f} kOhm")`,
       `<code>press</code> is a unitless knob from 0 (tip just touching) to 1 (a hard press). It is <i>not</i> a force: there is no force data for FlexiTac, so this whole curve is illustrative.`,
       `<code>s</code> eases the press so the resistance falls quickly at first and then levels off, like real Velostat does.`,
       `The resistance moves between the two ends on a <b>log scale</b>: each step multiplies it by the same factor instead of subtracting the same amount. That matches how Velostat goes from hundreds of kΩ to a few kΩ.`,
-      `Press <b>Run</b>: the plunger in the figure goes to that press and the readout shows the same R<sub>taxel</sub>.`,
     ],
     run(p, ctx) {
       const press = Math.min(1, Math.max(0, p.press));

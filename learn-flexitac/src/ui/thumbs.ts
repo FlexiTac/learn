@@ -37,7 +37,7 @@ const THUMB: Record<string, string> = {
   // 2.2 a capture of its chips-lab widget (step 1, the multiplexer on channel 8; it has words, so a Chinese one too)
   "arduino-fsr": "L15",
   "two-chips": "L16",
-  // 2026-11-12: 2.2 is its finished build seen from above (the step-5 view after "Show me", the sensor pressed), 2.4 the
+  // 2026-11-12: 2.2 is its finished build on the 3D bench (the step-5 view after "Show me"), 2.4 the
   // Bottom FPC's 32 gold fingers from its step 1 (neither has words)
   "build-the-circuit": "L17",
   "fingers-and-cables": "L18",

@@ -1,24 +1,24 @@
 // Lesson 2.2's workbench, "Build it and make it work" (PLAN-section2-build.md §2.2): the learner rebuilds lesson 2.1's
-// circuit from nothing on a breadboard seen from straight above, puts the sketch together from code tiles, plugs in USB,
-// uploads and presses. It fills the stage: the workbench on the left (the top-down render, a parts tray under the
-// board, jumper wires drawn live), a panel on the right that changes with the step (view):
-//   nano    step 1: drag the Nano onto the board (it snaps across the groove); the panel shows what is inside a board
+// circuit from nothing on a breadboard, puts the sketch together from code tiles, plugs in USB, uploads and presses.
+// The bench is 3D (2026-11-12, ./build3d/scene.ts): the breadboard on the left, the parts waiting on a foam pad to its
+// right, jumper wires between holes. Drag on empty space turns the view, the wheel zooms, a right drag pans; the corner
+// has "from above" and "back to the start". Every part can be dragged at any step, from the pad to the board, about the
+// board and back. A click on a part (or a wire, the cable, the board) opens a small card: what it is, where its pins
+// are, and its tools (turn, back to the pad, remove). A panel on the right changes with the step (view):
+//   nano    step 1: drag the Nano onto the board (it snaps across the groove); the panel shows the circuit to build
 //   parts   step 2: the FSR and the 10 kΩ resistor (each can be turned); the panel lists what is joined
-//   wires   step 3: drag from a hole to a hole (or click one, then the other) to lay a jumper wire in the chosen colour;
-//           a click on a wire picks it, Delete removes it; the panel says in plain words what is joined and whether the
-//           wiring would work
+//   wires   step 3: drag from a hole to a hole (or click one, then the other) to lay a jumper wire in the chosen colour
 //   sketch  step 4: the panel is the sketch builder (build-ui/sketch-ui.ts)
 //   run     step 5: plug in USB, upload; the Serial Monitor (its baud rate can be changed) and Plotter come alive, and
 //           the FSR can be pressed (press and hold, drag down for harder, as in lesson 2.1). Whatever is wrong fails the
-//           way the engine says (../build/verdict.ts), with its line and hint, never a generic error.
-// Each view has its own "Show me", which does that step (the engine's REFERENCE_BUILD and REFERENCE_SKETCH). Every
-// placement, wire and verdict comes from the engine (./build/: hole ids and pin names only); build-ui/data.ts turns
-// them into the render's pixels (public/media/build/build.json). The holes joined inside the board light up while
-// something is held over them. Keyboard: the board takes focus; the arrow keys move between holes, Enter picks up or
-// starts a wire, Delete removes, R turns, Escape cancels; the tray's parts are buttons; the tiles have their own keys.
-// The learner's build, sketch and monitor rate are saved in localStorage (try/catch) and come back; Start over (and
-// reset(), the steps' restart) clears them, and Undo brings them back. Code card: run() says what the current build
-// does with the lesson's reference sketch; say() repeats it in the language on show.
+//           way the engine says (./build/verdict.ts), with its line and hint, never a generic error.
+// The panel's circuit diagram (build-ui/schematic.ts) lights each of its four links as the build makes it. Each view has
+// its own "Show me", which does that step (the engine's REFERENCE_BUILD and REFERENCE_SKETCH). Every placement, wire and
+// verdict comes from the engine (./build/: hole ids and pin names only); the scene turns them into millimetres. The holes
+// joined inside the board light up while something is held over them. Keyboard: the board takes focus; the arrow keys
+// move between holes, Enter picks up or starts a wire, Delete removes, R turns, Escape cancels; the pad's parts are
+// buttons; the tiles have their own keys. The learner's build, sketch and monitor rate are saved in localStorage
+// (try/catch) and come back; Start over (and reset(), the steps' restart) clears them, and Undo brings them back.
 import { tx } from "../i18n";
 import { paintText } from "../i18n/paint";
 import type { Theme, WidgetCtx, WidgetInstance } from "../types";
@@ -28,11 +28,13 @@ import { icon } from "../ui/icons";
 import { forceAt, MAX_CODE } from "./bench/fsr";
 import {
   addWire,
+  ALL_HOLES,
   checkNano,
   checkPart,
   checkWire,
   checkWireEnd,
   checkWiring,
+  circuit,
   compile,
   connections,
   EMPTY_BUILD,
@@ -55,7 +57,6 @@ import {
   ROWS,
   run,
   runner,
-  circuit,
   say,
   stripHoles,
   stripOf,
@@ -79,9 +80,9 @@ import {
   type WireColor,
   F_PRESS,
 } from "./build/engine";
-import { BASE, FRAME, geometry, loadData, partAt, TRAY_BAND, TRAY_SCALE, USB_TRAY_CROP, type BuildData, type Geometry, type Placed, type Pt } from "./build-ui/data";
+import { createScene, PAD, type LitKind, type P2, type Scene3D, type Thing, type WireLook } from "./build3d/scene";
+import { schematic } from "./build-ui/schematic";
 import { emptyState, sketchOf, sketchUi, stateOf, validState, type SketchState } from "./build-ui/sketch-ui";
-import { wireLayers, wirePaths, type WireLook } from "./build-ui/wires";
 import { S } from "./build-ui/words";
 import "./build-bench.css";
 
@@ -95,9 +96,13 @@ type Part = "nano" | PartKind;
 const PARTS: Part[] = ["nano", "fsr", "resistor"];
 const WINDOW_MS = 10000; // the plotter's span
 const NOTE_MS = 5200;
+const PITCH = 2.54;
+/** The palette's swatches (the wires' rendered colours, a little lighter than their material). */
+const SWATCH: Record<WireColor, string> = { red: "#bf3732", black: "#1f1f22", yellow: "#e2ad33", blue: "#2f5ea8", green: "#2f8a52" };
 const clamp = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
 const T = (t: Text) => tx(t.en, t.zh);
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+const onPad = (p: P2 | null) => Boolean(p && p[0] >= PAD.x0 - 2 && p[0] <= PAD.x1 + 2 && p[1] >= PAD.y0 - 2 && p[1] <= PAD.y1 + 2);
 
 interface Saved {
   v: 1;
@@ -107,6 +112,7 @@ interface Saved {
   color: WireColor;
   uploaded: Sketch | null;
 }
+type CardOf = { kind: Part | "usb" | "board" } | { kind: "wire"; id: string };
 
 export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   const reduced = ctx.reducedMotion();
@@ -116,39 +122,21 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   root.setAttribute("role", "group");
   root.dataset.tAria = "aria";
   root.classList.toggle("is-reduced", reduced);
+  const viewIcon = (top: boolean) =>
+    top
+      ? `<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="1.5"/><path d="M3 8h10M8 3v10"/></svg>`
+      : `<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 10.5 8 13.5l5.5-3"/><path d="M2.5 7 8 10l5.5-3L8 4z"/></svg>`;
   root.innerHTML = `
     <div class="bb-stage" tabindex="0" role="application" data-t-aria="stageAria">
-      <div class="bb-cam">
-        <img class="bb-img bb-board" alt="" decoding="async" draggable="false">
-        <div class="bb-tray"></div>
-        <img class="bb-img bb-tray-item" data-item="nano" alt="" draggable="false">
-        <img class="bb-img bb-tray-item" data-item="fsr" alt="" draggable="false">
-        <img class="bb-img bb-tray-item" data-item="resistor" alt="" draggable="false">
-        <div class="bb-tray-usb" data-item="usb"><img class="bb-img" alt="" draggable="false"></div>
-        <svg class="bb-lit" aria-hidden="true"></svg>
-        <img class="bb-img bb-part" data-part="nano" alt="" draggable="false">
-        <img class="bb-img bb-part" data-part="resistor" alt="" draggable="false">
-        <img class="bb-img bb-part" data-part="fsr" alt="" draggable="false">
-        <img class="bb-img bb-plug" alt="" draggable="false">
-        <svg class="bb-ov" aria-hidden="true">
-          <defs>
-            <filter id="bb-soft" filterUnits="userSpaceOnUse" x="-400" y="-300" width="3600" height="2600"><feGaussianBlur stdDeviation="13"/></filter>
-            <radialGradient id="bb-press-grad"><stop offset="0" stop-color="var(--ft-signal)" stop-opacity=".75"/><stop offset=".7" stop-color="var(--ft-signal)" stop-opacity=".28"/><stop offset="1" stop-color="var(--ft-signal)" stop-opacity="0"/></radialGradient>
-          </defs>
-          <g class="bb-press"><circle class="bb-press-glow" fill="url(#bb-press-grad)"/><circle class="bb-press-ring"/></g>
-          <g class="bb-shadows" filter="url(#bb-soft)"></g>
-          <g class="bb-ends"></g>
-          <g class="bb-bodies"></g>
-          <g class="bb-marks"></g>
-        </svg>
-        <img class="bb-img bb-ghost" alt="" draggable="false">
-        <img class="bb-img bb-float" alt="" draggable="false">
-      </div>
+      <div class="bb-view"></div>
+      <div class="bb-labels" aria-hidden="true"></div>
       <div class="bb-keys"></div>
       <div class="bb-chip mono" aria-hidden="true"></div>
-      <div class="bb-tools"></div>
+      <div class="bb-card" role="dialog" hidden></div>
       <p class="bb-kicker mono" data-t="kicker"></p>
       <div class="bb-corner">
+        <button type="button" class="bb-icon-btn" data-act="top"></button>
+        <button type="button" class="bb-icon-btn" data-act="home" data-t-aria="view.home" data-t-title="view.home"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 8a5.5 5.5 0 1 0 1.6-3.9"/><path d="M2.3 2.2v3.1h3.1"/></svg></button>
         <button type="button" class="bb-icon-btn" data-act="undo" data-t-aria="undo" data-t-title="undo"><svg class="icon bb-undo-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 2 2.5 5l3 3"/><path d="M2.5 5h7a4 4 0 0 1 0 8H7"/></svg></button>
         <button type="button" class="bb-text-btn mono" data-act="clear" data-t="reset" data-t-aria="reset.aria"></button>
       </div>
@@ -165,6 +153,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
         <div class="bb-inside-fig"></div>
         <p class="bb-small" data-t="inside.note"></p>
       </section>
+      <section class="bb-sec bb-schem"></section>
       <section class="bb-sec bb-conn">
         <p class="bb-cap mono" data-t="conn.cap"></p>
         <ol class="bb-conn-list mono"></ol>
@@ -193,27 +182,12 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   el.append(root);
   const $ = <E extends Element>(sel: string) => root.querySelector<E>(sel)!;
   const stage = $<HTMLElement>(".bb-stage");
-  const cam = $<HTMLElement>(".bb-cam");
-  const boardImg = $<HTMLImageElement>(".bb-board");
-  const trayEl = $<HTMLElement>(".bb-tray");
-  const trayImgs = { nano: $<HTMLImageElement>('.bb-tray-item[data-item="nano"]'), fsr: $<HTMLImageElement>('.bb-tray-item[data-item="fsr"]'), resistor: $<HTMLImageElement>('.bb-tray-item[data-item="resistor"]') };
-  const trayUsb = $<HTMLElement>(".bb-tray-usb");
-  const trayUsbImg = trayUsb.querySelector("img")!;
-  const litSvg = $<SVGSVGElement>(".bb-lit");
-  const partImgs = { nano: $<HTMLImageElement>('.bb-part[data-part="nano"]'), fsr: $<HTMLImageElement>('.bb-part[data-part="fsr"]'), resistor: $<HTMLImageElement>('.bb-part[data-part="resistor"]') };
-  const plugImg = $<HTMLImageElement>(".bb-plug");
-  const ov = $<SVGSVGElement>(".bb-ov");
-  const gShadows = $<SVGGElement>(".bb-shadows");
-  const gEnds = $<SVGGElement>(".bb-ends");
-  const gBodies = $<SVGGElement>(".bb-bodies");
-  const gMarks = $<SVGGElement>(".bb-marks");
-  const pressGlow = $<SVGCircleElement>(".bb-press-glow");
-  const pressRing = $<SVGCircleElement>(".bb-press-ring");
-  const ghostImg = $<HTMLImageElement>(".bb-ghost");
-  const floatImg = $<HTMLImageElement>(".bb-float");
+  const viewEl = $<HTMLElement>(".bb-view");
+  const labelsEl = $<HTMLElement>(".bb-labels");
   const keysEl = $<HTMLElement>(".bb-keys");
   const chip = $<HTMLElement>(".bb-chip");
-  const tools = $<HTMLElement>(".bb-tools");
+  const cardEl = $<HTMLElement>(".bb-card");
+  const topBtn = $<HTMLButtonElement>('[data-act="top"]');
   const noteEl = $<HTMLElement>(".bb-note");
   const hintEl = $<HTMLElement>(".bb-hint");
   const palette = $<HTMLElement>(".bb-palette");
@@ -230,11 +204,37 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   const trace = $<SVGPolylineElement>(".bb-trace");
   const slider = $<HTMLInputElement>(".bb-press-row input");
 
-  let data: BuildData | null = null;
-  let g: Geometry | null = null;
   let theme: Theme = ctx.theme();
   let view: View = "nano";
   let alive = true;
+
+  // ---------------------------------------------------------------------------------------- the scene
+  let sc: Scene3D | null = null;
+  try {
+    sc = createScene(viewEl, theme);
+  } catch (err) {
+    // (no WebGL: say so where the bench would be; the panel still works)
+    root.classList.add("is-failed");
+    $<HTMLElement>(".bb-kicker").textContent = String((err as Error)?.message ?? err);
+  }
+  /** The board's holes in plan millimetres (the scene's), and the hole nearest a point. */
+  const G = {
+    pitch: PITCH,
+    hole: (id: HoleId): P2 => sc!.hole(id),
+    nearest(p: P2, reach = 0.55): HoleId | null {
+      let best: HoleId | null = null;
+      let bd = (reach * PITCH) ** 2;
+      for (const id of ALL_HOLES) {
+        const q = sc!.hole(id);
+        const dd = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2;
+        if (dd < bd) {
+          bd = dd;
+          best = id;
+        }
+      }
+      return best;
+    },
+  };
 
   // ---------------------------------------------------------------------------------------- state (saved)
   let build: Build = EMPTY_BUILD;
@@ -299,277 +299,94 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   };
   const partName = (p: Part | "usb") => W()[p];
 
-  // ---------------------------------------------------------------------------------------- the camera
+  // ---------------------------------------------------------------------------------------- the panel's circuit diagram
+  let schemHover = false;
+  const schem = schematic({
+    onHover: (holes) => {
+      schemHover = Boolean(holes);
+      setLit(holes ? [{ holes, kind: "join" }] : []);
+    },
+  });
+  $<HTMLElement>(".bb-schem").append(schem.el);
+
+  // ---------------------------------------------------------------------------------------- the camera's size
   let size = { w: 0, h: 0 };
-  let camK = 0.3;
-  let camO: Pt = [0, 0];
   const panelW = (v: View = view) => {
     const w = size.w;
     if (v === "sketch") return Math.round(clamp(w * 0.4, 330, 440));
     if (v === "run") return Math.round(clamp(w * 0.31, 262, 340));
-    return Math.round(clamp(w * 0.27, 238, 300));
+    return Math.round(clamp(w * 0.27, 250, 300));
   };
   const narrow = () => size.w < 620;
-  const TOP = 34;
-  const BOTTOM = 48;
-  const fitCam = (v: View = view) => {
-    const aw = narrow() ? size.w : size.w - panelW(v);
-    const ah = narrow() ? stage.clientHeight : size.h;
-    const [x0, y0, x1, y1] = FRAME;
-    const k = Math.max(0.05, Math.min((aw - 24) / (x1 - x0), (ah - TOP - BOTTOM) / (y1 - y0)));
-    camK = k;
-    camO = [aw / 2 - ((x0 + x1) / 2) * k, TOP + (ah - TOP - BOTTOM) / 2 - ((y0 + y1) / 2) * k];
-    cam.style.transform = `translate(${camO[0].toFixed(2)}px, ${camO[1].toFixed(2)}px) scale(${k.toFixed(5)})`;
-    root.style.setProperty("--bb-k", k.toFixed(4));
-  };
-  const toScreen = (p: Pt): Pt => [camO[0] + p[0] * camK, camO[1] + p[1] * camK];
-  const toScene = (e: { clientX: number; clientY: number }): Pt => {
-    const r = stage.getBoundingClientRect();
-    return [(e.clientX - r.left - camO[0]) / camK, (e.clientY - r.top - camO[1]) / camK];
+  const fitScene = () => {
+    if (!sc) return;
+    sc.resize(stage.clientWidth, stage.clientHeight);
   };
 
-  // ---------------------------------------------------------------------------------------- pictures
-  const src = (p: string) => BASE + p;
-  const place = (img: HTMLElement, b: Placed, scale = 1) => {
-    img.style.left = `${b.left}px`;
-    img.style.top = `${b.top}px`;
-    img.style.width = `${b.w * scale}px`;
-    img.style.height = `${b.h * scale}px`;
-  };
-  const partSrc = (p: Part, rot: Rot) => {
-    const d = data!;
-    if (p === "nano") return src(d.parts.nano.src[theme]);
-    const pic = g!.partPic(p, rot);
-    return src(pic.src[theme]);
-  };
-  const setSrc = (img: HTMLImageElement, s: string) => {
-    if (img.getAttribute("src") !== s) img.src = s;
-  };
-  const loadPics = (t: Theme) => {
-    if (!data) return;
-    const d = data;
-    // decode the new set first, so a theme switch never shows a blank frame
-    const all = [d.board.src[t], d.parts.nano.src[t], d.parts.usbPlug.src[t], d.parts.fsr.rot0.src[t], d.parts.fsr.rot90.src[t], d.parts.resistor.rot0.src[t], d.parts.resistor.rot90.src[t], d.wire.endSrc[t]];
-    void Promise.all(
-      all.map((s) => {
-        const im = new Image();
-        im.src = src(s);
-        return im.decode().catch(() => undefined);
-      }),
-    ).then(() => {
-      if (!alive || theme !== t) return;
-      setSrc(boardImg, src(d.board.src[t]));
-      place(boardImg, { left: 0, top: 0, w: d.board.size[0], h: d.board.size[1] });
-      paintAll();
-      root.classList.add("is-ready");
-    });
-  };
-
-  // ---------------------------------------------------------------------------------------- the tray
-  /** Where each part not on the board sits in the tray (scene px, its picture at TRAY_SCALE). */
-  const trayPlaces = (): Partial<Record<Part | "usb", Placed>> => {
-    const d = data!;
-    const [x0, y0, , y1] = TRAY_BAND;
-    const items: { id: Part | "usb"; w: number; h: number }[] = [];
-    if (!build.nano) items.push({ id: "nano", w: d.parts.nano.size[0], h: d.parts.nano.size[1] });
-    if (!build.fsr) items.push({ id: "fsr", w: d.parts.fsr.rot0.size[0], h: d.parts.fsr.rot0.size[1] });
-    if (!build.resistor) items.push({ id: "resistor", w: d.parts.resistor.rot0.size[0], h: d.parts.resistor.rot0.size[1] });
-    if (!build.usb) items.push({ id: "usb", w: USB_TRAY_CROP, h: d.parts.usbPlug.size[1] });
-    // (an FSR whose disc hangs into the tray keeps that stretch clear)
-    let block: [number, number] | null = null;
-    if (build.fsr) {
-      const b = g!.partBox("fsr", build.fsr);
-      if (b.top + b.h > y0 + 30) block = [b.left - 40, b.left + b.w + 40];
-    }
-    const out: Partial<Record<Part | "usb", Placed>> = {};
-    let x = x0 + 70;
-    for (const it of items) {
-      const w = it.w * TRAY_SCALE;
-      const h = it.h * TRAY_SCALE;
-      if (block && x + w > block[0] && x < block[1]) x = block[1];
-      out[it.id] = { left: x, top: y0 + (y1 - y0 - h) / 2, w: it.w, h: it.h };
-      x += w + 110;
-    }
-    return out;
-  };
-  let tray: Partial<Record<Part | "usb", Placed>> = {};
-  const paintTray = () => {
-    if (!data) return;
-    const d = data;
-    tray = trayPlaces();
-    const [x0, y0, x1, y1] = TRAY_BAND;
-    trayEl.style.left = `${x0}px`;
-    trayEl.style.top = `${y0}px`;
-    trayEl.style.width = `${x1 - x0}px`;
-    trayEl.style.height = `${y1 - y0}px`;
-    trayEl.classList.toggle("is-empty", !Object.keys(tray).length);
-    for (const p of PARTS) {
-      const img = trayImgs[p];
-      const at = tray[p];
-      const held = drag?.kind === "part" && drag.part === p && drag.from === "tray" && drag.on;
-      img.hidden = !at || held || carry?.part === p;
-      if (!at) continue;
-      setSrc(img, partSrc(p, 0));
-      place(img, at, TRAY_SCALE);
-    }
-    const u = tray.usb;
-    trayUsb.hidden = !u;
-    if (u) {
-      trayUsb.style.left = `${u.left}px`;
-      trayUsb.style.top = `${u.top}px`;
-      trayUsb.style.width = `${u.w * TRAY_SCALE}px`;
-      trayUsb.style.height = `${u.h * TRAY_SCALE}px`;
-      setSrc(trayUsbImg, src(d.parts.usbPlug.src[theme]));
-      trayUsbImg.style.width = `${d.parts.usbPlug.size[0] * TRAY_SCALE}px`;
-      trayUsbImg.style.height = `${d.parts.usbPlug.size[1] * TRAY_SCALE}px`;
-      trayUsbImg.style.left = `${-(d.parts.usbPlug.size[0] - USB_TRAY_CROP) * TRAY_SCALE}px`;
-    }
-  };
-  const inTray = (p: Pt): Part | "usb" | null => {
-    for (const [id, b] of Object.entries(tray) as [Part | "usb", Placed][]) {
-      if (p[0] >= b.left - 10 && p[0] <= b.left + b.w * TRAY_SCALE + 10 && p[1] >= b.top - 10 && p[1] <= b.top + b.h * TRAY_SCALE + 10) return id;
-    }
-    return null;
-  };
-  const overTray = (p: Pt) => p[0] >= TRAY_BAND[0] && p[0] <= TRAY_BAND[2] && p[1] >= TRAY_BAND[1] - 10 && p[1] <= TRAY_BAND[3] + 20;
-
-  // ---------------------------------------------------------------------------------------- the parts on the board
-  const paintParts = () => {
-    if (!data || !g) return;
-    for (const p of PARTS) {
-      const img = partImgs[p];
-      const pl = build[p];
-      const moving = (drag?.kind === "part" && drag.part === p && drag.from === "board" && drag.on) || (carry?.part === p && carry.from === "board");
-      img.hidden = !pl || moving;
-      if (!pl) continue;
-      if (p === "nano") {
-        setSrc(img, partSrc("nano", 0));
-        place(img, g.nanoBox(pl as NanoPlace));
-      } else {
-        const pp = pl as PartPlace;
-        setSrc(img, partSrc(p, pp.rot));
-        place(img, g.partBox(p, pp));
-      }
-      img.classList.toggle("is-selected", sel?.kind === "part" && sel.part === p);
-    }
-    const nanoMoving = drag?.kind === "part" && drag.part === "nano" && drag.from === "board" && drag.on;
-    plugImg.hidden = !build.nano || !build.usb || nanoMoving || (carry?.part === "nano" && carry.from === "board");
-    if (build.nano && build.usb) {
-      setSrc(plugImg, src(data.parts.usbPlug.src[theme]));
-      place(plugImg, g.usbBox(build.nano));
-    }
-  };
-
-  // ---------------------------------------------------------------------------------------- wires
+  // ---------------------------------------------------------------------------------------- the parts, the wires, the paint on the board
   type Sel = { kind: "wire"; id: string } | { kind: "part"; part: Part } | null;
   let sel: Sel = null;
   let pending: HoleId | null = null; // a wire started by a click, waiting for its other end
-  let pointerScene: Pt | null = null;
+  let pointerPlan: P2 | null = null;
+  let litGroups: { holes: HoleId[]; kind: LitKind }[] = [];
+  let markOk: HoleId[] = [];
+  let markBad: P2[] = [];
+  const setLit = (groups: { holes: HoleId[]; kind: LitKind }[]) => {
+    litGroups = groups;
+    paintMarks();
+  };
+  const paintMarks = () => {
+    if (!sc) return;
+    const cardPart = card && (card.kind === "nano" || card.kind === "fsr" || card.kind === "resistor") ? card.kind : null;
+    sc.setMarks({
+      lit: litGroups,
+      ok: markOk,
+      bad: markBad,
+      cursor: kbd && document.activeElement === stage && !carry ? cursor : null,
+      start: pending,
+      sel: !(drag?.kind === "part" && drag.on) && !carry ? (sel?.kind === "part" ? sel.part : cardPart) : null,
+    });
+  };
+  const paintParts = () => {
+    if (!sc) return;
+    for (const p of PARTS) {
+      if (drag?.kind === "part" && drag.part === p && drag.on) sc.setPart(p, { held: drag.at, rot: drag.rot, snap: drag.snap });
+      else if (carry?.kind === "part" && carry.part === p) {
+        const s = snapPart(p, carry.rot, G.hole(carry.anchor));
+        sc.setPart(p, { held: G.hole(carry.anchor), rot: carry.rot, snap: s.place });
+      } else {
+        const pl = build[p];
+        sc.setPart(p, pl ? { place: pl } : null);
+      }
+    }
+    const nanoMoving = (drag?.kind === "part" && drag.part === "nano" && drag.on) || (carry?.kind === "part" && carry.part === "nano");
+    sc.setUsb(build.nano && build.usb ? (nanoMoving ? "hidden" : "plugged") : "tray");
+  };
   const paintWires = () => {
-    if (!data || !g) return;
+    if (!sc) return;
     const looks: WireLook[] = [];
     build.wires.forEach((w, i) => {
       const moving = drag?.kind === "end" && drag.on && drag.id === w.id;
       const kmove = carry?.kind === "end" && carry.id === w.id;
       if (moving || kmove) {
         const fixedEnd = (drag?.kind === "end" ? drag.end : carry!.end) === "a" ? w.b : w.a;
-        const to = drag?.kind === "end" ? (drag.snap ? g!.hole(drag.snap) : drag.to) : g!.hole(carry!.hole!);
+        const to = drag?.kind === "end" ? (drag.snap ? G.hole(drag.snap) : drag.to) : G.hole(carry!.hole!);
         const open = drag?.kind === "end" ? !drag.snap : false;
-        looks.push({ id: w.id, a: g!.hole(fixedEnd), b: to, color: w.color, index: i, open, ghost: true, selected: true });
+        looks.push({ id: w.id, a: G.hole(fixedEnd), b: to, color: w.color, index: i, open, ghost: true, selected: true });
         return;
       }
-      looks.push({ id: w.id, a: g!.hole(w.a), b: g!.hole(w.b), color: w.color, index: i, selected: sel?.kind === "wire" && sel.id === w.id });
+      looks.push({ id: w.id, a: G.hole(w.a), b: G.hole(w.b), color: w.color, index: i, selected: (sel?.kind === "wire" && sel.id === w.id) || (card?.kind === "wire" && card.id === w.id) });
     });
     // a wire being laid: from its first hole to the pointer (or the hole it would go in)
     const from = drag?.kind === "wire" && drag.on ? drag.from : pending;
     if (from) {
       const snap = drag?.kind === "wire" ? drag.snap : hoverHole && hoverHole !== pending && holeFree(build, hoverHole).ok ? hoverHole : null;
-      const to = snap ? g.hole(snap) : drag?.kind === "wire" ? drag.to : (pointerScene ?? kbdTarget());
-      if (to) looks.push({ id: "new", a: g.hole(from), b: to, color, index: build.wires.length, open: !snap, ghost: true });
+      const to = snap ? G.hole(snap) : drag?.kind === "wire" ? drag.to : (pointerPlan ?? kbdTarget());
+      if (to) looks.push({ id: "new", a: G.hole(from), b: to, color, index: build.wires.length, open: !snap, ghost: true });
     }
-    const L = wireLayers(data, theme, src, looks);
-    gShadows.innerHTML = L.shadows;
-    gEnds.innerHTML = L.ends;
-    gBodies.innerHTML = L.bodies;
-    // (a wire's shadow is a long thin band: lighter than a part's, so it never reads as a second wire or a smear)
-    gShadows.style.opacity = String(data.light.partShadow[theme] * 0.5);
+    sc.setWires(looks);
   };
-  const kbdTarget = (): Pt | null => (kbd && pending && cursor !== pending ? g!.hole(cursor) : null);
-
-  // ---------------------------------------------------------------------------------------- holes lit up
-  type LitKind = "join" | "bad" | "soft";
-  let litGroups: { holes: HoleId[]; kind: LitKind }[] = [];
-  let litKey = "";
-  const paintLit = () => {
-    if (!g) return;
-    const key = JSON.stringify(litGroups);
-    if (key === litKey) return;
-    litKey = key;
-    let out = "";
-    for (const grp of litGroups) {
-      // one soft capsule along each strip, a ring on every hole
-      const byStrip = new Map<string, HoleId[]>();
-      for (const h of grp.holes) {
-        const s = stripOf(h);
-        if (!s) continue;
-        if (!byStrip.has(s)) byStrip.set(s, []);
-        byStrip.get(s)!.push(h);
-      }
-      for (const hs of byStrip.values()) {
-        const pts = hs.map((h) => g!.hole(h));
-        const xs = pts.map((p) => p[0]);
-        const ys = pts.map((p) => p[1]);
-        const [ax, ay, bx, by] = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
-        out += `<path class="bb-lit-strip is-${grp.kind}" d="M${ax},${ay}L${bx},${by}"/>`;
-        for (const p of pts) out += `<rect class="bb-lit-hole is-${grp.kind}" x="${p[0] - 15}" y="${p[1] - 15}" width="30" height="30" rx="7"/>`;
-      }
-    }
-    litSvg.innerHTML = out;
-  };
-  const setLit = (groups: { holes: HoleId[]; kind: LitKind }[]) => {
-    litGroups = groups;
-    paintLit();
-  };
-
-  // ---------------------------------------------------------------------------------------- marks (pins of a part held over the board, the keyboard's hole)
-  let markHtml = "";
-  /** A part's outline for the pick (scene px): the Nano's board, the FSR's legs to its disc, the resistor's legs. */
-  const selBox = (p: Part, pl: NanoPlace | PartPlace, b: Placed): [number, number, number, number] => {
-    const d = data!;
-    if (p === "nano") {
-      const [x0, y0, x1, y1] = d.parts.nano.pcb;
-      return [b.left + x0 - 14, b.top + y0 - 14, b.left + x1 + 14, b.top + y1 + 14];
-    }
-    const pic = g!.partPic(p, (pl as PartPlace).rot);
-    const [a, z] = [pic.pins["1"], pic.pins["2"]];
-    if (p === "fsr") {
-      const disc = g!.fsrDisc(pl as PartPlace);
-      const xs = [b.left + a[0], b.left + z[0], disc.c[0] - disc.r, disc.c[0] + disc.r];
-      const ys = [b.top + a[1], b.top + z[1], disc.c[1] - disc.r, disc.c[1] + disc.r];
-      return [Math.min(...xs) - 16, Math.min(...ys) - 22, Math.max(...xs) + 16, Math.max(...ys) + 16];
-    }
-    return [b.left + Math.min(a[0], z[0]) - 26, b.top + Math.min(a[1], z[1]) - 30, b.left + Math.max(a[0], z[0]) + 26, b.top + Math.max(a[1], z[1]) + 30];
-  };
-  const paintMarks = () => {
-    if (!g) return;
-    let out = markHtml;
-    // the part picked: a quiet outline round it
-    if (sel?.kind === "part" && build[sel.part] && !(drag?.kind === "part" && drag.on) && !carry) {
-      const pl = build[sel.part]!;
-      const b = sel.part === "nano" ? g.nanoBox(pl as NanoPlace) : g.partBox(sel.part, pl as PartPlace);
-      const [x0, y0, x1, y1] = selBox(sel.part, pl, b);
-      out += `<rect class="bb-sel" x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}" rx="22"/>`;
-    }
-    if (kbd && document.activeElement === stage && !carry) {
-      const p = g.hole(cursor);
-      out += `<rect class="bb-cursor" x="${p[0] - 21}" y="${p[1] - 21}" width="42" height="42" rx="9"/>`;
-    }
-    if (pending) {
-      const p = g.hole(pending);
-      out += `<circle class="bb-start" cx="${p[0]}" cy="${p[1]}" r="24"/>`;
-    }
-    gMarks.innerHTML = out;
-  };
+  const kbdTarget = (): P2 | null => (kbd && pending && cursor !== pending ? G.hole(cursor) : null);
 
   // ---------------------------------------------------------------------------------------- the panel: what is joined, the check
   let connHover = -1;
@@ -600,6 +417,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     return null;
   };
   const paintPanelBuild = () => {
+    schem.paint(build, readPin());
     const list = connections(build);
     connList.innerHTML = list.length ? list.map((c, i) => `<li data-net="${i}">${esc(T(c.text))}</li>`).join("") : `<li class="bb-empty">${esc(W()["conn.empty"])}</li>`;
     const c = checkWiring(build, readPin());
@@ -779,6 +597,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     const pressable = Boolean(build.fsr);
     $<HTMLElement>(".bb-press-row").hidden = !pressable;
     paintHint();
+    paintPress();
   };
 
   // the Serial Monitor and Plotter
@@ -796,29 +615,21 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     trace.setAttribute("points", points.filter((p) => p.t >= t0 - 200).map((p) => `${(((p.t - t0) / WINDOW_MS) * 100).toFixed(2)},${(100 - (clamp(p.v, 0, MAX_CODE) / MAX_CODE) * 100).toFixed(2)}`).join(" "));
   };
 
-  // ---------------------------------------------------------------------------------------- the press
+  // ---------------------------------------------------------------------------------------- the press, the board's lights
   let level = 0.42;
   let pressActive = false;
   let holdLevel = 0;
   let force = 0;
+  let txUntil = 0;
+  let powered = false;
   const pressedNow = () => pressActive || holdLevel > 0;
   const levelNow = () => (pressActive ? level : holdLevel > 0 ? holdLevel : level);
   const paintPress = () => {
-    if (!g || !build.fsr) {
-      pressGlow.setAttribute("r", "0");
-      pressRing.setAttribute("r", "0");
-      return;
-    }
-    const disc = g.fsrDisc(build.fsr);
-    pressGlow.setAttribute("cx", String(disc.c[0]));
-    pressGlow.setAttribute("cy", String(disc.c[1]));
-    pressGlow.setAttribute("r", String(disc.active));
-    pressRing.setAttribute("cx", String(disc.c[0]));
-    pressRing.setAttribute("cy", String(disc.c[1]));
-    pressRing.setAttribute("r", String(disc.r + 10));
     const p = force > 0 ? 0.35 + (0.65 * Math.log(force / 0.2)) / Math.log(100) : 0;
     root.style.setProperty("--bb-press", p.toFixed(3));
     root.classList.toggle("is-pressed", force > 0);
+    sc?.setPress(p, force > 0, view === "run" && Boolean(build.fsr) && Boolean(verdict?.ok));
+    sc?.setLeds({ on: powered, tx: powered && performance.now() < txUntil });
     if (document.activeElement !== slider) slider.value = String(pressedNow() ? Math.max(1, Math.round(levelNow() * 100)) : 0);
   };
   slider.addEventListener("input", () => {
@@ -831,10 +642,11 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   });
 
   // ---------------------------------------------------------------------------------------- hints, palette, corner buttons
+  let turned = false;
   const paintHint = () => {
     const w = W();
     let h = "";
-    if (view === "nano") h = build.nano ? w["hint.look"] : w["hint.nano"];
+    if (view === "nano") h = build.nano ? (turned ? w["hint.look"] : w["hint.view"]) : w["hint.nano"];
     else if (view === "parts") h = w["hint.parts"];
     else if (view === "wires") h = w["hint.wires"];
     else if (view === "run") h = verdict?.stage === "run" && build.fsr && build.usb ? w["hint.press"] : verdict || lastFail || build.usb ? "" : w["hint.run"];
@@ -843,13 +655,14 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   };
   const paintPalette = () => {
     const w = W();
-    palette.innerHTML = WIRE_COLORS.map((c) => `<button type="button" role="radio" class="bb-swatch" data-color="${c}" aria-checked="${c === color}" tabindex="${c === color ? 0 : -1}" aria-label="${esc(w[c])}" title="${esc(w[c])}" style="--sw:${data ? data.wire.colors[c] : "#888"}"></button>`).join("");
+    palette.innerHTML = WIRE_COLORS.map((c) => `<button type="button" role="radio" class="bb-swatch" data-color="${c}" aria-checked="${c === color}" tabindex="${c === color ? 0 : -1}" aria-label="${esc(w[c])}" title="${esc(w[c])}" style="--sw:${SWATCH[c]}"></button>`).join("");
   };
   const pickColor = (c: WireColor) => {
     color = c;
-    if (sel?.kind === "wire") {
+    const wid = sel?.kind === "wire" ? sel.id : card?.kind === "wire" ? card.id : null;
+    if (wid) {
       remember();
-      build = recolorWire(build, sel.id, color);
+      build = recolorWire(build, wid, color);
       commit();
     } else save();
     paintPalette();
@@ -868,9 +681,28 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     pickColor(next);
     palette.querySelector<HTMLElement>(`[data-color="${next}"]`)?.focus();
   });
+  let fromAbove = false;
+  /** What the camera frames by default in a step: the whole bench while parts come off the pad, the board for wiring. */
+  const frameOf = (v: View): "all" | "board" => (v === "wires" || v === "run" ? "board" : "all");
   const paintCorner = () => {
     $<HTMLButtonElement>('[data-act="undo"]').disabled = !history.length;
+    const w = W();
+    const label = fromAbove ? w["view.tilt"] : w["view.top"];
+    topBtn.innerHTML = viewIcon(!fromAbove);
+    topBtn.setAttribute("aria-label", label);
+    topBtn.title = label;
+    topBtn.setAttribute("aria-pressed", String(fromAbove));
   };
+  topBtn.addEventListener("click", () => {
+    fromAbove = !fromAbove;
+    sc?.home(fromAbove, frameOf(view));
+    paintCorner();
+  });
+  $<HTMLButtonElement>('[data-act="home"]').addEventListener("click", () => {
+    fromAbove = false;
+    sc?.home(false, frameOf(view));
+    paintCorner();
+  });
 
   // ---------------------------------------------------------------------------------------- notes
   let noteTimer = 0;
@@ -887,6 +719,118 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   };
   let noteRaw: Text[] | string | null = null;
 
+  // ---------------------------------------------------------------------------------------- the card: what a thing is
+  let card: CardOf | null = null;
+  let cardAt: P2 | null = null; // (the board's card: where it was clicked, canvas px)
+  const openCard = (c: CardOf | null, at: P2 | null = null) => {
+    card = c;
+    cardAt = at;
+    paintCard();
+    paintMarks();
+    paintWires();
+  };
+  const pinsLine = (p: Part): string => {
+    const pl = build[p];
+    if (!pl) return "";
+    if (p === "nano") {
+      const ps = nanoPins(pl as NanoPlace);
+      return ["5V", "A0", "GND"]
+        .map((n) => ps.find((x) => x.pin.name === n))
+        .map((x) => (x ? `${x.pin.name} ${x.hole}` : ""))
+        .filter(Boolean)
+        .join(" · ");
+    }
+    const ps = pinsOf(p, pl as PartPlace);
+    return ps ? `${ps["1"]} · ${ps["2"]}` : "";
+  };
+  const paintCard = () => {
+    if (!card || !sc) {
+      cardEl.hidden = true;
+      cardEl.innerHTML = "";
+      return;
+    }
+    const w = W();
+    const c = card;
+    const kind = c.kind;
+    const title = kind === "wire" ? w.wire : kind === "board" ? w.board : partName(kind);
+    const text = w[`info.${kind}` as "info.nano"];
+    let extra = "";
+    let tools = "";
+    if (kind === "nano" || kind === "fsr" || kind === "resistor") {
+      if (build[kind]) {
+        extra = `<p class="bb-card-pins mono">${esc(w["info.where"].replace("{holes}", pinsLine(kind)))}</p>`;
+        if (kind !== "nano") tools += `<button type="button" class="bb-card-btn mono" data-tool="turn"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12.5 6.5A5 5 0 1 0 13 10"/><path d="M13 2.8v3.9H9.1"/></svg><span>${esc(w.turn)}</span><kbd>R</kbd></button>`;
+        tools += `<button type="button" class="bb-card-btn mono" data-tool="tray">${icon("close")}<span>${esc(w.toTray)}</span></button>`;
+      } else extra = `<p class="bb-card-pins mono">${esc(w["info.inTray"])}</p>`;
+    } else if (kind === "wire") {
+      const wire = build.wires.find((x) => x.id === c.id);
+      if (wire) extra = `<p class="bb-card-pins mono">${esc(`${wire.a} → ${wire.b}`)}</p>`;
+      tools += `<button type="button" class="bb-card-btn mono" data-tool="delete">${icon("close")}<span>${esc(w.deleteWire)}</span></button>`;
+    } else if (kind === "usb") {
+      tools += `<button type="button" class="bb-card-btn mono" data-tool="usb">${icon("usb")}<span>${esc(build.usb ? w["usb.in"] : w["usb.out"])}</span></button>`;
+    }
+    cardEl.innerHTML = `<div class="bb-card-head"><p class="bb-card-title">${esc(title)}</p><button type="button" class="bb-card-x" data-tool="close" aria-label="${esc(w["info.close"])}" title="${esc(w["info.close"])}">${icon("close")}</button></div><p class="bb-card-text">${esc(text)}</p>${extra}${tools ? `<div class="bb-card-tools">${tools}</div>` : ""}`;
+    cardEl.setAttribute("aria-label", title);
+    cardEl.hidden = false;
+    placeCard();
+  };
+  /** The card sits above its thing (below it when there is no room), inside the bench. */
+  const placeCard = () => {
+    if (!card || !sc || cardEl.hidden) return;
+    let a: P2 | null = null;
+    if (card.kind === "board") a = cardAt;
+    else if (card.kind === "wire") {
+      const cid = card.id;
+      const wire = build.wires.find((x) => x.id === cid);
+      if (wire) {
+        const pa = G.hole(wire.a);
+        const pb = G.hole(wire.b);
+        a = sc.toScreen([(pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2, 22]);
+      }
+    } else a = sc.partTop(card.kind);
+    if (!a) {
+      cardEl.style.visibility = "hidden";
+      return;
+    }
+    cardEl.style.visibility = "";
+    const sw = stage.clientWidth;
+    const sh = stage.clientHeight;
+    const cw = cardEl.offsetWidth;
+    const ch = cardEl.offsetHeight;
+    let x = a[0] - cw / 2;
+    let y = a[1] - ch - 14;
+    if (y < 44) y = a[1] + 26;
+    x = clamp(x, 10, sw - cw - 10);
+    y = clamp(y, 44, sh - ch - 64);
+    cardEl.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px)`;
+  };
+  cardEl.addEventListener("click", (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-tool]");
+    if (!b) return;
+    const t = b.dataset.tool;
+    if (t === "close") {
+      sel = null;
+      openCard(null);
+      return;
+    }
+    if (t === "delete" && card?.kind === "wire") {
+      remember();
+      build = removeWire(build, card.id);
+      sel = null;
+      card = null;
+      announce(W()["live.wireGone"]);
+      commit();
+    } else if (t === "tray" && card && (card.kind === "nano" || card.kind === "fsr" || card.kind === "resistor")) {
+      const p = card.kind;
+      remember();
+      build = removePart(build, p);
+      sel = null;
+      announce(W()["live.back"].replace("{part}", partName(p)));
+      commit();
+    } else if (t === "turn" && card && (card.kind === "fsr" || card.kind === "resistor")) turn(card.kind);
+    else if (t === "usb") toggleUsb();
+  });
+
   // ---------------------------------------------------------------------------------------- one commit
   /** After every change to the build: save, draw, and let the running board feel it. */
   const commit = () => {
@@ -894,43 +838,41 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     const sw = sel?.kind === "wire" ? sel.id : null;
     if (sw && !build.wires.some((w) => w.id === sw)) sel = null;
     if (sel?.kind === "part" && !build[sel.part]) sel = null;
+    if (card?.kind === "wire" && !build.wires.some((w) => w.id === (card as { id: string }).id)) card = null;
     if (pending && !holeFree(build, pending).ok) pending = null;
     if (lastFail?.s.id === "no-usb" && build.usb) lastFail = null;
+    powered = circuit(build).power.state === "on";
     if (uploaded) restartBoard();
     paintAll();
   };
   const paintAll = () => {
-    if (!data) return;
-    paintTray();
     paintParts();
     paintWires();
-    paintPress();
     paintMarks();
-    paintTools();
+    paintCard();
     paintKeys();
     if (BUILD_VIEWS.has(view)) paintPanelBuild();
     paintStatus();
     paintCorner();
-    root.classList.toggle("has-palette", view === "wires" || sel?.kind === "wire" || Boolean(pending));
+    root.classList.toggle("has-palette", view === "wires" || sel?.kind === "wire" || card?.kind === "wire" || Boolean(pending));
   };
 
-  // ---------------------------------------------------------------------------------------- pointer: hit-testing
+  // ---------------------------------------------------------------------------------------- pointer: what is under it
   type Drag =
-    | { kind: "part"; part: Part; from: "tray" | "board"; rot: Rot; grab: Pt; x0: number; y0: number; on: boolean; snap: NanoPlace | PartPlace | null; why: Text[] | null; pid: number }
-    | { kind: "wire"; from: HoleId; to: Pt; snap: HoleId | null; x0: number; y0: number; on: boolean; pid: number }
-    | { kind: "end"; id: string; end: "a" | "b"; from: HoleId; to: Pt; snap: HoleId | null; x0: number; y0: number; on: boolean; pid: number }
+    | { kind: "part"; part: Part; from: "tray" | "board"; rot: Rot; grab: P2; at: P2; x0: number; y0: number; on: boolean; snap: NanoPlace | PartPlace | null; why: Text[] | null; pid: number }
+    | { kind: "wire"; from: HoleId; to: P2; snap: HoleId | null; x0: number; y0: number; on: boolean; pid: number }
+    | { kind: "end"; id: string; end: "a" | "b"; from: HoleId; to: P2; snap: HoleId | null; x0: number; y0: number; on: boolean; pid: number }
     | { kind: "press"; y0: number; level0: number; pid: number }
-    | { kind: "click"; what: "usb-tray" | "usb-board" | "wire"; id?: string; x0: number; y0: number; pid: number };
+    | { kind: "click"; what: "usb" | "wire"; id?: string; x0: number; y0: number; pid: number };
   let drag: Drag | null = null;
+  /** A press on empty space, which the camera takes (a click there, without moving, puts things down). */
+  let idle: { x0: number; y0: number; pid: number; thing: Thing | null; plan: P2 | null } | null = null;
   let hoverHole: HoleId | null = null;
 
-  const anchorOf = (p: Part, pl: NanoPlace | PartPlace): Pt => (p === "nano" ? g!.hole(`${(pl as NanoPlace).col}${(pl as NanoPlace).row}`) : g!.hole((pl as PartPlace).at));
-  const pinPx = (p: Part, rot: Rot): Pt => (p === "nano" ? g!.nanoPinPx.D12 : g!.partPic(p, rot).pins["1"]);
-  const picSize = (p: Part, rot: Rot): [number, number] => (p === "nano" ? data!.parts.nano.size : g!.partPic(p, rot).size);
+  const anchorOf = (p: Part, pl: NanoPlace | PartPlace): P2 => (p === "nano" ? G.hole(`${(pl as NanoPlace).col}${(pl as NanoPlace).row}`) : G.hole((pl as PartPlace).at));
 
-  /** Where a part held with its anchor pin at `a` (scene px) would go, or why it can't. */
-  const snapPart = (p: Part, rot: Rot, a: Pt): { place: NanoPlace | PartPlace | null; why: Text[] | null; near: Pt[] } => {
-    const G = g!;
+  /** Where a part held with its anchor pin at `a` (plan mm) would go, or why it can't. */
+  const snapPart = (p: Part, rot: Rot, a: P2): { place: NanoPlace | PartPlace | null; why: Text[] | null; near: P2[] } => {
     if (p === "nano") {
       const h1 = G.hole("1a");
       const col = Math.round((a[0] - h1[0]) / G.pitch) + 1;
@@ -964,108 +906,103 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     for (const h of holes) out.push({ holes: p === "nano" ? stripHoles(stripOf(h)!) : joinedHoles(bare, h), kind: p === "nano" ? "soft" : "join" });
     return out;
   };
-  const showPartHeld = (p: Part, rot: Rot, a: Pt, snap: NanoPlace | PartPlace | null, near: Pt[], floating: boolean) => {
-    const pin = pinPx(p, rot);
-    const [w, h] = picSize(p, rot);
-    const s = partSrc(p, rot);
-    setSrc(floatImg, s);
-    place(floatImg, { left: a[0] - pin[0], top: a[1] - pin[1], w, h });
-    floatImg.hidden = !floating;
-    ghostImg.hidden = !snap;
+  const pinHoles = (p: Part, pl: NanoPlace | PartPlace): HoleId[] => (p === "nano" ? nanoPins(pl as NanoPlace).map((x) => x.hole) : Object.values(pinsOf(p, pl as PartPlace) ?? {}));
+  const showHeld = (p: Part, snap: NanoPlace | PartPlace | null, near: P2[]) => {
     if (snap) {
-      setSrc(ghostImg, s);
-      const at = anchorOf(p, snap);
-      place(ghostImg, { left: at[0] - pin[0], top: at[1] - pin[1], w, h });
-      setLit(pinGroups(p, snap));
-      markHtml = g!
-        .pinsPx(p, snap)
-        .map((q) => `<circle class="bb-pin-ok" cx="${q[0]}" cy="${q[1]}" r="17"/>`)
-        .join("");
+      litGroups = pinGroups(p, snap);
+      markOk = pinHoles(p, snap);
+      markBad = [];
     } else {
-      setLit([]);
-      markHtml = near.map((q) => `<circle class="bb-pin-bad" cx="${q[0]}" cy="${q[1]}" r="20"/>`).join("");
+      litGroups = [];
+      markOk = [];
+      markBad = near;
     }
+    paintParts();
     paintMarks();
   };
   const clearHeld = () => {
-    floatImg.hidden = true;
-    ghostImg.hidden = true;
-    markHtml = "";
-    setLit([]);
+    markOk = [];
+    markBad = [];
+    litGroups = [];
     paintMarks();
   };
 
-  /** A free hole right under the pointer (a jumper arcs over the holes it crosses, so they stay usable). */
-  const freeHoleUnder = (p: Pt): HoleId | null => {
-    const h = g!.nearest(p, 0.25);
+  /** A free hole right under a plan point (a jumper arcs over the holes it crosses, so they stay usable). */
+  const freeHoleUnder = (p: P2 | null): HoleId | null => {
+    if (!p) return null;
+    const h = G.nearest(p, 0.45);
     return h && holeFree(build, h).ok ? h : null;
   };
-  const wireEndAt = (p: Pt): { id: string; end: "a" | "b"; hole: HoleId } | null => {
-    const h = g!.nearest(p, 0.5);
-    if (!h) return null;
-    const o = whatIsAt(build, h);
-    return o?.kind === "wire" ? { id: o.id, end: o.end, hole: h } : null;
-  };
+  const onBoard = (p: P2 | null) => Boolean(p && p[0] >= -0.5 && p[0] <= 83 && p[1] >= -0.5 && p[1] <= 55.1);
 
   const onDown = (e: PointerEvent) => {
-    if (!data || !g || drag || e.button !== 0) return;
-    if ((e.target as HTMLElement).closest("button, input, select, .bb-note")) return;
+    if (!sc || drag || e.button !== 0) return;
+    if ((e.target as HTMLElement).closest("button, input, select, .bb-note, .bb-card")) return;
     kbd = false;
     hideChip();
     pointerFocus = true;
     stage.focus({ preventScroll: true });
     pointerFocus = false;
-    const p = toScene(e);
+    const t = sc.pick(e.clientX, e.clientY);
+    const p = sc.planAt(e.clientX, e.clientY);
     const base = { x0: e.clientX, y0: e.clientY, pid: e.pointerId };
-    // 1. a wire's end (its housing over a hole)
-    const we = wireEndAt(p);
-    if (we && !pending) {
-      drag = { kind: "end", id: we.id, end: we.end, from: we.hole, to: p, snap: null, on: false, ...base };
-    } else if ((e.target as Element).closest?.("[data-wire]") && !pending && !freeHoleUnder(p)) {
-      // 2. a wire's body: a click picks it
-      drag = { kind: "click", what: "wire", id: (e.target as Element).closest("[data-wire]")!.getAttribute("data-wire")!, ...base };
-    } else if (view === "run" && build.fsr && g.onFsr(build.fsr, p, true) && !pending) {
-      // 3. the sensor's disc, once there is something to read it
+    const take = () => {
+      sc!.orbit(false);
+      stage.setPointerCapture(e.pointerId);
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    // with a wire waiting for its other end, a free hole under the pointer wins
+    const free = freeHoleUnder(p);
+    if (pending && free && onBoard(p) && t?.kind !== "part") {
+      finishWire(free);
+      take();
+      drag = { kind: "click", what: "wire", ...base };
+      return;
+    }
+    if (t?.kind === "end" && !pending) {
+      const w = build.wires.find((x) => x.id === t.id);
+      if (w) {
+        drag = { kind: "end", id: t.id, end: t.end, from: w[t.end], to: p ?? G.hole(w[t.end]), snap: null, on: false, ...base };
+        take();
+        return;
+      }
+    }
+    if (t?.kind === "wire" && !pending) {
+      drag = { kind: "click", what: "wire", id: t.id, ...base };
+      take();
+      return;
+    }
+    if (t?.kind === "part" && t.part === "fsr" && t.zone === "disc" && view === "run" && build.fsr && !pending) {
+      // the sensor's disc, once there is something to read it
       drag = { kind: "press", y0: e.clientY, level0: level, pid: e.pointerId };
       pressActive = true;
       root.classList.add("was-pressed");
       kick();
-    } else {
-      const part = pending ? null : partAt(g, build, p, view === "run");
-      const ti = pending ? null : inTray(p);
-      if (part === "usb") drag = { kind: "click", what: "usb-board", ...base };
-      else if (part) {
-        const pl = build[part]!;
-        const a = anchorOf(part, pl);
-        drag = { kind: "part", part, from: "board", rot: part === "nano" ? 0 : (pl as PartPlace).rot, grab: [a[0] - p[0], a[1] - p[1]], on: false, snap: null, why: null, ...base };
-      } else if (ti === "usb") drag = { kind: "click", what: "usb-tray", ...base };
-      else if (ti) {
-        const b = tray[ti]!;
-        const pin = pinPx(ti, 0);
-        const a: Pt = [b.left + pin[0] * TRAY_SCALE, b.top + pin[1] * TRAY_SCALE];
-        drag = { kind: "part", part: ti, from: "tray", rot: 0, grab: [(a[0] - p[0]) / TRAY_SCALE, (a[1] - p[1]) / TRAY_SCALE], on: false, snap: null, why: null, ...base };
-      } else {
-        const h = g.nearest(p, 0.5);
-        if (h && holeFree(build, h).ok) {
-          if (pending) {
-            finishWire(h);
-            return;
-          }
-          drag = { kind: "wire", from: h, to: p, snap: null, on: false, ...base };
-        } else {
-          if (pending) {
-            const c = h ? checkWire(build, pending, h) : null;
-            if (c && !c.ok) note([c.text]);
-            pending = null;
-          }
-          sel = null;
-          paintAll();
-          return;
-        }
-      }
+      take();
+      return;
     }
-    stage.setPointerCapture(e.pointerId);
-    e.preventDefault();
+    if (t?.kind === "part" && !pending) {
+      const part = t.part;
+      const pl = build[part];
+      const a = pl ? anchorOf(part, pl) : sc.trayAnchor(part);
+      const q = p ?? a;
+      drag = { kind: "part", part, from: pl ? "board" : "tray", rot: part === "nano" || !pl ? 0 : (pl as PartPlace).rot, grab: [a[0] - q[0], a[1] - q[1]], at: a, on: false, snap: null, why: null, ...base };
+      take();
+      return;
+    }
+    if (t?.kind === "usb" && !pending) {
+      drag = { kind: "click", what: "usb", ...base };
+      take();
+      return;
+    }
+    if (free && onBoard(p) && (!t || t.kind === "board")) {
+      drag = { kind: "wire", from: free, to: p!, snap: null, on: false, ...base };
+      take();
+      return;
+    }
+    // empty space (or the board's margin, the pad): the camera's; a click there puts things down
+    idle = { ...base, thing: t, plan: p };
   };
   const finishWire = (h: HoleId) => {
     const from = pending!;
@@ -1087,15 +1024,44 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       paintMarks();
     }
   };
+  let heldWhy: Text[] | null = null;
+  const paintHintHeld = (why: Text[] | null) => {
+    heldWhy = why;
+    if (why) hintEl.textContent = T(why[0]);
+    else paintHint();
+    hintEl.classList.toggle("is-why", Boolean(why));
+  };
+  // (a drag's pointer move is handled at once, so the part is drawn where the pointer is in the same frame; moves that
+  // come in a burst, within a few milliseconds, wait for the next frame and only the latest counts)
+  let moveEv: PointerEvent | null = null;
+  let moveRaf = 0;
+  let movedAt = 0;
+  const flushMove = () => {
+    if (moveRaf) cancelAnimationFrame(moveRaf);
+    moveRaf = 0;
+    const ev = moveEv;
+    moveEv = null;
+    movedAt = performance.now();
+    if (alive && ev && drag) moveNow(ev);
+  };
   const onMove = (e: PointerEvent) => {
-    if (!data || !g) return;
-    const p = toScene(e);
-    pointerScene = p;
+    if (!sc) return;
     if (!drag) {
-      hover(p, e);
+      queueHover(e);
       return;
     }
     if (e.pointerId !== drag.pid) return;
+    moveEv = e;
+    if (performance.now() - movedAt > 6) flushMove();
+    else if (!moveRaf) moveRaf = requestAnimationFrame(flushMove);
+  };
+  /** What the part, wire or press in the hand does at a pointer position (the board's marks change only when the
+   *  spot it would go changes). */
+  let heldKey = "";
+  const moveNow = (e: PointerEvent) => {
+    if (!sc || !drag) return;
+    const p = sc.planAt(e.clientX, e.clientY);
+    pointerPlan = p;
     if (drag.kind === "press") {
       level = clamp(drag.level0 + (e.clientY - drag.y0) / 140, 0, 1);
       kick();
@@ -1105,56 +1071,68 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     if (!drag.on) {
       if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 5) return;
       drag.on = true;
-      sel = drag.kind === "part" && drag.from === "board" ? { kind: "part", part: drag.part } : drag.kind === "end" ? { kind: "wire", id: drag.id } : null;
+      sel = drag.kind === "end" ? { kind: "wire", id: drag.id } : null;
+      card = null;
+      paintCard();
       root.classList.add("is-holding");
       hideChip();
-      paintTools();
-      if (drag.kind === "part") {
-        paintParts();
-        paintTray();
-      }
+      heldKey = "";
     }
+    if (!p) return;
     if (drag.kind === "part") {
-      const a: Pt = [p[0] + drag.grab[0], p[1] + drag.grab[1]];
+      const a: P2 = [p[0] + drag.grab[0], p[1] + drag.grab[1]];
       const s = snapPart(drag.part, drag.rot, a);
+      // (over the pad, it goes back: no marks, no reasons)
+      const toTray = onPad(p) && !s.place;
+      drag.at = a;
       drag.snap = s.place;
       drag.why = s.why;
-      // (a valid place wins over the tray: the FSR held by its disc has its legs far above the pointer)
-      const toTray = overTray(p) && !s.place;
-      showPartHeld(drag.part, drag.rot, a, toTray ? null : s.place, toTray ? [] : s.near, true);
-      paintHintHeld(toTray ? null : s.why);
+      const key = JSON.stringify([s.place, toTray ? [] : s.near, toTray]);
+      if (key !== heldKey) {
+        heldKey = key;
+        showHeld(drag.part, s.place, toTray ? [] : s.near);
+        paintHintHeld(toTray ? null : s.why);
+      } else paintParts();
     } else if (drag.kind === "wire" || drag.kind === "end") {
       drag.to = p;
-      const h = g.nearest(p, 0.5);
+      const h = G.nearest(p, 0.5);
       const ok = h && (drag.kind === "wire" ? h !== drag.from && holeFree(build, h).ok : checkWireEnd(build, drag.id, drag.end, h).ok);
+      const before = drag.snap;
       drag.snap = ok ? h : null;
+      if (drag.snap === before && heldKey === "wire") {
+        // (the same hole as last time, or none: only the loose end moves)
+        paintWires();
+        return;
+      }
+      heldKey = "wire";
       const groups: { holes: HoleId[]; kind: LitKind }[] = [];
       if (drag.kind === "wire") groups.push({ holes: joinedHoles(build, drag.from), kind: "join" });
       else {
         const w = build.wires.find((x) => x.id === (drag as { id: string }).id)!;
         const fixed = drag.end === "a" ? w.b : w.a;
-        const bare = removeWire(build, w.id);
-        groups.push({ holes: joinedHoles(bare, fixed), kind: "join" });
+        groups.push({ holes: joinedHoles(removeWire(build, w.id), fixed), kind: "join" });
       }
       if (drag.snap) groups.push({ holes: joinedHoles(drag.kind === "end" ? removeWire(build, drag.id) : build, drag.snap), kind: "join" });
-      setLit(groups);
+      litGroups = groups;
       paintWires();
+      paintMarks();
     }
   };
-  let heldWhy: Text[] | null = null;
-  const paintHintHeld = (why: Text[] | null) => {
-    heldWhy = why;
-    if (why) hintEl.textContent = T(why[0]);
-    else paintHint();
-    hintEl.classList.toggle("is-why", Boolean(why));
-  };
   const onUp = (e: PointerEvent) => {
+    if (drag && e.pointerId === drag.pid) flushMove();
+    if (idle && e.pointerId === idle.pid) {
+      const i = idle;
+      idle = null;
+      if (Math.hypot(e.clientX - i.x0, e.clientY - i.y0) <= 5) clickEmpty(i, e);
+      return;
+    }
     if (!drag || e.pointerId !== drag.pid) return;
     const d = drag;
     drag = null;
+    sc?.orbit(true);
     root.classList.remove("is-holding");
     if (stage.hasPointerCapture(e.pointerId)) stage.releasePointerCapture(e.pointerId);
-    const p = toScene(e);
+    const p = sc?.planAt(e.clientX, e.clientY) ?? null;
     if (d.kind === "press") {
       pressActive = false;
       kick();
@@ -1162,15 +1140,23 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     }
     if (d.kind === "click") {
       if (Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > 6) return;
-      if (d.what === "wire") {
-        sel = sel?.kind === "wire" && sel.id === d.id ? null : { kind: "wire", id: d.id! };
+      if (d.what === "wire" && d.id) {
+        const same1 = card?.kind === "wire" && card.id === d.id;
+        sel = same1 ? null : { kind: "wire", id: d.id };
         const w = build.wires.find((x) => x.id === d.id);
         if (w && sel) {
           color = w.color;
           paintPalette();
         }
+        openCard(same1 ? null : { kind: "wire", id: d.id });
         paintAll();
-      } else toggleUsb();
+      } else if (d.what === "usb") {
+        if (card?.kind === "usb") toggleUsb();
+        else {
+          if (!build.usb && build.nano) toggleUsb();
+          openCard({ kind: "usb" });
+        }
+      }
       return;
     }
     if (!d.on) {
@@ -1178,18 +1164,23 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       if (d.kind === "wire") {
         pending = d.from;
         sel = null;
+        card = null;
         announce(W()["live.wireStart"].replace("{hole}", d.from));
         paintAll();
       } else if (d.kind === "end") {
-        sel = sel?.kind === "wire" && sel.id === d.id ? null : { kind: "wire", id: d.id };
+        const same1 = card?.kind === "wire" && card.id === d.id;
+        sel = same1 ? null : { kind: "wire", id: d.id };
         const w = build.wires.find((x) => x.id === d.id);
         if (w && sel) {
           color = w.color;
           paintPalette();
         }
+        openCard(same1 ? null : { kind: "wire", id: d.id });
         paintAll();
       } else if (d.kind === "part") {
-        if (d.from === "board") sel = sel?.kind === "part" && sel.part === d.part ? null : { kind: "part", part: d.part };
+        const same1 = card?.kind === d.part;
+        sel = !same1 && d.from === "board" ? { kind: "part", part: d.part } : null;
+        openCard(same1 ? null : { kind: d.part });
         paintAll();
       }
       return;
@@ -1197,7 +1188,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     paintHintHeld(null);
     clearHeld();
     if (d.kind === "part") {
-      if (overTray(p) && !d.snap) {
+      if (onPad(p) && !d.snap) {
         if (d.from === "board") {
           remember();
           build = removePart(build, d.part);
@@ -1227,7 +1218,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
         pending = d.from;
         finishWire(d.snap);
       } else {
-        const h = g!.nearest(p, 0.5);
+        const h = p ? G.nearest(p, 0.5) : null;
         if (h && h !== d.from) {
           const c = checkWire(build, d.from, h);
           if (!c.ok) note([c.text]);
@@ -1247,7 +1238,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
         }
         note([r.text]);
       } else if (!d.snap) {
-        const h = g!.nearest(p, 0.5);
+        const h = p ? G.nearest(p, 0.5) : null;
         if (h && h !== d.from) {
           const c = checkWireEnd(build, d.id, d.end, h);
           if (!c.ok) note([c.text]);
@@ -1256,64 +1247,97 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       paintAll();
     }
   };
+  /** A click on empty space: a waiting wire is let go (with why, over a used hole), a pick is put down; a click on the
+   *  board's margin opens the board's card. */
+  const clickEmpty = (i: { thing: Thing | null; plan: P2 | null }, e: PointerEvent) => {
+    if (pending) {
+      const h = i.plan ? G.nearest(i.plan, 0.5) : null;
+      const c = h ? checkWire(build, pending, h) : null;
+      if (c && !c.ok) note([c.text]);
+      pending = null;
+    }
+    sel = null;
+    const r = stage.getBoundingClientRect();
+    if (i.thing?.kind === "board" && card?.kind !== "board") openCard({ kind: "board" }, [e.clientX - r.left, e.clientY - r.top]);
+    else openCard(null);
+    paintAll();
+  };
   const onCancel = () => {
+    idle = null;
+    if (moveRaf) cancelAnimationFrame(moveRaf);
+    moveRaf = 0;
+    moveEv = null;
     if (!drag) return;
     if (drag.kind === "press") pressActive = false;
     drag = null;
+    sc?.orbit(true);
     root.classList.remove("is-holding");
     paintHintHeld(null);
     clearHeld();
     paintAll();
   };
-  stage.addEventListener("pointerdown", onDown);
+  stage.addEventListener("pointerdown", onDown, true);
   stage.addEventListener("pointermove", onMove);
   stage.addEventListener("pointerup", onUp);
   stage.addEventListener("pointercancel", onCancel);
   stage.addEventListener("pointerleave", () => {
-    pointerScene = null;
+    pointerPlan = null;
     if (!drag) {
       hoverHole = null;
       hideChip();
-      if (connHover < 0) setLit([]);
+      if (connHover < 0 && !schemHover) setLit([]);
       root.dataset.cursor = "";
       if (pending) paintWires();
     }
   });
 
-  // hover: what a hole joins (a chip by the pointer, its strip or net lit)
+  // hover: what a hole joins (a chip by the pointer, its strip or net lit), what the pointer would pick up
+  let nlMemo: { b: Build; nl: ReturnType<typeof netlist> } | null = null;
+  const nlNow = () => {
+    if (!nlMemo || nlMemo.b !== build) nlMemo = { b: build, nl: netlist(build) };
+    return nlMemo.nl;
+  };
   const whatJoined = (h: HoleId): string => {
-    const net = netlist(build).netOfHole(h);
+    const net = nlNow().netOfHole(h);
     if (!net) return "";
     const items: Text[] = [...net.nano.map((n) => ({ en: n, zh: n })), ...net.fsr.map((n) => say("itemFsr", { n })), ...(net.resistor.length === 2 ? [say("itemResBoth")] : net.resistor.length ? [say("itemRes")] : [])];
     return items.slice(0, 3).map(T).join(" — ") + (items.length > 3 ? " …" : "");
   };
   const hideChip = () => chip.classList.remove("is-on");
-  let wireRaf = 0;
-  const hover = (p: Pt, e: PointerEvent) => {
-    const G = g!;
-    const we = wireEndAt(p);
-    const onWire = (e.target as Element).closest?.("[data-wire]") && !freeHoleUnder(p);
-    const part = partAt(G, build, p, view === "run");
-    const ti = inTray(p);
+  let hoverRaf = 0;
+  let hoverEv: { clientX: number; clientY: number } | null = null;
+  let hoveredAt = 0;
+  const queueHover = (e: PointerEvent) => {
+    hoverEv = { clientX: e.clientX, clientY: e.clientY };
+    const go = () => {
+      if (hoverRaf) cancelAnimationFrame(hoverRaf);
+      hoverRaf = 0;
+      hoveredAt = performance.now();
+      if (alive && hoverEv && !drag) hover(hoverEv);
+    };
+    // (at once, unless the last one was a few milliseconds ago: then on the next frame, the latest only)
+    if (performance.now() - hoveredAt > 6) go();
+    else if (!hoverRaf) hoverRaf = requestAnimationFrame(go);
+  };
+  const hover = (e: { clientX: number; clientY: number }) => {
+    if (!sc || idle) return;
+    const p = sc.planAt(e.clientX, e.clientY);
+    pointerPlan = p;
+    const t = sc.pick(e.clientX, e.clientY);
     let cur = "";
-    if (view === "run" && build.fsr && G.onFsr(build.fsr, p, true)) cur = "press";
-    else if (we || part || (ti && ti !== "usb")) cur = "grab";
-    else if (onWire || ti === "usb") cur = "pointer";
-    // (over a part, only its own pins name themselves: the Nano's body hides the holes under it)
-    const near = part === "usb" ? null : G.nearest(p, 0.5);
-    const occ = near ? whatIsAt(build, near) : undefined;
-    const h = near && (!part || (occ && occ.kind !== "nano-body" && occ.kind !== "wire")) ? near : null;
+    if (view === "run" && build.fsr && t?.kind === "part" && t.part === "fsr" && t.zone === "disc") cur = "press";
+    else if (t && (t.kind === "part" || t.kind === "end")) cur = "grab";
+    else if (t && (t.kind === "wire" || t.kind === "usb")) cur = "pointer";
+    // (a hole names itself only when nothing stands in front of it)
+    const near = p && onBoard(p) && (!t || t.kind === "board") ? G.nearest(p, 0.5) : null;
+    const h = near;
     if (!cur && h) cur = "hole";
     root.dataset.cursor = cur;
     if (h !== hoverHole) {
       hoverHole = h;
-      if (connHover < 0) setLit(h ? [{ holes: joinedHoles(build, h), kind: "join" }] : []);
+      if (connHover < 0 && !schemHover) setLit(h ? [{ holes: joinedHoles(build, h), kind: "join" }] : []);
     }
-    // (a wire waiting for its other end follows the pointer, between holes and over the Nano too)
-    if (pending && !wireRaf) wireRaf = requestAnimationFrame(() => {
-      wireRaf = 0;
-      if (alive && pending) paintWires();
-    });
+    if (pending) paintWires();
     if (h) {
       const what = whatJoined(h);
       chip.textContent = what ? `${h} · ${what}` : h;
@@ -1334,56 +1358,6 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     announce(build.usb ? W()["note.plugged"] : W()["note.unplugged"]);
     commit();
   };
-
-  // ---------------------------------------------------------------------------------------- tools by a picked thing
-  const paintTools = () => {
-    if (!g || !data) return;
-    let html = "";
-    let at: Pt | null = null;
-    const w = W();
-    if (sel?.kind === "part" && build[sel.part] && !drag?.kind) {
-      const pl = build[sel.part]!;
-      const b = sel.part === "nano" ? g.nanoBox(pl as NanoPlace) : g.partBox(sel.part, pl as PartPlace);
-      at = toScreen([b.left + b.w * 0.5, b.top + 6]);
-      if (sel.part !== "nano") html += `<button type="button" class="bb-tool" data-tool="turn" aria-label="${esc(w.turn)}" title="${esc(w.turn)}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12.5 6.5A5 5 0 1 0 13 10"/><path d="M13 2.8v3.9H9.1"/></svg></button>`;
-      html += `<button type="button" class="bb-tool" data-tool="tray" aria-label="${esc(w.toTray)}" title="${esc(w.toTray)}">${icon("close")}</button>`;
-    } else if (sel?.kind === "wire") {
-      const sid = sel.id;
-      const wire = build.wires.find((x) => x.id === sid);
-      if (wire) {
-        const { mid } = wirePaths(data, { a: g.hole(wire.a), b: g.hole(wire.b), index: build.wires.indexOf(wire) });
-        at = toScreen(mid);
-        html = `<button type="button" class="bb-tool" data-tool="delete" aria-label="${esc(w.deleteWire)}" title="${esc(w.deleteWire)}">${icon("close")}</button>`;
-      }
-    }
-    tools.innerHTML = html;
-    tools.hidden = !at;
-    if (at) {
-      // (above the thing, kept inside the workbench)
-      const aw = (narrow() ? size.w : size.w - panelW()) - 12;
-      tools.style.left = `${clamp(at[0], 40, aw - 40).toFixed(0)}px`;
-      tools.style.top = `${clamp(at[1] - 10, 72, size.h - 60).toFixed(0)}px`;
-    }
-  };
-  tools.addEventListener("click", (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-tool]");
-    if (!b) return;
-    const t = b.dataset.tool;
-    if (t === "delete" && sel?.kind === "wire") {
-      remember();
-      build = removeWire(build, sel.id);
-      sel = null;
-      announce(W()["live.wireGone"]);
-      commit();
-    } else if (t === "tray" && sel?.kind === "part") {
-      const p = sel.part;
-      remember();
-      build = removePart(build, p);
-      sel = null;
-      announce(W()["live.back"].replace("{part}", partName(p)));
-      commit();
-    } else if (t === "turn" && sel?.kind === "part" && sel.part !== "nano") turn(sel.part);
-  });
   const turn = (p: PartKind) => {
     const pl = build[p];
     if (!pl) return;
@@ -1404,7 +1378,6 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   const BOT_ROWS = ["BP", "BN"];
   /** The hole next to `h` in a direction (rails above row a and below row j). */
   const step = (h: HoleId, dx: number, dy: number): HoleId => {
-    const G = g!;
     const order = [...RAIL_ROWS, ...ROWS, ...BOT_ROWS];
     const m = /^(\d+)([a-j])$/.exec(h);
     const r = /^(TP|TN|BP|BN)(\d+)$/.exec(h);
@@ -1415,7 +1388,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       i = clamp(i + dy, 0, order.length - 1);
       rowName = order[i];
       // (the hole in that row nearest the same x)
-      const cands = G.ids.filter((id) => (/^(TP|TN|BP|BN)/.test(rowName) ? id.startsWith(rowName) && /^\D+\d+$/.test(id) : id.endsWith(rowName) && /^\d+[a-j]$/.test(id)));
+      const cands = ALL_HOLES.filter((id) => (/^(TP|TN|BP|BN)/.test(rowName) ? id.startsWith(rowName) && /^\D+\d+$/.test(id) : id.endsWith(rowName) && /^\d+[a-j]$/.test(id)));
       let best = cands[0];
       let bd = Infinity;
       for (const c of cands) {
@@ -1431,11 +1404,11 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     return `${r![1]}${clamp(Number(r![2]) + dx, 1, 25)}`;
   };
   const showCarry = () => {
-    if (!carry || !g) return;
+    if (!carry) return;
     if (carry.kind === "part") {
-      const a = g.hole(carry.anchor);
+      const a = G.hole(carry.anchor);
       const s = snapPart(carry.part, carry.rot, a);
-      showPartHeld(carry.part, carry.rot, a, s.place, s.near, !s.place);
+      showHeld(carry.part, s.place, s.near);
       paintHintHeld(s.why);
     } else {
       paintWires();
@@ -1445,6 +1418,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   const startCarry = (c: Carry) => {
     carry = c;
     sel = c.kind === "part" && c.from === "board" ? { kind: "part", part: c.part } : c.kind === "end" ? { kind: "wire", id: c.id } : null;
+    card = null;
     kbd = true;
     paintAll();
     showCarry();
@@ -1463,7 +1437,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     return o?.kind === "nano-body" ? `${base} ${T(say("underNano", { hole: h }))}` : base;
   };
   const onKey = (e: KeyboardEvent) => {
-    if (!g || e.target !== stage) return;
+    if (!sc || e.target !== stage) return;
     const k = e.key;
     const arrows: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
     if ((e.ctrlKey || e.metaKey) && k.toLowerCase() === "z") {
@@ -1481,7 +1455,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
         if (!/^\d+[a-j]$/.test(next)) next = carry.anchor;
         carry.anchor = next;
         showCarry();
-        const s = snapPart(carry.part, carry.rot, g.hole(next));
+        const s = snapPart(carry.part, carry.rot, G.hole(next));
         announce(s.place ? next : `${next}. ${s.why ? T(s.why[0]) : ""}`);
         return;
       }
@@ -1493,7 +1467,6 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       }
       cursor = step(cursor, dx, dy);
       setLit([{ holes: joinedHoles(build, cursor), kind: "join" }]);
-      paintMarks();
       if (pending) paintWires();
       announce(describe(cursor));
       return;
@@ -1514,29 +1487,22 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
         paintWires();
         paintMarks();
         announce(W()["live.cancel"]);
-      } else if (sel) {
+      } else if (sel || card) {
         sel = null;
+        openCard(null);
         paintAll();
       }
       return;
     }
     if (k === "r" || k === "R") {
       if (drag?.kind === "part" && drag.part !== "nano") {
-        // (a part held by the pointer turns about the pointer: each turned picture is the other one transposed, so the
-        // pointer's spot on the picture is transposed too)
-        const p0 = pinPx(drag.part, drag.rot);
-        const q: Pt = [p0[0] - drag.grab[0], p0[1] - drag.grab[1]];
+        // (a part held by the pointer turns about its first pin, which stays where it is)
         drag.rot = drag.rot === 0 ? 90 : 0;
-        const p1 = pinPx(drag.part, drag.rot);
-        drag.grab = [p1[0] - q[1], p1[1] - q[0]];
-        if (pointerScene) {
-          const a: Pt = [pointerScene[0] + drag.grab[0], pointerScene[1] + drag.grab[1]];
-          const s = snapPart(drag.part, drag.rot, a);
-          drag.snap = s.place;
-          drag.why = s.why;
-          showPartHeld(drag.part, drag.rot, a, s.place, s.near, true);
-          paintHintHeld(s.why);
-        }
+        const s = snapPart(drag.part, drag.rot, drag.at);
+        drag.snap = s.place;
+        drag.why = s.why;
+        showHeld(drag.part, s.place, s.near);
+        paintHintHeld(s.why);
       } else if (carry?.kind === "part" && carry.part !== "nano") {
         carry.rot = carry.rot === 0 ? 90 : 0;
         showCarry();
@@ -1559,6 +1525,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
           announce(W()["live.back"].replace("{part}", partName(sel.part)));
         }
         sel = null;
+        card = null;
         commit();
         return;
       }
@@ -1580,7 +1547,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     if (k === "Enter" || k === " ") {
       e.preventDefault();
       if (carry?.kind === "part") {
-        const s = snapPart(carry.part, carry.rot, g.hole(carry.anchor));
+        const s = snapPart(carry.part, carry.rot, G.hole(carry.anchor));
         if (!s.place) {
           if (s.why) {
             note(s.why);
@@ -1661,29 +1628,59 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     paintMarks();
   });
 
-  // the tray's parts and the plug as buttons, for the keyboard (placed over their pictures)
+  // the pad's parts and the plug as buttons, for the keyboard (placed over them), and their names under them; made once
+  // and then only moved, since the camera moves them every frame it turns
+  const keyEls = new Map<string, HTMLButtonElement>();
+  const labelEls = new Map<string, HTMLSpanElement>();
   const paintKeys = () => {
-    if (!g) return;
+    if (!sc) return;
     const w = W();
-    let html = "";
-    const btn = (id: string, b: { x: number; y: number; w: number; h: number }, label: string) =>
-      `<button type="button" class="bb-key" data-key="${id}" aria-label="${esc(label)}" style="left:${b.x.toFixed(0)}px;top:${b.y.toFixed(0)}px;width:${b.w.toFixed(0)}px;height:${b.h.toFixed(0)}px"></button>`;
-    for (const [id, b] of Object.entries(tray) as [Part | "usb", Placed][]) {
-      const [x, y] = toScreen([b.left, b.top]);
-      const label = id === "usb" ? w["tray.plug"] : w["tray.pick"].replace("{part}", partName(id));
-      html += btn(id, { x, y, w: b.w * TRAY_SCALE * camK, h: b.h * TRAY_SCALE * camK }, label);
+    const keys = new Set<string>();
+    const labels = new Set<string>();
+    const key = (id: string, b: { x: number; y: number; w: number; h: number }, label: string) => {
+      let el = keyEls.get(id);
+      if (!el) {
+        el = document.createElement("button");
+        el.type = "button";
+        el.className = "bb-key";
+        el.dataset.key = id;
+        keysEl.append(el);
+        keyEls.set(id, el);
+      }
+      if (el.getAttribute("aria-label") !== label) el.setAttribute("aria-label", label);
+      el.style.cssText = `left:${b.x.toFixed(0)}px;top:${b.y.toFixed(0)}px;width:${b.w.toFixed(0)}px;height:${b.h.toFixed(0)}px`;
+      keys.add(id);
+    };
+    const name = (id: string, at: P2, text: string) => {
+      let el = labelEls.get(id);
+      if (!el) {
+        el = document.createElement("span");
+        el.className = "bb-label mono";
+        labelsEl.append(el);
+        labelEls.set(id, el);
+      }
+      if (el.textContent !== text) el.textContent = text;
+      el.style.transform = `translate(${at[0].toFixed(0)}px, ${at[1].toFixed(0)}px)`;
+      labels.add(id);
+    };
+    for (const id of ["nano", "fsr", "resistor", "usb"] as const) {
+      const held = (drag?.kind === "part" && drag.on && drag.part === id) || (carry?.kind === "part" && carry.part === id);
+      const b = held ? null : sc.trayBox(id);
+      if (!b) continue;
+      key(id, b, id === "usb" ? w["tray.plug"] : w["tray.pick"].replace("{part}", partName(id)));
+      const under = id === "usb" ? sc.toScreen([PAD.x0 + 38, PAD.y1 - 0.5, 0]) : ([b.x + b.w / 2, b.y + b.h + 3] as P2);
+      if (under) name(id, under, w[`label.${id}`]);
     }
     if (build.nano && build.usb) {
-      const u = g.usbBox(build.nano);
-      const [x, y] = toScreen([Math.max(u.left + u.w - 600, FRAME[0]), u.top]);
-      const [x1, y1] = toScreen([u.left + u.w, u.top + 230]);
-      html += btn("unplug", { x, y, w: x1 - x, h: y1 - y }, w["board.unplug"]);
+      const top = sc.partTop("usb");
+      if (top) key("unplug", { x: top[0] - 30, y: top[1], w: 60, h: 40 }, w["board.unplug"]);
     }
-    if (keysEl.innerHTML !== html) keysEl.innerHTML = html;
+    for (const [id, el] of keyEls) if (!keys.has(id)) (el.remove(), keyEls.delete(id));
+    for (const [id, el] of labelEls) if (!labels.has(id)) (el.remove(), labelEls.delete(id));
   };
   keysEl.addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-key]");
-    if (!b || !g) return;
+    if (!b || !sc) return;
     const id = b.dataset.key!;
     if (id === "usb" || id === "unplug") {
       toggleUsb();
@@ -1691,9 +1688,19 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     }
     const p = id as Part;
     const ref = p === "nano" ? "3c" : p === "fsr" ? "24j" : "21b";
-    const anchor = /^\d+[a-j]$/.test(cursor) && snapPart(p, 0, g.hole(cursor)).place ? cursor : ref;
+    const anchor = /^\d+[a-j]$/.test(cursor) && snapPart(p, 0, G.hole(cursor)).place ? cursor : ref;
     stage.focus();
     startCarry({ kind: "part", part: p, from: "tray", rot: 0, anchor });
+  });
+  // (the camera moved: the card, the labels and the keyboard's buttons follow what they stand on)
+  sc?.onChange(() => {
+    if (!alive) return;
+    if (sc!.moved() && !turned) {
+      turned = true;
+      paintHint();
+    }
+    placeCard();
+    paintKeys();
   });
 
   // ---------------------------------------------------------------------------------------- undo, start over, show me
@@ -1703,6 +1710,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     build = h.build;
     sk = h.sk;
     sel = null;
+    card = null;
     pending = null;
     verifyOut = null;
     sketchView.paint();
@@ -1715,6 +1723,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     sk = emptyState();
     uploaded = null;
     sel = null;
+    card = null;
     pending = null;
     lastFail = null;
     verifyOut = null;
@@ -1757,9 +1766,9 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     return { ...b, usb: keep.usb };
   };
   const showMe = () => {
-    if (!data) return;
     remember();
     sel = null;
+    card = null;
     pending = null;
     carry = null;
     if (view === "nano" || view === "parts" || view === "wires") {
@@ -1810,7 +1819,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   let raf = 0;
   let last = 0;
   let onScreen = true;
-  const busyLoop = () => view === "run" && (Boolean(rn) || force > 0 || pressedNow());
+  const busyLoop = () => view === "run" && (Boolean(rn) || force > 0 || pressedNow() || performance.now() < txUntil);
   const frame = (now: number) => {
     raf = 0;
     if (!alive) return;
@@ -1820,18 +1829,19 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     const kk = reduced ? 1 : 1 - Math.exp(-dt / 85);
     force += (want - force) * kk;
     if (!pressedNow() && force < 0.2) force = 0;
-    paintPress();
     if (rn && view === "run" && build.usb) {
       const ch = rn.step(dt, force);
       if (ch.text) {
         monText += ch.text;
         if (monText.length > 8000) monText = monText.slice(-6000);
+        txUntil = now + 45;
       }
       for (const p of ch.points) points.push({ t: p.t, v: p.value });
       const cut = rn.t - WINDOW_MS - 400;
       while (points.length && points[0].t < cut) points.shift();
       paintSerial();
     }
+    paintPress();
     if (busyLoop() && onScreen && !document.hidden) raf = requestAnimationFrame(frame);
     else last = 0;
   };
@@ -1864,20 +1874,21 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     if (carry) endCarry();
     pending = null;
     sel = null;
+    card = null;
     pressActive = false;
     holdLevel = 0;
     if (v === "sketch") sketchView.paint();
     root.style.setProperty("--bb-panel", `${panelW(v)}px`);
+    if (sc && !sc.moved()) sc.home(fromAbove, frameOf(v));
     if (animate && prev !== v && !reduced) {
       root.classList.add("is-moving");
       window.clearTimeout(moveTimer);
       moveTimer = window.setTimeout(() => {
         root.classList.remove("is-moving");
-        paintTools();
-        paintKeys();
+        fitScene();
       }, 620);
     }
-    fitCam(v);
+    fitScene();
     paintHint();
     paintAll();
     kick();
@@ -1888,62 +1899,43 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     size = { w: r.width, h: r.height };
     root.toggleAttribute("data-narrow", narrow());
     root.style.setProperty("--bb-panel", `${panelW()}px`);
-    if (!data) return;
-    fitCam();
-    paintTools();
+    fitScene();
     paintKeys();
   };
   const ro = new ResizeObserver(onResize);
   ro.observe(root);
+  const ro2 = new ResizeObserver(() => fitScene());
+  ro2.observe(stage);
 
   // ---------------------------------------------------------------------------------------- words on show
   const paintWords = () => {
     paintText(root, W());
     paintPalette();
     paintInside();
+    schem.relabel();
     sketchView.relabel();
     paintVerify();
     if (noteRaw && typeof noteRaw !== "string") note(noteRaw);
     if (heldWhy) paintHintHeld(heldWhy);
     else paintHint();
-    if (data) paintAll();
+    paintAll();
   };
 
+  // (the dev server only: a handle for the browser checks, which aim the pointer at holes and parts)
+  if (import.meta.env.DEV) (window as unknown as { __bb: unknown }).__bb = { sc, hole: (id: HoleId) => G.hole(id), build: () => build };
+
   // ---------------------------------------------------------------------------------------- start
+  powered = circuit(build).power.state === "on";
   paintWords();
   const offTheme = ctx.onTheme((t) => {
     theme = t;
-    loadPics(t);
+    sc?.setTheme(t);
   });
   const offLang = ctx.onLang(() => paintWords());
-  loadData()
-    .then((d) => {
-      if (!alive) return;
-      data = d;
-      g = geometry(d);
-      const W0 = 3600;
-      ov.setAttribute("viewBox", `-400 -300 ${W0} 2600`);
-      ov.style.left = "-400px";
-      ov.style.top = "-300px";
-      ov.style.width = `${W0}px`;
-      ov.style.height = "2600px";
-      litSvg.setAttribute("viewBox", `-400 -300 ${W0} 2600`);
-      litSvg.style.left = "-400px";
-      litSvg.style.top = "-300px";
-      litSvg.style.width = `${W0}px`;
-      litSvg.style.height = "2600px";
-      cam.style.width = `${d.board.size[0]}px`;
-      cam.style.height = `${d.board.size[1]}px`;
-      paintPalette();
-      onResize();
-      loadPics(theme);
-      if (uploaded && build.usb) restartBoard();
-      show(view, false);
-    })
-    .catch((err: Error) => {
-      root.classList.add("is-failed");
-      $<HTMLElement>(".bb-kicker").textContent = err.message;
-    });
+  onResize();
+  if (uploaded && build.usb) restartBoard();
+  show(view, false);
+  root.classList.add("is-ready");
 
   // ---------------------------------------------------------------------------------------- the code card
   let lastRun: Verdict | null = null;
@@ -1966,7 +1958,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   return {
     view(v) {
       const want = VIEWS.includes(v?.view as View) ? (v!.view as View) : "nano";
-      show(want, Boolean(data));
+      show(want, true);
     },
     run() {
       lastRun = run({ ...build, usb: build.nano !== null }, REFERENCE_SKETCH, { monitorBaud: 9600, force: 0 });
@@ -1987,18 +1979,21 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     destroy() {
       alive = false;
       cancelAnimationFrame(raf);
-      cancelAnimationFrame(wireRaf);
+      cancelAnimationFrame(hoverRaf);
+      cancelAnimationFrame(moveRaf);
       window.clearTimeout(busyTimer);
       window.clearTimeout(noteTimer);
       window.clearTimeout(moveTimer);
       ro.disconnect();
+      ro2.disconnect();
       io.disconnect();
       document.removeEventListener("visibilitychange", onVis);
       sketchView.destroy();
+      schem.destroy();
+      sc?.dispose();
       offTheme();
       offLang();
       root.remove();
     },
   };
 }
-

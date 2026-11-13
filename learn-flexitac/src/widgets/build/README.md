@@ -1,8 +1,8 @@
 # Lesson 2.2's build engine (`src/widgets/build/`)
 
 The circuit and code engine behind lesson 2.2, "Build it and make it work" (`build-the-circuit`). It is pure
-TypeScript with no DOM. It works in hole ids and pin names only, never in pixels; the renders' `build.json` maps those to
-pictures. It follows the build's shared contract (`CONTRACT.md` in the session scratchpad). Everything is exported from
+TypeScript with no DOM. It works in hole ids and pin names only, never in pixels; the 3D bench (`../build3d/scene.ts`) maps those to
+millimetres. It follows the build's shared contract (`CONTRACT.md` in the session scratchpad). Everything is exported from
 one module:
 
 ```ts
@@ -38,8 +38,8 @@ the site's own helper. Every English key needs its Chinese key, and TypeScript e
   - `nanoPins(place)` gives `[{ pin, hole }]` for all 30 pins. `nanoBody(place)` gives the holes under the board between
     the two headers; those holes are blocked.
   - **Pin keys:** each pin's key is its printed name, except the two GND and the two RST pins, which become
-    `"GND.upper"`, `"GND.lower"`, `"RST.upper"` and `"RST.lower"`. The renderer's `build.json` cannot have two keys
-    named `"GND"`, so the interface needs to map its pin names to these keys (`NANO_PINS`, `nanoPinByKey`).
+    `"GND.upper"`, `"GND.lower"`, `"RST.upper"` and `"RST.lower"`. A lookup keyed by pin cannot hold two keys
+    named `"GND"`, so code that maps pin names must use these keys (`NANO_PINS`, `nanoPinByKey`).
 - **FSR and resistor:** `{ at: HoleId, rot: 0 | 90 }`. Pin `"1"` sits at `at`.
   - FSR, rot 0: the second pin is one column to the right, and the tail runs down. FSR, rot 90: the second pin is one
     row below, in the same strip, so the sensor is bypassed. That is a lesson mistake, so it can be placed.

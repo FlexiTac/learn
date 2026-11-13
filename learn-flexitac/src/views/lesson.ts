@@ -1,4 +1,5 @@
-// Lesson page: stage (figure / widget / media) + guided steps, right panel with tabs, "Try it yourself", lesson strip.
+// Lesson page: stage (figure / widget / media) + guided steps, right panel with tabs, "Try it yourself" (off for now:
+// SHOW_CODE_CARD; the Code tab shows the code instead), lesson strip.
 // A language switch (src/i18n) repaints the words in place and keeps the rest: the guided step on show and the figure's
 // pose (the figure gets setLang: a live act, never a reload unless it cannot switch live), the widget (ctx.onLang), the
 // open tab, the code card's values and output, an open detail window. Only the panel's text, the strip and the steps
@@ -8,12 +9,13 @@ import { lang, loc, onLang, t } from "../i18n";
 import { FLAT_QUERY, WIDE_QUERY } from "../state/layout";
 import { onTheme, reducedMotion, theme } from "../state/theme";
 import { load, update } from "../state/store";
-import type { DemoId, Lesson, LessonCtx, StageId, WidgetInstance } from "../types";
+import type { CodeSample, DemoId, Lesson, LessonCtx, StageId, WidgetInstance } from "../types";
 import { loadWidget } from "../widgets";
 import { badge, sourceChips, specRows } from "../ui/bits";
 import { codeCard, type CodeCard } from "../ui/codecard";
 import { enhanceDfns } from "../ui/dfn";
 import { esc, h } from "../ui/dom";
+import { fill, highlight } from "../ui/highlight";
 import { icon } from "../ui/icons";
 import { demoHost, whenReady, type DemoHost } from "../ui/demo";
 import { detailsWindow } from "../ui/details";
@@ -24,6 +26,9 @@ import { lessonStrip } from "../ui/strip";
 import { stageCard, type StageCard } from "../ui/stagecard";
 import { lessonNo } from "../lessons";
 
+// The "Try it yourself" code card and its fold: removed from every lesson by the user on 2026-11-12 (true brings them back).
+const SHOW_CODE_CARD = false;
+
 type TabId = "overview" | "parts" | "wiring" | "code" | "specs";
 const TABS: { id: TabId; label: "tab.overview" | "tab.parts" | "tab.wiring" | "tab.code" | "tab.specs" }[] = [
   { id: "overview", label: "tab.overview" },
@@ -32,6 +37,18 @@ const TABS: { id: TabId; label: "tab.overview" | "tab.parts" | "tab.wiring" | "t
   { id: "code", label: "tab.code" },
   { id: "specs", label: "tab.specs" },
 ];
+
+/** The Code tab's own copy of the lesson's code (while the code card is away): highlighted, read only, each {{param}}
+ *  at its default value, under the code's caption. */
+function codeBlock(code: CodeSample): string {
+  const plain: CodeSample = { ...code, source: fill(code, {}), params: [] };
+  const lines = plain.source.split("\n").length;
+  return `${code.caption ? `<p class="code-caption mono">${esc(code.caption)}</p>` : ""}
+    <div class="code-wrap">
+      <div class="code-gutter mono" aria-hidden="true">${Array.from({ length: lines }, (_, i) => `<span>${i + 1}</span>`).join("")}</div>
+      <pre class="code mono"><code class="lang-${code.lang}">${highlight(plain, {})}</code></pre>
+    </div>`;
+}
 
 /** Stacked layouts (one column; the window scrolls): a step change can change the stage's height above the steps bar
  *  (a step that hides the widget, GuidedStep.widget false; a demo card under the figure that comes a moment later). The
@@ -516,9 +533,10 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
        ${L.wiring.foot ? `<p class="foot">${L.wiring.foot}</p>` : ""}`
       : `<p class="empty">${t("wiring.none")}</p>`;
 
-    // Code notes
+    // Code (the code itself while the code card is away) and its notes
     pane("code").innerHTML = L.code
-      ? `<p class="prose">${t("code.what")}</p>
+      ? `${SHOW_CODE_CARD ? "" : codeBlock(L.code)}
+       <p class="prose">${t("code.what")}</p>
        <ol class="code-notes">${(L.code.notes ?? []).map((n) => `<li>${n}</li>`).join("")}</ol>`
       : `<p class="empty">${t("code.none")}</p>`;
 
@@ -529,7 +547,8 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
 
     offDfns?.();
     offDfns = enhanceDfns(info);
-    info.querySelector<HTMLButtonElement>(".read-toggle")!.hidden = !lesson.code;
+    // (the fold only folds the code card away, so it goes with it)
+    info.querySelector<HTMLButtonElement>(".read-toggle")!.hidden = !(SHOW_CODE_CARD && lesson.code);
   };
   paintInfo();
 
@@ -559,9 +578,9 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
   select(active);
   panel.append(info);
 
-  // Try it yourself
+  // Try it yourself (away for now: SHOW_CODE_CARD; without it the info card takes the whole column)
   let card: CodeCard | null = null;
-  if (lesson.code) {
+  if (SHOW_CODE_CARD && lesson.code) {
     const code = lesson.code;
     const canRun = Boolean(code.run || lesson.widget);
     card = codeCard(lesson, loc(lesson).code ?? code, {

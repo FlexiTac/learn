@@ -108,7 +108,7 @@ void loop() {
       "<code>setup()</code> runs once, when the board starts. <code>Serial.begin(9600)</code> opens the USB link at 9600 baud, a speed the Serial Monitor must match.",
       `<code>loop()</code> runs over and over. Each time, <code>analogRead(SENSOR)</code> measures the voltage on A0 (the pin <code>SENSOR</code> names) and returns a whole number from 0 to ${STEPS - 1}.`,
       "<code>Serial.println(value)</code> sends the number as text and starts a new line, so each reading is one line in the Serial Monitor and one point in the Serial Plotter.",
-      "<code>delay(WAIT)</code> pauses for <code>WAIT</code> milliseconds, so 100 means about 10 readings a second. Change the boxed number and press <b>Run</b>. The bench's plotter and monitor take the new pace, and the console prints the latest readings.",
+      "<code>delay(WAIT)</code> pauses for <code>WAIT</code> milliseconds, so 100 means about 10 readings a second.",
     ],
   },
   specs: [

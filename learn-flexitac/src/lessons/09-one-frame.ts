@@ -136,8 +136,8 @@ less than a taxel in that time, so the frame works as a snapshot: ${ROWS + COLS}
 ${FRAME_MS} ms.</p>
 
 <p>The hardware repo also has a ${repo16.rows}-row firmware that reads every mux channel: 2 + ${repo16.rows} × ${COLS} =
-${REPO16_BYTES} bytes. The computer has to expect the same size as the board sends, or frames won't line up. Try it in the
-code card: set <code>ROW_COUNT</code> to ${repo16.rows} and the offset to ${repo16.muxOffset}.</p>`,
+${REPO16_BYTES} bytes. The computer has to expect the same size as the board sends, or frames won't line up. That
+firmware sets <code>ROW_COUNT</code> to ${repo16.rows} and the offset to ${repo16.muxOffset}.</p>`,
   wiring: {
     intro: `What each Nano pin does during one frame, and where each byte of the ${FRAME_BYTES} comes from (counting bytes from 1). Lesson 2.5's Wiring tab has every connection on the board.`,
     rows: [
@@ -201,7 +201,7 @@ void loop() {
       "<code>raw &gt;&gt; 2</code> is Lesson 2.1's divide by 4: it drops the two lowest bits of the 10-bit reading, turning 0–1023 into 0–255 so it fits one byte.",
       "<code>Serial.write</code> sends the number itself as one raw byte. <code>Serial.print(12)</code> would send the text \"12\": two bytes, and a much bigger frame. Lesson 2.1's sketch sent text like that, with <code>Serial.println</code>.",
       `<code>ROW_COUNT</code> and <code>MUX_CHANNEL_OFFSET</code> must match the sensor: ${ROWS} and ${MUX_OFFSET} for this pad. With offset 0 the firmware would read four empty channels and miss the last four sense lines.`,
-      `Try <code>ROW_COUNT ${repo16.rows}</code>, offset <code>${repo16.muxOffset}</code> (the repo's ${REPO16_BYTES}-byte build) and press <b>Run</b>: the frame strip under the figure redraws for that frame (the figure keeps the real ${ROWS} × ${COLS} pad). Rows + offset above 16 wrap around to channel 0.`,
+      `The repo's ${REPO16_BYTES}-byte build uses <code>ROW_COUNT ${repo16.rows}</code> and offset <code>${repo16.muxOffset}</code>, so it reads every channel. Rows + offset above 16 wrap around to channel 0.`,
     ],
   },
   specs: [

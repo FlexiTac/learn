@@ -134,7 +134,7 @@ ${ROWS} × ${COLS} 个交叉点，也是这样。</p>
     notes: [
       "<code>digitalWrite(pin, HIGH)</code> 让引脚输出 5 V，<code>LOW</code> 输出 0 V。在 <code>setup()</code> 里，<code>pinMode(p, OUTPUT)</code> 把 D2–D8 设成输出。它们一开始都是 LOW，所以 D8 上的 E# 是 LOW，多路选择器打开。",
       "<code>setChannel(ch)</code> 把通道号写到 D4–D7，每个引脚一位。<code>bitRead(ch, b)</code> 取出 <code>ch</code> 的第 <code>b</code> 位，是 0 或 1：<code>setChannel(13)</code> 依次往 D4、D5、D6、D7 写 1、0、1、1。从 D7 读到 D4，正是 1101。",
-      "接着 <code>analogRead(A0)</code> 读出多路选择器选中的那条线，范围 0 到 1023，和第 2.1 课一样。按<b>运行</b>：第 1 步图中的多路选择器会转到同一个通道，控制台显示串口监视器会打印的内容。",
+      "接着 <code>analogRead(A0)</code> 读出多路选择器选中的那条线，范围 0 到 1023，和第 2.1 课一样。",
       "<code>clockOnce()</code> 在 D3 上发一个脉冲：先 HIGH，再 LOW。D3 跳到 HIGH 的那一刻叫<dfn data-term=\"rising-edge\">上升沿（rising edge）</dfn>，所有的位就在这一刻往后挪一格。在读取板上，D3 同时接锁存引脚，所以每个脉冲也会锁存（第 2.6 课会讲这带来什么变化）。",
       `每轮读一次 A0、打一次时钟。每 ${COLS} 轮才送进一个 1，于是这一个 1 沿着 ${CHIPS} 片芯片的全部 ${COLS} 个输出走一遍，一次只有一条驱动线通电，和读取板一样。按 <code>delay(${WALK_MS})</code>，走完一趟要 ${(COLS * WALK_MS) / 1000} 秒；在输出上接 LED，就能看着它走。`,
     ],

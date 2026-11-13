@@ -26,7 +26,7 @@ only a file name; the order is `LESSONS`. The ids, in order: `meet-flexitac`, `t
 ```
 #/                     home: hero, then each section's title and its three chapter cards (cover pictures)
 #/lessons              all lessons, grouped by section and chapter
-#/lesson/<id>          a lesson: stage (figure / widget / media) + guided steps, tabs, "Try it yourself", lesson strip
+#/lesson/<id>          a lesson: stage (figure / widget / media) + guided steps, tabs, lesson strip
 #/glossary[/<term>]    glossary (a term id scrolls to and highlights it)
 #/about                sources, badges, licences, reset progress
 ```
@@ -207,14 +207,17 @@ with no rewrites.
   click on empty background clears. Old gestures are grab handles on their own part only: Fig 1 drag-to-touch on the
   sensing area in top view, Fig 2 press-and-hold on the plunger, Fig 3 clocks with →, its buttons and `clock` acts.
 - Figure keyboard shortcuts work only while the iframe has focus (the browser guarantees it). The site's only
-  global shortcut is Ctrl/⌘ + Enter (Run), which never reaches a focused figure.
+  global shortcut is Ctrl/⌘ + Enter (Run, when the code card is on), which never reaches a focused figure.
 
 ## Lesson page layout (desktop)
 
-The right column gives the lesson text priority: the code card is capped at 40% of the column, the Run output floats
-over the bottom of the code (× closes it) instead of pushing the cards, and the chevron at the end of the tab row
-folds the code card to its header ("read the lesson"). Below 860 px of window height the "Edit the boxed numbers" hint
-is dropped. Stacked layouts show everything in page flow.
+The right column is the lesson text, one card the column's full height. Its Code tab shows the lesson's code,
+highlighted and read only (each `{{name}}` at its default value), above the notes. The "Try it yourself" code card
+(editable numbers, Copy, Run) and the chevron that folded it are off for now: the user removed them on 2026-11-12, and
+`SHOW_CODE_CARD` in `src/views/lesson.ts` brings both back (the Code tab then shows only the notes). With the card on,
+it is capped at 40% of the column, the Run output floats over the bottom of the code (× closes it) instead of pushing
+the cards, the chevron at the end of the tab row folds the card to its header ("read the lesson"), and below 860 px of
+window height the "Edit the boxed numbers" hint is dropped. Stacked layouts show everything in page flow.
 
 ## Add a lesson
 
@@ -281,8 +284,8 @@ lesson all take its colour. `--on-lc` is the text colour on a lesson-colour fill
   added): saved progress is moved onto the same steps once per learner (`migrateSteps` in `src/state/store.ts`, the
   revision kept in `stepsRev`).
 - **Quiz:** 3 questions, one clearly right answer each, and a `why` that teaches, not just confirms.
-- **Code** (`code`): ≤ ~46 characters per line so it fits the card. `{{name}}` placeholders become editable
-  numbers; give each a `params` entry. `run(params, ctx)` is the sim: drive `ctx.figure` / `ctx.widget` and
+- **Code** (`code`): ≤ ~46 characters per line so it fits the panel. `{{name}}` placeholders show their default
+  value on the Code tab (editable numbers on the code card, when it is on); give each a `params` entry. `run(params, ctx)` is the sim: drive `ctx.figure` / `ctx.widget` and
   return the console lines.
 
 A lesson counts as done when its quiz is fully right **or** all its guided steps have been shown. Progress, quiz

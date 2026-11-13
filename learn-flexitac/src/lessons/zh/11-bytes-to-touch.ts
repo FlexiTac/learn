@@ -48,7 +48,7 @@ export const zh: LessonZh = {
       "<code>peak</code> 是这一帧里最强的触觉像素。除以它，整帧就被拉伸到 0–1，所以图像总能用满整个颜色范围。",
       `当 <code>peak</code> 低于阈值时，说明没有按压，于是改为除以 ${NOISE_SCALE}；残留的数值保持暗淡。`,
       `<code>s</code> 是平滑后的图像：${PCT} % 来自新帧，${100 - PCT} % 来自之前显示的图像。真正的查看器在显示循环每走一轮时做一次这样的混合。`,
-      "<code>applyColorMap</code> 把 0–255 变成 viridis 颜色。修改这些数字，再点<b>运行</b>，就能重新调节实验室。",
+      "<code>applyColorMap</code> 把 0–255 变成 viridis 颜色。",
     ],
   },
   specs: [

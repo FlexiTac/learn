@@ -102,8 +102,7 @@ print(f"V_A0 = {v_a0:.2f} V")`,
       `The three constants are the circuit: R1 and the ${VCC} V supply are on the board, R<sub>on</sub> is the multiplexer switch from its datasheet.`,
       "Current first: the whole loop is one path, so I = V ÷ (sum of the resistances).",
       "Then Ohm's law for R1 alone: the voltage across it, which is what A0 sees, is I × R1.",
-      `Try <code>rk = ${R1K}</code> (equal to R1): V<sub>A0</sub> lands just under half of ${VCC} V. Try 1 and 1000 to see it bunch up near the ends.`,
-      `Press <b>Run</b>: the slider and the figure jump to that resistance. The figure's illustrative curve only spans ${kOhm(R_HARD)} to ${kOhm(R_REST)}, so values outside that are clamped there.`,
+      `With <code>rk = ${R1K}</code> (equal to R1), V<sub>A0</sub> lands just under half of ${VCC} V. At 1 or 1000 it bunches up near the ends.`,
     ],
     run(p) {
       const r = p.rk * 1000;

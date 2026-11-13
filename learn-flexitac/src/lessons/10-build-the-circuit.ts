@@ -1,8 +1,9 @@
 // Lesson 2.2: build it and make it work (2026-11-12, PLAN-section2-build.md). The learner rebuilds lesson 2.1's circuit
 // from an empty breadboard: place the Nano, the FSR and the 10 kΩ resistor, lay the jumper wires, put the sketch
-// together from code tiles, plug in USB, upload and press. The stage is src/widgets/build-bench.ts (the top-down render
-// of flexitac-anatomy/figures/bench/topdown, public/media/build/); each step picks its view, and the widget's own
-// "Show me" does the step. The check is electrical (src/widgets/build/: the board's strips and rails become nets, a
+// together from code tiles, plug in USB, upload and press. The stage is src/widgets/build-bench.ts, a 3D bench since
+// 2026-11-12 (src/widgets/build3d/, the models of flexitac-anatomy/figures/bench/topdown drawn live with three.js; the
+// panel's circuit diagram is build-ui/schematic.ts); each step picks its view, and the widget's own "Show me" does the
+// step. The check is electrical (src/widgets/build/: the board's strips and rails become nets, a
 // small solver gives every pin's voltage), so any working build counts, and a wrong one fails the way a real bench does,
 // with its reason and a hint. Numbers: SparkFun's breadboard pages (external), the shared data (R1), the engine's pass
 // mark (F_PRESS, RESPONSIVE) and the illustrative FSR curve of lesson 2.1 (src/widgets/bench/fsr.ts).
@@ -94,7 +95,6 @@ void loop() {
       "<code>loop()</code> runs again and again: read A0 into <code>value</code>, send it as one line, pause for 100 ms.",
       "Order matters. A variable exists only after the line that makes it, and only inside its own function. A sketch that prints <code>value</code> before reading it does not compile.",
       "Each decoy tile breaks one thing. <code>digitalRead</code> gives only 0 or 1, <code>Serial.print</code> runs the numbers together, and <code>pinMode(A0, OUTPUT)</code> fights the sensor. 115200 baud works only with the monitor at 115200 too.",
-      "Press <b>Run</b> to see what your build on the bench would do with this sketch.",
     ],
   },
   specs: [
@@ -123,7 +123,7 @@ void loop() {
     {
       title: "Place the Nano",
       // keep every text to 3 lines in a 475-530 px column (1366-1440 px windows)
-      text: "Drag the Nano from the tray onto the breadboard. It snaps across the middle groove, one row of pins on each side. Point at any hole to see which holes are joined to it inside.",
+      text: "Drag the Nano from the tray on the right onto the breadboard. It snaps across the middle groove, one row of pins on each side. Click any part to see what it is, and drag empty space to turn the view.",
       start: true,
       widgetView: { view: "nano" },
     },
@@ -134,7 +134,7 @@ void loop() {
     },
     {
       title: "Wire it",
-      text: "Drag from a hole to a hole to lay a jumper wire: 5V to one FSR leg, A0 to the other leg and the resistor, the resistor to GND. The panel says what is joined.",
+      text: "Drag from a hole to a hole to lay a jumper wire: 5V to one FSR leg, A0 to the other leg and the resistor, the resistor to GND. The diagram in the panel lights each link you make.",
       widgetView: { view: "wires" },
     },
     {

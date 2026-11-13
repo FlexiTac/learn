@@ -1,5 +1,5 @@
 // The breadboard of Lesson 2.2 "Build it and make it work" and where the parts' pins go, in hole ids and pin names only
-// (never pixels: the renders' build.json maps them to pictures). It follows the build's shared contract (CONTRACT.md,
+// (never pixels: the 3D bench, ../build3d/scene.ts, puts them in millimetres). It follows the build's shared contract (CONTRACT.md,
 // 2026-11-12); this folder's README.md documents the API.
 //   - A half-size board: columns 1..30, rows a..j. The five holes a..e of one column are one strip, f..j another; the
 //     groove lies between e and f (rows at 0..4 and 7..11 pitches of 2.54 mm).

@@ -99,7 +99,7 @@ def show(raw, prev):
       "<code>peak</code> is the strongest taxel in this frame. Dividing by it stretches the frame to fill 0–1, so the picture always uses the full colour range.",
       `When <code>peak</code> is below the threshold nothing is pressed, so it divides by ${NOISE_SCALE} instead; leftovers stay dark.`,
       `<code>s</code> is the smoothed picture: ${PCT} % new frame, ${100 - PCT} % of what was shown before. The real viewer runs this blend once per pass of its display loop.`,
-      "<code>applyColorMap</code> turns 0–255 into viridis colours. Edit the numbers and press <b>Run</b> to retune the lab.",
+      "<code>applyColorMap</code> turns 0–255 into viridis colours.",
     ],
   },
   specs: [

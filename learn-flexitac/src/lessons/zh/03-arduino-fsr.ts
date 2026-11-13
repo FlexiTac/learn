@@ -51,7 +51,7 @@ export const zh: LessonZh = {
       "<code>setup()</code> 只在板子启动时运行一次。<code>Serial.begin(9600)</code> 以 9600 baud 打开 USB 连接，串口监视器也要设成这个速度。",
       `<code>loop()</code> 一遍又一遍地运行。每一遍，<code>analogRead(SENSOR)</code> 量一次 A0 上的电压（<code>SENSOR</code> 就是 A0），返回 0 到 ${STEPS - 1} 之间的一个整数。`,
       "<code>Serial.println(value)</code> 把这个数当作文字发出去，再换一行，所以每个读数在串口监视器里是一行，在串口绘图器里是一个点。",
-      "<code>delay(WAIT)</code> 停 <code>WAIT</code> 毫秒，所以设成 100 时，一秒钟大约读 10 次。改一下方框里的数字，再点<b>运行</b>。工作台上的绘图器和监视器会换成新的速度，控制台会打印最近的几个读数。",
+      "<code>delay(WAIT)</code> 停 <code>WAIT</code> 毫秒，所以设成 100 时，一秒钟大约读 10 次。",
     ],
   },
   specs: [

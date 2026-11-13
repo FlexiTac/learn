@@ -397,7 +397,6 @@ print(f"{n} × \${each:.2f} = \${n * each:.2f}")`,
     notes: [
       "Each entry is the guide's price times the share one sensor uses: a 5-pack of cables at 0.2, a sheet of Velostat at 0.05.",
       "Every sensor here gets its own reading board and Nano, which is most of the cost. Ordering many boards at once lowers the board price a lot (see the paper's numbers in the Overview).",
-      "Press <b>Run</b> to total it for your <code>n</code>.",
     ],
     pureRun: true,
     run(p) {

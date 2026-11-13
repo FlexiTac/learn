@@ -58,7 +58,7 @@ export const UI_EN = {
   "wiring.to": "To",
   "wiring.note": "What travels",
   "wiring.none": "No wiring in this lesson.",
-  "code.what": "What the code in <b>Try it yourself</b> does:",
+  "code.what": "What this code does:",
   "code.none": "No code in this lesson.",
   "sources.aria": "Sources",
   "specs.foot": "Grey chips name the source of each number. Badges:",

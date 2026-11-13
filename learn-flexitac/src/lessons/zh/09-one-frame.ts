@@ -65,7 +65,7 @@ export const zh: LessonZh = {
 
 <p>每个触觉像素（taxel）每帧只被读取一次，每次只读大约 ${READ_US} µs。一帧中第一个读数和最后一个读数相隔几毫秒，所以这幅图并不是同一瞬间拍下的，就像手机相机的“卷帘快门”。但在这段时间里，指尖移动的距离远小于一个触觉像素，所以一帧可以当作一张快照：${ROWS + COLS} 根线，${TAXELS} 个触觉像素，每 ${FRAME_MS} ms 一幅图像。</p>
 
-<p>硬件仓库里还有一个 ${repo16.rows} 行的固件，它会读取多路选择器的每一个通道：2 + ${repo16.rows} × ${COLS} = ${REPO16_BYTES} 字节。电脑期望的帧大小必须和读取板发送的一致，否则帧就对不齐。在代码卡片里试试：把 <code>ROW_COUNT</code> 设为 ${repo16.rows}，偏移量设为 ${repo16.muxOffset}。</p>`,
+<p>硬件仓库里还有一个 ${repo16.rows} 行的固件，它会读取多路选择器的每一个通道：2 + ${repo16.rows} × ${COLS} = ${REPO16_BYTES} 字节。电脑期望的帧大小必须和读取板发送的一致，否则帧就对不齐。这个固件把 <code>ROW_COUNT</code> 设为 ${repo16.rows}，偏移量设为 ${repo16.muxOffset}。</p>`,
   wiring: {
     intro: `一帧期间，Nano 的每个引脚在做什么，以及 ${FRAME_BYTES} 个字节里每个字节从哪里来（字节从 1 开始数）。第 2.5 课的“接线”栏列出了读取板上的每一处连接。`,
     rows: [
@@ -94,7 +94,7 @@ export const zh: LessonZh = {
       "<code>raw &gt;&gt; 2</code> 就是第 2.1 课说的除以 4：去掉 10 位读数中最低的两位，把 0–1023 变成 0–255，正好放进一个字节。",
       "<code>Serial.write</code> 把数字本身作为一个原始字节发送。<code>Serial.print(12)</code> 则会发送文本“12”：两个字节，帧也会大得多。第 2.1 课的程序用 <code>Serial.println</code> 发的就是这样的文本。",
       `<code>ROW_COUNT</code> 和 <code>MUX_CHANNEL_OFFSET</code> 必须和传感器一致：这块传感垫是 ${ROWS} 和 ${MUX_OFFSET}。如果偏移量是 0，固件会去读四个空通道，还会漏掉最后四条感应线。`,
-      `试试 <code>ROW_COUNT ${repo16.rows}</code>、偏移量 <code>${repo16.muxOffset}</code>（仓库里 ${REPO16_BYTES} 字节的版本），然后点<b>运行</b>：图下方的帧条带会按这种帧重新绘制（图里仍是真实的 ${ROWS} × ${COLS} 传感垫）。行数加偏移量超过 16 时，会绕回到通道 0。`,
+      `仓库里 ${REPO16_BYTES} 字节的版本用的是 <code>ROW_COUNT ${repo16.rows}</code>、偏移量 <code>${repo16.muxOffset}</code>，所以会读取每一个通道。行数加偏移量超过 16 时，会绕回到通道 0。`,
     ],
   },
   specs: [
