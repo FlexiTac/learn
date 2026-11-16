@@ -4,6 +4,7 @@
 // baud, pause) are typed in place, in a slot or not. Keyboard: Space or Enter on a tile picks it up, the arrow keys move
 // it one place at a time (through setup(), loop() and back to the tiles), Space or Enter puts it down, Escape puts it
 // back where it was. The widget keeps the state (SketchState) and saves it; this file only draws it and reports changes.
+// The Hint (./coach.ts) marks a tile, the box to type in, or the line where the tile goes (hint()).
 import { esc } from "../../ui/dom";
 import { highlight } from "../../ui/highlight";
 import { FIELDS, lineOf, pieces, TRAY, type FieldName, type Sketch, type Tile } from "../build/engine";
@@ -52,6 +53,8 @@ export interface SketchUi {
   relabel(): void;
   /** Mark the tile a compile error points at (null: none). */
   mark(id: string | null): void;
+  /** The Hint's marks: a tile, and where it goes (a line in setup() or loop(), or the tiles), or the box to type in. */
+  hint(h: { id: string; to?: { list: ListId; index: number }; field?: string } | null): void;
   destroy(): void;
 }
 
@@ -66,11 +69,14 @@ export function sketchUi(
     </div>
     <p class="bb-cap mono bb-tiles-cap"></p>
     <ol class="bb-list bb-tray-list" data-list="tray"></ol>
-    <div class="bb-insert" aria-hidden="true"></div>`;
+    <div class="bb-insert" aria-hidden="true"></div>
+    <div class="bb-insert bb-coach-line" aria-hidden="true"></div>`;
   const ide = host.querySelector<HTMLElement>(".bb-ide")!;
   const lists = Object.fromEntries(LISTS.map((l) => [l, host.querySelector<HTMLOListElement>(`[data-list="${l}"]`)!])) as Record<ListId, HTMLOListElement>;
-  const insertEl = host.querySelector<HTMLElement>(".bb-insert")!;
+  const insertEl = host.querySelector<HTMLElement>(".bb-insert:not(.bb-coach-line)")!;
+  const coachLine = host.querySelector<HTMLElement>(".bb-coach-line")!;
   let marked: string | null = null;
+  let coach: { id: string; to?: { list: ListId; index: number }; field?: string } | null = null;
 
   const codeOf = (t: Tile) => lineOf(t);
   const tileHtml = (t: Tile): string => {
@@ -93,6 +99,40 @@ export function sketchUi(
       lists[l].innerHTML = ids.map((id) => tileHtml(st.tiles[id])).join("") + (ids.length ? "" : `<li class="bb-slot-empty" aria-hidden="true">${esc(l === "tray" ? W["tiles.empty"] : W["slot.empty"])}</li>`);
       lists[l].classList.toggle("is-empty", !ids.length);
     }
+    paintCoach();
+  };
+  /** A line where a tile would land: in list t.list before its t.index-th tile (`skip`, the tile itself, not counted). */
+  const lineAt = (line: HTMLElement, t: { list: ListId; index: number }, skip: Element | null) => {
+    const hr = host.getBoundingClientRect();
+    const list = lists[t.list];
+    const items = [...list.querySelectorAll<HTMLElement>("[data-tile]")].filter((x) => x !== skip);
+    const lr = list.getBoundingClientRect();
+    let y: number;
+    if (!items.length) y = lr.top + lr.height / 2;
+    else if (t.index >= items.length) y = items[items.length - 1].getBoundingClientRect().bottom + 2;
+    else y = items[t.index].getBoundingClientRect().top - 2;
+    line.style.transform = `translate(${(lr.left - hr.left + 8).toFixed(1)}px, ${(y - hr.top + host.scrollTop - 1).toFixed(1)}px)`;
+    line.style.width = `${Math.max(40, lr.width - 16)}px`;
+    line.classList.add("is-on");
+  };
+  const paintCoach = () => {
+    host.querySelectorAll(".is-coach").forEach((x) => x.classList.remove("is-coach"));
+    for (const l of LISTS) lists[l].classList.remove("is-coach-target");
+    coachLine.classList.remove("is-on");
+    if (!coach) return;
+    const el = host.querySelector<HTMLElement>(`[data-tile="${coach.id}"]`);
+    if (!el) return;
+    if (coach.field) {
+      el.querySelector(`[data-field="${coach.field}"]`)?.classList.add("is-coach");
+      return;
+    }
+    el.classList.add("is-coach");
+    if (!coach.to) return;
+    // (into the tiles, or into an empty setup() or loop(): the place itself lights up; else a line between two tiles)
+    const list = lists[coach.to.list];
+    const others = [...list.querySelectorAll("[data-tile]")].filter((x) => x !== el);
+    if (coach.to.list === "tray" || !others.length) list.classList.add("is-coach-target");
+    else lineAt(coachLine, coach.to, el);
   };
   const relabel = () => {
     const W = S();
@@ -160,17 +200,7 @@ export function sketchUi(
       return;
     }
     lists.tray.classList.remove("is-target");
-    const hr = host.getBoundingClientRect();
-    const list = lists[t.list];
-    const items = [...list.querySelectorAll<HTMLElement>("[data-tile]")].filter((x) => x !== drag?.el);
-    const lr = list.getBoundingClientRect();
-    let y: number;
-    if (!items.length) y = lr.top + lr.height / 2;
-    else if (t.index >= items.length) y = items[items.length - 1].getBoundingClientRect().bottom + 2;
-    else y = items[t.index].getBoundingClientRect().top - 2;
-    insertEl.style.transform = `translate(${(lr.left - hr.left + 8).toFixed(1)}px, ${(y - hr.top + host.scrollTop - 1).toFixed(1)}px)`;
-    insertEl.style.width = `${Math.max(40, lr.width - 16)}px`;
-    insertEl.classList.add("is-on");
+    lineAt(insertEl, t, drag?.el ?? null);
   };
   const onDown = (e: PointerEvent) => {
     if (e.button !== 0 || drag) return;
@@ -322,6 +352,10 @@ export function sketchUi(
       marked = id;
       host.querySelectorAll(".bb-tile.is-error").forEach((x) => x.classList.remove("is-error"));
       if (id) host.querySelector(`[data-tile="${id}"]`)?.classList.add("is-error");
+    },
+    hint(h) {
+      coach = h;
+      paintCoach();
     },
     destroy() {
       endDrag(false);

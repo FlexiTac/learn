@@ -1,4 +1,4 @@
-// Lesson 1.6 "Build your own": the Chinese of its build steps (BUILD in ../12-build-your-own.ts), which the
+// Lesson 1.4 "Build your own": the Chinese of its build steps (BUILD in ../12-build-your-own.ts), which the
 // build-checklist widget shows (src/widgets/build-checklist.ts reads them through locBuild below). Keyed by the step id;
 // photos and checks go by place / by check id. Only words: ids, photos, clips and the terminal lines stay the English
 // file's own (the terminal is code and stays as it is). Terms follow docs/i18n-terms-zh.md.

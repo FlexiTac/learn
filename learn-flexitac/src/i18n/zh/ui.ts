@@ -93,6 +93,8 @@ export const UI_ZH: Partial<Record<keyof typeof UI_EN, string>> = {
   "steps.show": "演示一下",
   "steps.next": "下一步",
   "steps.done": "完成",
+  "steps.nextLesson": "下一课",
+  "steps.nextLessonAria": "下一课：{no} {title}",
 
   // ------------------------------------------------------------------ quiz
   "quiz.title": "自我检测",
@@ -100,14 +102,6 @@ export const UI_ZH: Partial<Record<keyof typeof UI_EN, string>> = {
   "quiz.wrong": "<b>还不对。</b>再看一看，然后再试一次。",
   "quiz.score": "答对 {right}/{n} 题",
   "quiz.complete": " · 本课完成",
-
-  // ------------------------------------------------------------------ lesson strip
-  "strip.title": "课程",
-  "strip.aria": "课程",
-  "strip.prev": "上一课：{title}",
-  "strip.noPrev": "没有上一课",
-  "strip.next": "下一课：{title}",
-  "strip.noNext": "没有下一课",
 
   // ------------------------------------------------------------------ "Try it yourself"
   "code.try": "动手试试",
@@ -181,6 +175,9 @@ export const UI_ZH: Partial<Record<keyof typeof UI_EN, string>> = {
   "home.resume": "继续第 {no} 课",
   "home.all": "全部课程",
   "home.nextUp": "已完成 {done} 课 · 下一课：{lesson}",
+  "home.pick": "选一课",
+  "home.pickAria": "{title}，{range}：选一课",
+  "home.pickClose": "关闭",
   "home.soonAria": "{title}：即将推出",
   "home.soonPill": "即将推出",
   "home.soonKicker": "{title} · 未完待续",

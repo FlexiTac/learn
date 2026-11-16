@@ -2,8 +2,8 @@
 // from an empty breadboard: place the Nano, the FSR and the 10 kΩ resistor, lay the jumper wires, put the sketch
 // together from code tiles, plug in USB, upload and press. The stage is src/widgets/build-bench.ts, a 3D bench since
 // 2026-11-12 (src/widgets/build3d/, the models of flexitac-anatomy/figures/bench/topdown drawn live with three.js; the
-// panel's circuit diagram is build-ui/schematic.ts); each step picks its view, and the widget's own "Show me" does the
-// step. The check is electrical (src/widgets/build/: the board's strips and rails become nets, a
+// panel's circuit diagram is build-ui/schematic.ts); each step picks its view, and the widget's own Hint gives the next
+// single thing to do and can do just that one (build-ui/coach.ts). The check is electrical (src/widgets/build/: the board's strips and rails become nets, a
 // small solver gives every pin's voltage), so any working build counts, and a wrong one fails the way a real bench does,
 // with its reason and a hint. Numbers: SparkFun's breadboard pages (external), the shared data (R1), the engine's pass
 // mark (F_PRESS, RESPONSIVE) and the illustrative FSR curve of lesson 2.1 (src/widgets/bench/fsr.ts).

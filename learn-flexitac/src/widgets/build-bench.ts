@@ -1,7 +1,7 @@
 // Lesson 2.2's workbench, "Build it and make it work" (PLAN-section2-build.md §2.2): the learner rebuilds lesson 2.1's
 // circuit from nothing on a breadboard, puts the sketch together from code tiles, plugs in USB, uploads and presses.
-// The bench is 3D (2026-11-12, ./build3d/scene.ts): the breadboard on the left, the parts waiting on a foam pad to its
-// right, jumper wires between holes. Drag on empty space turns the view, the wheel zooms, a right drag pans; the corner
+// The bench is 3D (2026-11-12, ./build3d/scene.ts): the breadboard on a blue anti-static work mat, the parts waiting
+// on the mat to its right, jumper wires between holes. Drag on empty space turns the view, the wheel zooms, a right drag pans; the corner
 // has "from above" and "back to the start". Every part can be dragged at any step, from the pad to the board, about the
 // board and back. A click on a part (or a wire, the cable, the board) opens a small card: what it is, where its pins
 // are, and its tools (turn, back to the pad, remove). A panel on the right changes with the step (view):
@@ -12,8 +12,11 @@
 //   run     step 5: plug in USB, upload; the Serial Monitor (its baud rate can be changed) and Plotter come alive, and
 //           the FSR can be pressed (press and hold, drag down for harder, as in lesson 2.1). Whatever is wrong fails the
 //           way the engine says (./build/verdict.ts), with its line and hint, never a generic error.
-// The panel's circuit diagram (build-ui/schematic.ts) lights each of its four links as the build makes it. Each view has
-// its own "Show me", which does that step (the engine's REFERENCE_BUILD and REFERENCE_SKETCH). Every placement, wire and
+// The panel's circuit diagram (build-ui/schematic.ts) lights each of its four links as the build makes it. The Hint
+// button (build-ui/coach.ts; 2026-11-15, in place of "Show me", which did a whole step at once) says the next single
+// thing to do, worked out from the learner's own build or sketch, marks where it goes (holes on the board, the part on
+// the mat, the tile and its line), and its "Do this step" does that one thing; it follows along until it is closed.
+// Every placement, wire and
 // verdict comes from the engine (./build/: hole ids and pin names only); the scene turns them into millimetres. The holes
 // joined inside the board light up while something is held over them. Keyboard: the board takes focus; the arrow keys
 // move between holes, Enter picks up or starts a wire, Delete removes, R turns, Escape cancels; the pad's parts are
@@ -50,7 +53,6 @@ import {
   placePart,
   plugUsb,
   recolorWire,
-  REFERENCE_BUILD,
   REFERENCE_SKETCH,
   removePart,
   removeWire,
@@ -80,7 +82,8 @@ import {
   type WireColor,
   F_PRESS,
 } from "./build/engine";
-import { createScene, PAD, type LitKind, type P2, type Scene3D, type Thing, type WireLook } from "./build3d/scene";
+import { createScene, PAD, TRAY_Z, type LitKind, type P2, type Scene3D, type Thing, type WireLook } from "./build3d/scene";
+import { buildHint, hint, RUN, sketchHint, type Hint } from "./build-ui/coach";
 import { schematic } from "./build-ui/schematic";
 import { emptyState, sketchOf, sketchUi, stateOf, validState, type SketchState } from "./build-ui/sketch-ui";
 import { S } from "./build-ui/words";
@@ -144,7 +147,12 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       <div class="bb-foot">
         <div class="bb-palette" role="radiogroup" data-t-aria="palette"></div>
         <p class="bb-hint mono"></p>
-        <button type="button" class="bb-show mono"><span class="bb-show-icon">${icon("play")}</span><span data-t="showMe"></span></button>
+        <button type="button" class="bb-show mono" aria-expanded="false"><span class="bb-show-icon"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 12.5h4M6.6 14.5h2.8"/><path d="M5.3 10.2a4.6 4.6 0 1 1 5.4 0c-.5.4-.7.9-.7 1.5v.3H6v-.3c0-.6-.2-1.1-.7-1.5z"/></svg></span><span data-t="coach.btn"></span></button>
+      </div>
+      <div class="bb-coach" role="status" hidden>
+        <div class="bb-coach-head"><p class="bb-coach-cap mono"></p><button type="button" class="bb-card-x bb-coach-x" data-t-aria="coach.close" data-t-title="coach.close">${icon("close")}</button></div>
+        <p class="bb-coach-text"></p>
+        <button type="button" class="bb-coach-do mono" data-t="coach.do"></button>
       </div>
     </div>
     <aside class="bb-panel">
@@ -191,7 +199,11 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   const noteEl = $<HTMLElement>(".bb-note");
   const hintEl = $<HTMLElement>(".bb-hint");
   const palette = $<HTMLElement>(".bb-palette");
-  const showBtn = $<HTMLButtonElement>(".bb-show");
+  const hintBtn = $<HTMLButtonElement>(".bb-show");
+  const coachEl = $<HTMLElement>(".bb-coach");
+  const coachCap = $<HTMLElement>(".bb-coach-cap");
+  const coachText = $<HTMLElement>(".bb-coach-text");
+  const coachDo = $<HTMLButtonElement>(".bb-coach-do");
   const liveEl = $<HTMLElement>(".bb-live");
   const connList = $<HTMLOListElement>(".bb-conn-list");
   const checkEl = $<HTMLElement>(".bb-check");
@@ -345,6 +357,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       cursor: kbd && document.activeElement === stage && !carry ? cursor : null,
       start: pending,
       sel: !(drag?.kind === "part" && drag.on) && !carry ? (sel?.kind === "part" ? sel.part : cardPart) : null,
+      coach: coachNow && (coachNow.marks.holes.length || coachNow.marks.pairs.length) ? { holes: coachNow.marks.holes, pairs: coachNow.marks.pairs, nano: coachNow.marks.nano } : null,
     });
   };
   const paintParts = () => {
@@ -375,7 +388,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
         looks.push({ id: w.id, a: G.hole(fixedEnd), b: to, color: w.color, index: i, open, ghost: true, selected: true });
         return;
       }
-      looks.push({ id: w.id, a: G.hole(w.a), b: G.hole(w.b), color: w.color, index: i, selected: (sel?.kind === "wire" && sel.id === w.id) || (card?.kind === "wire" && card.id === w.id) });
+      looks.push({ id: w.id, a: G.hole(w.a), b: G.hole(w.b), color: w.color, index: i, selected: (sel?.kind === "wire" && sel.id === w.id) || (card?.kind === "wire" && card.id === w.id) || coachNow?.marks.wire === w.id });
     });
     // a wire being laid: from its first hole to the pointer (or the hole it would go in)
     const from = drag?.kind === "wire" && drag.on ? drag.from : pending;
@@ -598,6 +611,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     $<HTMLElement>(".bb-press-row").hidden = !pressable;
     paintHint();
     paintPress();
+    paintCoach();
   };
 
   // the Serial Monitor and Plotter
@@ -651,7 +665,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     else if (view === "wires") h = w["hint.wires"];
     else if (view === "run") h = verdict?.stage === "run" && build.fsr && build.usb ? w["hint.press"] : verdict || lastFail || build.usb ? "" : w["hint.run"];
     hintEl.textContent = h;
-    showBtn.setAttribute("aria-label", w[`show.${view}` as "show.nano"]);
+    hintBtn.setAttribute("aria-label", w["coach.aria"]);
   };
   const paintPalette = () => {
     const w = W();
@@ -986,7 +1000,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       const part = t.part;
       const pl = build[part];
       const a = pl ? anchorOf(part, pl) : sc.trayAnchor(part);
-      const q = p ?? a;
+      // (a part on the mat lies lower than the board's plane: where the pointer meets the mat is where it was taken)
+      const q = (pl ? p : sc.planAt(e.clientX, e.clientY, TRAY_Z)) ?? a;
       drag = { kind: "part", part, from: pl ? "board" : "tray", rot: part === "nano" || !pl ? 0 : (pl as PartPlace).rot, grab: [a[0] - q[0], a[1] - q[1]], at: a, on: false, snap: null, why: null, ...base };
       take();
       return;
@@ -1082,8 +1097,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     if (drag.kind === "part") {
       const a: P2 = [p[0] + drag.grab[0], p[1] + drag.grab[1]];
       const s = snapPart(drag.part, drag.rot, a);
-      // (over the pad, it goes back: no marks, no reasons)
-      const toTray = onPad(p) && !s.place;
+      // (over the parts' corner of the mat, it goes back: no marks, no reasons)
+      const toTray = onPad(sc.planAt(e.clientX, e.clientY, TRAY_Z)) && !s.place;
       drag.at = a;
       drag.snap = s.place;
       drag.why = s.why;
@@ -1188,7 +1203,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     paintHintHeld(null);
     clearHeld();
     if (d.kind === "part") {
-      if (onPad(p) && !d.snap) {
+      if (onPad(sc?.planAt(e.clientX, e.clientY, TRAY_Z) ?? null) && !d.snap) {
         if (d.from === "board") {
           remember();
           build = removePart(build, d.part);
@@ -1632,6 +1647,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   // and then only moved, since the camera moves them every frame it turns
   const keyEls = new Map<string, HTMLButtonElement>();
   const labelEls = new Map<string, HTMLSpanElement>();
+  const dotEls = new Map<string, HTMLSpanElement>();
   const paintKeys = () => {
     if (!sc) return;
     const w = W();
@@ -1668,7 +1684,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       const b = held ? null : sc.trayBox(id);
       if (!b) continue;
       key(id, b, id === "usb" ? w["tray.plug"] : w["tray.pick"].replace("{part}", partName(id)));
-      const under = id === "usb" ? sc.toScreen([PAD.x0 + 38, PAD.y1 - 0.5, 0]) : ([b.x + b.w / 2, b.y + b.h + 3] as P2);
+      keyEls.get(id)!.classList.toggle("is-coach", coachNow?.marks.tray === id);
+      const under = id === "usb" ? sc.toScreen([PAD.x0 + 38, PAD.y1 - 0.5, TRAY_Z]) : ([b.x + b.w / 2, b.y + b.h + 3] as P2);
       if (under) name(id, under, w[`label.${id}`]);
     }
     if (build.nano && build.usb) {
@@ -1677,6 +1694,24 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     }
     for (const [id, el] of keyEls) if (!keys.has(id)) (el.remove(), keyEls.delete(id));
     for (const [id, el] of labelEls) if (!labels.has(id)) (el.remove(), labelEls.delete(id));
+    // the Hint's holes (a few at most; the Nano's thirty get an outline instead), pulsing over the board
+    const dots = new Set<string>();
+    const cm = coachNow?.marks;
+    if (cm && !cm.nano && cm.holes.length <= 4)
+      for (const h of cm.holes) {
+        const at = sc.toScreen([...G.hole(h), 0]);
+        if (!at) continue;
+        let el = dotEls.get(h);
+        if (!el) {
+          el = document.createElement("span");
+          el.className = "bb-coach-dot";
+          labelsEl.append(el);
+          dotEls.set(h, el);
+        }
+        el.style.transform = `translate(${at[0].toFixed(1)}px, ${at[1].toFixed(1)}px)`;
+        dots.add(h);
+      }
+    for (const [id, el] of dotEls) if (!dots.has(id)) (el.remove(), dotEls.delete(id));
   };
   keysEl.addEventListener("click", (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>("[data-key]");
@@ -1703,7 +1738,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     paintKeys();
   });
 
-  // ---------------------------------------------------------------------------------------- undo, start over, show me
+  // ---------------------------------------------------------------------------------------- undo, start over, the hint
   const undo = () => {
     const h = history.pop();
     if (!h) return;
@@ -1741,67 +1776,148 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     clearAll();
     note(W()["note.cleared"]);
   });
-  /** The build with the reference's parts (and wires) for the steps up to `upto`; the learner's other things stay when
-   *  they still fit. */
-  const withReference = (upto: "nano" | "parts" | "wires"): Build => {
-    let b: Build = { ...EMPTY_BUILD, nano: REFERENCE_BUILD.nano };
-    const keep: Build = build;
-    const tryPart = (kind: PartKind, pl: PartPlace | null) => {
-      if (!pl) return;
-      const r = placePart(b, kind, pl);
-      if (r.ok) b = r.build;
-    };
-    if (upto === "nano") {
-      tryPart("fsr", keep.fsr);
-      tryPart("resistor", keep.resistor);
-    } else {
-      tryPart("fsr", REFERENCE_BUILD.fsr);
-      tryPart("resistor", REFERENCE_BUILD.resistor);
+  /** The analog pin the sensor's other leg is wired to (what the sketch should read), A0 when none is yet. */
+  const wiredPin = (): string => {
+    const nl = netlist(build);
+    for (const ref of ["fsr:1", "fsr:2"]) {
+      const n = nl.netOf(ref);
+      const a = n?.nano.find((x) => /^A\d$/.test(x));
+      if (n && a && !n.nano.includes("5V")) return a;
     }
-    const wires = upto === "wires" ? REFERENCE_BUILD.wires : keep.wires;
-    for (const w of wires) {
-      const r = addWire(b, w.a, w.b, w.color, w.id);
-      if (r.ok) b = r.build;
-    }
-    return { ...b, usb: keep.usb };
+    return "A0";
   };
-  const showMe = () => {
-    remember();
+  /** Step 5: the wiring, then the sketch, then USB, the upload, whatever the run says, and at last the press. */
+  const runHint = (): Hint => {
+    const b = buildHint(build, "wires", readPin(), G.hole);
+    if (!b.done) return b;
+    const s = sketchHint(sk, wiredPin());
+    if (!s.done) return s;
+    if (!build.usb) return hint(RUN.usb, { tray: "usb" }, { kind: "usb" });
+    if (busy) return hint(RUN.wait);
+    if (!uploaded || changedSince()) return hint(RUN.upload, {}, { kind: "upload" });
+    if (lastFail) return hint({ en: `${lastFail.s.line.en} ${lastFail.s.hint.en}`, zh: `${lastFail.s.line.zh}${lastFail.s.hint.zh}` });
+    if (!verdict) return hint(RUN.upload, {}, { kind: "upload" });
+    if (verdict.ok) return hint(RUN.press, {}, { kind: "press" });
+    const v = verdict.symptom;
+    if (v.id === "wrong-baud") {
+      const c = compile(uploaded);
+      const begin = c.ok ? [...c.program.setup, ...c.program.loop].find((o) => o.kind === "begin") : undefined;
+      const baud = begin && begin.kind === "begin" ? begin.baud : 9600;
+      if ((MONITOR_BAUDS as readonly number[]).includes(baud)) {
+        const f = (x: string) => x.replaceAll("{monitor}", String(monitorBaud)).replaceAll("{sketch}", String(baud));
+        return hint({ en: f(RUN.baud.en), zh: f(RUN.baud.zh) }, {}, { kind: "baud", baud });
+      }
+    }
+    return hint({ en: `${v.line.en} ${v.hint.en}`, zh: `${v.line.zh}${v.hint.zh}` });
+  };
+  let coachOn = false;
+  let coachNow: Hint | null = null;
+  let pressTimer = 0;
+  const coachHint = (): Hint | null => {
+    if (view === "sketch") return sketchHint(sk, wiredPin());
+    if (!sc) return null;
+    if (view === "run") return runHint();
+    return buildHint(build, view, readPin(), G.hole);
+  };
+  /** Work the hint out again (after any change) and show it, with its marks on the board, the mat and the tiles. */
+  function paintCoach() {
+    const was = coachNow;
+    coachNow = coachOn ? coachHint() : null;
+    const h = coachNow;
+    hintBtn.setAttribute("aria-expanded", String(coachOn));
+    hintBtn.classList.toggle("is-on", coachOn);
+    coachEl.hidden = !h;
+    root.classList.toggle("has-coach", Boolean(h));
+    if (h) {
+      const w = W();
+      coachCap.textContent = h.done ? w["coach.done"] : w["coach.cap"];
+      const text = T(h.text);
+      if (coachText.textContent !== text) coachText.textContent = text;
+      coachDo.hidden = !h.act;
+      coachEl.classList.toggle("is-done", h.done);
+      root.style.setProperty("--bb-coach-h", `${coachEl.offsetHeight}px`);
+    }
+    sketchView.hint(h?.marks.tile ?? null);
+    if (!same(was?.marks ?? null, h?.marks ?? null)) {
+      paintMarks();
+      paintWires();
+      paintKeys();
+    }
+  }
+  /** "Do this step": the hint's one thing, as the learner would have done it (Undo takes it back). */
+  const doStep = () => {
+    const a = coachNow?.act;
+    if (!a) return;
+    if (carry) endCarry();
     sel = null;
     card = null;
     pending = null;
-    carry = null;
-    if (view === "nano" || view === "parts" || view === "wires") {
-      build = withReference(view);
+    if (a.kind === "nano" || a.kind === "part") {
+      const bare = removePart(build, a.kind === "nano" ? "nano" : a.part);
+      const r = a.kind === "nano" ? placeNano(bare, a.place) : placePart(bare, a.part, a.place);
+      if (r.ok) {
+        remember();
+        build = { ...r.build, usb: a.kind === "nano" ? false : build.usb };
+        announce(W()["live.placed"].replace("{part}", partName(a.kind === "nano" ? "nano" : a.part)));
+        commit();
+      }
+    } else if (a.kind === "wire") {
+      const r = addWire(build, a.a, a.b, a.color);
+      if (r.ok) {
+        remember();
+        build = r.build;
+        color = a.color;
+        paintPalette();
+        announce(W()["live.wireDone"].replace("{a}", a.a).replace("{b}", a.b));
+        commit();
+      }
+    } else if (a.kind === "unwire") {
+      remember();
+      build = removeWire(build, a.id);
+      announce(W()["live.wireGone"]);
       commit();
-      return;
-    }
-    if (view === "sketch") {
-      sk = stateOf(REFERENCE_SKETCH, sk.tiles);
+    } else if (a.kind === "sketch") {
+      remember();
+      sk = a.state;
       verifyOut = null;
+      sketchView.mark(null);
       sketchView.paint();
       save();
-      verify();
+      paintVerify();
       paintAll();
-      return;
+    } else if (a.kind === "usb") {
+      if (!build.usb) toggleUsb();
+    } else if (a.kind === "upload") upload();
+    else if (a.kind === "baud") {
+      monitorBaud = a.baud;
+      baudSel.value = String(a.baud);
+      save();
+      restartBoard();
+      paintStatus();
+    } else if (a.kind === "press") {
+      // (a firm press held for a moment, as a finger would)
+      holdLevel = 0.75;
+      level = 0.75;
+      root.classList.add("was-pressed");
+      kick();
+      window.clearTimeout(pressTimer);
+      pressTimer = window.setTimeout(() => {
+        holdLevel = 0;
+        kick();
+      }, 1800);
     }
-    // run: a build and a sketch that work (the learner's, when they do), the monitor at the sketch's rate, USB in, upload
-    if (!checkWiring(build, readPin()).ok) build = { ...REFERENCE_BUILD };
-    const v = run(build, sketchOf(sk), { monitorBaud: 9600 });
-    if (!v.ok) {
-      sk = stateOf(REFERENCE_SKETCH, sk.tiles);
-      sketchView.paint();
-      if (!run(build, sketchOf(sk), { monitorBaud: 9600 }).ok) build = { ...REFERENCE_BUILD };
-    }
-    const c = compile(sketchOf(sk));
-    const begin = c.ok ? [...c.program.setup, ...c.program.loop].find((o) => o.kind === "begin") : undefined;
-    monitorBaud = begin && begin.kind === "begin" && (MONITOR_BAUDS as readonly number[]).includes(begin.baud) ? begin.baud : 9600;
-    baudSel.value = String(monitorBaud);
-    build = plugUsb(build, true);
-    commit();
-    upload();
+    paintCoach();
   };
-  showBtn.addEventListener("click", showMe);
+  hintBtn.addEventListener("click", () => {
+    coachOn = !coachOn;
+    paintCoach();
+  });
+  coachDo.addEventListener("click", doStep);
+  $<HTMLButtonElement>(".bb-coach-x").addEventListener("click", () => {
+    coachOn = false;
+    paintCoach();
+    hintBtn.focus();
+  });
 
   // the panel's buttons
   $<HTMLButtonElement>('[data-act="verify"]').addEventListener("click", verify);
@@ -1984,6 +2100,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       window.clearTimeout(busyTimer);
       window.clearTimeout(noteTimer);
       window.clearTimeout(moveTimer);
+      window.clearTimeout(pressTimer);
       ro.disconnect();
       ro2.disconnect();
       io.disconnect();

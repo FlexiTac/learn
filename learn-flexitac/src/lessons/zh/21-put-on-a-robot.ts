@@ -9,7 +9,7 @@ const TAXELS = ROWS * COLS;
 export const zh: LessonZh = {
   id: "put-on-a-robot",
   title: "把 FlexiTac 装到机器人上",
-  kicker: "在机器人上",
+  kicker: "从零件到机器人",
   lede: `两块传感垫、两块读取板、两根 USB 线：看 FlexiTac 怎样装到夹爪的手指上，它的触觉又怎样传到电脑。然后自己操控夹爪，感受它抓住的东西。`,
   features: [
     { title: "贴上去", text: "聚酰亚胺胶带把传感垫固定住，尾线绕过手指折到背面" },

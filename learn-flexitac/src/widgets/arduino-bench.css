@@ -486,13 +486,13 @@
   transform: translateX(100%);
   opacity: 0;
   visibility: hidden;
-  transition: transform 0.5s var(--ease), opacity 0.3s var(--ease), visibility 0s linear 0.5s;
+  transition: transform 0.5s var(--ease), opacity 0.3s var(--ease), visibility 0s linear 0.5s, width 0.5s var(--ease);
 }
 .w-bench:not([data-view="nano"]) .wb-panel {
   transform: none;
   opacity: 1;
   visibility: visible;
-  transition: transform 0.5s var(--ease), opacity 0.3s var(--ease), visibility 0s;
+  transition: transform 0.5s var(--ease), opacity 0.3s var(--ease), visibility 0s, width 0.5s var(--ease);
 }
 .wb-sec {
   display: none;
@@ -726,51 +726,110 @@
 .wb-mon li:last-child {
   color: var(--accent);
 }
-/* step 4: 8 pins against 384 crossings, each pin joined to the one crossing it could read */
-.wb-pins-cap {
-  margin: 0 0 8px;
-  font-size: 12px;
-  color: var(--muted);
+/* step 4: how 8 pins read 384 crossings. A switch on every sense and drive line; the closed pair joins one crossing to
+   A0, its 5 V path in the current's pink and its sense line in A0's teal, as on the bench; the map fills as the scan
+   passes, the pressed crossings pink by their reading */
+.wb-pins-q {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
 }
-.wb-pins-cap-b {
-  margin: 8px 0 14px;
+.wb-pins-cap {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
 }
 .wb-pins-fig {
   display: block;
   width: 100%;
   height: auto;
+  overflow: visible;
 }
 .wb-pins-fig text {
-  font-size: 7.5px;
+  font-size: 5.6px;
   fill: var(--muted);
-  text-anchor: middle;
 }
-.wb-pins-fig circle {
+.wb-pins-fig text.mono {
+  fill: var(--ink);
+}
+.wb-pad-line {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 0.55;
+}
+.wb-rail {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 0.8;
+  stroke-linecap: round;
+}
+.wb-sw {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 0.8;
+  stroke-linecap: round;
+}
+.wb-sw-d.is-on {
+  stroke: var(--ft-signal);
+  stroke-width: 1.3;
+}
+.wb-sw-s.is-on {
+  stroke: var(--ft-hotspot);
+  stroke-width: 1.3;
+}
+.wb-lit {
+  fill: none;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wb-lit-d {
+  stroke: var(--ft-signal);
+}
+.wb-lit-s {
+  stroke: var(--ft-hotspot);
+}
+.wb-term-d {
+  fill: var(--ft-signal);
+}
+.wb-term-s {
   fill: var(--ft-hotspot);
 }
-.wb-pins-line {
-  fill: none;
-  stroke: var(--ft-hotspot);
-  stroke-width: 0.8;
-  opacity: 0.7;
-}
-.wb-pins-fig rect {
+.wb-cell {
   fill: var(--line-strong);
-  opacity: 0.55;
+  opacity: 0.5;
 }
-:root[data-theme="dark"] .wb-pins-fig rect {
+.wb-cell.is-read {
   fill: var(--muted);
-  opacity: 0.32;
+  opacity: 0.6;
+}
+.wb-cell.is-hot {
+  fill: var(--ft-signal);
+}
+:root[data-theme="dark"] .wb-cell:not(.is-read) {
+  fill: var(--muted);
+  opacity: 0.3;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .wb-pins-fig rect {
+  :root:not([data-theme="light"]) .wb-cell:not(.is-read) {
     fill: var(--muted);
-    opacity: 0.32;
+    opacity: 0.3;
   }
 }
-.wb-pins-fig rect.is-read {
-  fill: var(--ft-hotspot);
-  opacity: 1;
+.wb-ring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 0.8;
+}
+.wb-pins-stat {
+  min-height: 1.5em;
+  margin: 10px 0 10px;
+  font-size: 11px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 .wb-pins-note {
   margin: 0;

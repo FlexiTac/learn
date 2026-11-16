@@ -1,7 +1,7 @@
 // Lesson 2.1: Arduino reads one force sensor (2026-11-09, PLAN-section2-basics.md). A short meeting with the Arduino Nano
 // (modelled on Learn Arduino's "Meet the board" and "Feel the force", structure only: no assets reused), then one
-// force-sensing resistor (FSR) read through a 10 kΩ pull-down on A0 with analogRead, and why one pin per sensor cannot
-// read FlexiTac's 384 crossings. The stage is src/widgets/arduino-bench.ts (a realistic render of the bench,
+// force-sensing resistor (FSR) read through a 10 kΩ pull-down on A0 with analogRead, and, leading into Lesson 2.3, how
+// 8 analog pins read FlexiTac's 384 crossings: a switch on each line joins one crossing at a time to A0 (2026-11-15). The stage is src/widgets/arduino-bench.ts (a realistic render of the bench,
 // flexitac-anatomy/figures/bench); each step picks its view. Numbers: the Arduino and Interlink docs (external), the
 // shared data (R1, the ADC, the frame rate), and an illustrative FSR curve through Adafruit's table
 // (src/widgets/bench/fsr.ts, which Lesson 2.3 reuses).
@@ -74,8 +74,12 @@ sending it. Those are the 0 to 255 readings you met in Lesson 1.3.</p>
 <p>Each crossing of a FlexiTac pad works like a tiny FSR. It is a top line and a bottom line with Velostat between, and
 its resistance falls when you press. There is one difference. Velostat conducts a little even when nothing presses it,
 so an untouched crossing never reads exactly 0.</p>
-<p>And the Nano has 8 analog pins, while one pad has ${TAXELS} crossings. How one A0 reads them all is the next
-lesson.</p>`,
+<p>One pad has ${TAXELS} crossings, and the Nano has 8 analog pins, so one pin per crossing cannot work. FlexiTac does
+not need that. The pad has only ${ROWS} sense lines and ${COLS} drive lines, and every crossing is where one of each meets.
+A switch on each line picks one crossing: 5 V goes onto its drive line, and its sense line is joined to A0. A0 then reads
+that crossing alone, the same way it reads the FSR here. Then the switches move to the next crossing, through all
+${TAXELS} of them ${FRAME_HZ} times a second. Step 4 shows this slowed down, and Lesson 2.3 builds the switches from two
+kinds of chip.</p>`,
   wiring: {
     intro: "Three jumper wires make the circuit. Each FSR pin and each resistor leg shares a short row of five holes with a wire's end, and the holes of one row are joined inside the board. The resistor reaches across the groove to a row of its own, where the black wire meets it. Neither the FSR nor the resistor has a right way round, and either GND pin will do.",
     rows: [
@@ -149,8 +153,8 @@ void loop() {
       widgetView: { view: "press" },
     },
     {
-      title: "One sensor, one pin",
-      text: `The Nano has 8 analog pins, but a FlexiTac pad has ${TAXELS} crossings, each one a tiny force sensor. One pin per sensor can't read them all. Lesson 2.3 shows how one A0 does.`,
+      title: `8 pins, ${TAXELS} crossings`,
+      text: `How can 8 analog pins read ${TAXELS} crossings? Not with a pin each: switches join one crossing at a time to A0 and step through all ${TAXELS}, ${FRAME_HZ} times a second. Lesson 2.3 shows the chips.`,
       widgetView: { view: "pins" },
     },
   ],
@@ -177,6 +181,17 @@ void loop() {
       choices: ["250", "512", "1023", "2500"],
       answer: 1,
       why: `The ADC splits 0–5 V into ${STEPS} steps, so 2.5 V is halfway: 2.5 × ${STEPS} / 5 = ${adcCode(2.5)}.`,
+    },
+    {
+      q: `How does the reading board read ${TAXELS} crossings with the Nano's 8 analog pins?`,
+      choices: [
+        `Each analog pin reads ${TAXELS / 8} crossings at once`,
+        "Switches join one crossing at a time to A0",
+        "It reads 8 crossings and works out the rest",
+        `The pad has ${TAXELS} wires, one for each crossing`,
+      ],
+      answer: 1,
+      why: `Switches put 5 V on one drive line and join one sense line to A0, so A0 reads only the crossing where the two meet. Then they move on, through all ${TAXELS} crossings ${FRAME_HZ} times a second.`,
     },
   ],
 };

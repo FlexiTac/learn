@@ -31,13 +31,15 @@ const THUMB: Record<string, string> = {
   "bytes-to-touch": "L05",
   "build-your-own": "L06",
   "put-on-a-robot": "L07",
-  // the 1.6 placeholder (real robot footage to come): the "what comes next" sketch, until the video gives it a frame
+  // the real-robot placeholder (out of the course since 2026-11-16): the "what comes next" sketch
   "real-robot": "media/covers/next",
+  // 2026-11-16: 1.5, its assembly bench put together (step 6, angled view)
+  "put-it-together": "L19",
   // 2026-11-09: Section 2's basics. 2.1 is a crop of its own bench render (public/media/bench: the base and the wires),
   // 2.2 a capture of its chips-lab widget (step 1, the multiplexer on channel 8; it has words, so a Chinese one too)
   "arduino-fsr": "L15",
   "two-chips": "L16",
-  // 2026-11-12: 2.2 is its finished build on the 3D bench (the step-5 view after "Show me"), 2.4 the
+  // 2026-11-12: 2.2 is its finished build on the 3D bench (step 5, on the blue mat since 2026-11-15), 2.4 the
   // Bottom FPC's 32 gold fingers from its step 1 (neither has words)
   "build-the-circuit": "L17",
   "fingers-and-cables": "L18",

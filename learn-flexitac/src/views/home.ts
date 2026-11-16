@@ -4,7 +4,7 @@ import { lang, loc, locSection, onLang, t } from "../i18n";
 import { byId, chapterLessons, chapterRange, LESSONS, lessonNo, SECTIONS } from "../lessons";
 import { load } from "../state/store";
 import { onTheme, reducedMotion, theme } from "../state/theme";
-import type { Chapter, CoverLoop, Section, Theme, WidgetCtx, WidgetInstance } from "../types";
+import type { Chapter, CoverLoop, Lesson, Section, Theme, WidgetCtx, WidgetInstance } from "../types";
 import { esc, h } from "../ui/dom";
 import { icon } from "../ui/icons";
 import { lc } from "../ui/lessoncolor";
@@ -13,8 +13,12 @@ import { figThumb } from "../ui/thumbs";
 // Chapter covers (src/lessons/index.ts SECTIONS, Chapter.cover), each taken from the chapter's own figure or widget:
 // Section 1's are short muted loops (LOOPS below: the pad, Fig 1's feel mode; the board, Fig 3 scanning a press; use it,
 // the real sensor and its live heatmap from the project video); Sections 2 and 3 have stills in both themes,
-// public/media/covers/<name>-{light,dark}.webp, made by scripts/covers.mjs from Fig 5 and the simulation cards. A card
-// opens its chapter's first lesson; "Coming next" (no lessons yet) is not a link and is styled as coming soon.
+// public/media/covers/<name>-{light,dark}.webp, made by scripts/covers.mjs from Fig 5 and the simulation cards.
+// A card is not one link (2026-11-16, user: the whole card opened only its first lesson). A click on its picture lays a
+// chooser over the picture, one big box per lesson (number, title, a line of its lede); Escape, a click elsewhere or
+// the × closes it. Under the picture, each lesson's row is its own link, and it answers a hover (a tint of its colour, a
+// small move, its arrow). A chapter with one lesson: the picture is a plain link to it. "Coming next" (no lessons yet) is
+// not a link and is styled as coming soon.
 // In Chinese, the stills with words in them (the figure's map titles, the cards' labels) have a Chinese picture,
 // <name>-zh-<theme>.webp (scripts/covers.mjs --lang zh); the others are the same in both languages.
 const ZH_COVERS = new Set(["mount", "grasp", "points", "springs", "loop", "chips"]);
@@ -32,7 +36,7 @@ const STILL = (name: string, t: Theme) =>
 //   left out (it stays in the lesson), so the board and the pad fill the card; public/media/board, one set per theme
 //   (flexitac-anatomy/film/board-cover-src).
 // - useit: the real sensor and its live heatmap, from the project video (one set for both themes).
-// - gripper: Fig 5 as Lesson 1.5 step 4 "Extenders and cables" plays it, a 12.4 s seamless loop: the FFC extenders seat
+// - gripper: Fig 5 as Lesson 1.6 step 4 "Extenders and cables" plays it, a 12.4 s seamless loop: the FFC extenders seat
 //   on the tails, the flat cables run to the two reading boards, the gripper closes, opens wide and rests, then the
 //   cables fold away; no words in it; public/media/gripper, one set per theme (flexitac-anatomy/film/gripper-cover-src).
 const MEDIA = `${import.meta.env.BASE_URL}media/`;
@@ -196,29 +200,60 @@ function coverHtml(c: Chapter): string {
 /** A chapter's card: its cover, its name and lesson numbers, one or two sentences, its lessons. */
 function chapterCard(c: Chapter, done: string[]): string {
   const ls = chapterLessons(c);
-  const pic = `<span class="fig-card-img"${"loop" in c.cover ? ` data-card-loop="${c.cover.loop}" role="img" aria-label="${esc(c.alt)}"` : ""}>${coverHtml(c)}</span>`;
+  const loop = "loop" in c.cover ? ` data-card-loop="${c.cover.loop}"` : "";
+  // (a picture with buttons in it is not role=img: its loop's words go to the chooser button instead)
+  const pic = (inner = "") => `<div class="fig-card-img"${loop}${loop && !inner ? ` role="img" aria-label="${esc(c.alt)}"` : ""}>${coverHtml(c)}${inner}</div>`;
   if (!ls.length)
     // Section 2's "Coming next": no lesson yet, so no link
     return `<div class="card fig-card is-soon" role="group" aria-label="${t("home.soonAria", { title: esc(c.title) })}">
-      ${pic.replace('<span class="fig-card-img">', `<span class="fig-card-img"><span class="soon-pill mono">${t("home.soonPill")}</span>`)}
+      ${pic(`<span class="soon-pill mono">${t("home.soonPill")}</span>`)}
       <span class="fig-card-body">
         <span class="kicker mono">${t("home.soonKicker", { title: esc(c.title) })}</span>
         <span class="fig-card-go mono is-soon">${icon("soon")}<span>${t("home.soonPill")}</span></span>
       </span>
     </div>`;
   const first = ls[0];
-  return `<a class="card fig-card" href="#/lesson/${first.id}" style="${lc(first.n)}">
-    ${pic}
+  const range = chapterRange(c);
+  const tick = (l: Lesson) => (done.includes(l.id) ? `<span class="tick" aria-label="${t("state.done")}">${icon("check")}</span>` : "");
+  const named = (l: Lesson) => `<span class="visually-hidden">${t("lesson.noTitle", { no: lessonNo(l) })}</span>`;
+  // the picture: a chooser for two lessons or more, a plain link for one
+  const opener =
+    ls.length > 1
+      ? `<button type="button" class="fig-card-pick" aria-expanded="false" aria-label="${esc(t("home.pickAria", { title: c.title, range }))}"><span class="fig-card-pick-hint mono">${t("home.pick")}</span></button>`
+      : `<a class="fig-card-pick" href="#/lesson/${first.id}" aria-label="${esc(t("lesson.noTitle", { no: lessonNo(first) }))} ${esc(loc(first).title)}"></a>`;
+  const chooser =
+    ls.length > 1
+      ? `<div class="fig-card-menu" hidden>
+        <button type="button" class="fig-card-x" aria-label="${t("home.pickClose")}">${icon("close")}</button>
+        ${ls
+          .map(
+            (l) => `<a class="fig-card-opt" href="#/lesson/${l.id}" style="${lc(l.n)}">
+          <span class="lesson-num" aria-hidden="true">${lessonNo(l)}</span>
+          <span class="fig-card-opt-text">${named(l)}<span class="fig-card-opt-title">${esc(loc(l).title)}${tick(l)}</span><span class="fig-card-opt-lede">${esc(plain(loc(l).lede))}</span></span>
+          ${icon("chevron")}
+        </a>`,
+          )
+          .join("")}
+      </div>`
+      : "";
+  return `<div class="card fig-card" style="${lc(first.n)}">
+    ${pic(opener + chooser)}
     <span class="fig-card-body">
-      <span class="kicker mono">${esc(c.title)} · ${esc(chapterRange(c).toLowerCase())}</span>
+      <span class="kicker mono">${esc(c.title)} · ${esc(range.toLowerCase())}</span>
       <span class="fig-card-lessons">${ls
         .map(
-          (l, i) => `<span class="fig-card-go mono" style="${lc(l.n)}"><span class="lesson-num" aria-hidden="true">${lessonNo(l)}</span><span class="visually-hidden">${t("lesson.noTitle", { no: lessonNo(l) })}</span><span class="fig-card-name">${esc(loc(l).title)}</span>${done.includes(l.id) ? ` <span class="tick" aria-label="${t("state.done")}">${icon("check")}</span>` : i === 0 ? icon("chevron") : ""}</span>`,
+          (l) => `<a class="fig-card-go mono" href="#/lesson/${l.id}" style="${lc(l.n)}"><span class="lesson-num" aria-hidden="true">${lessonNo(l)}</span>${named(l)}<span class="fig-card-name">${esc(loc(l).title)}</span>${tick(l)}<span class="fig-card-arrow">${icon("chevron")}</span></a>`,
         )
         .join("")}</span>
     </span>
-  </a>`;
+  </div>`;
 }
+/** A lede as plain text (it may hold a <b> or an entity): one line of it shows in the chooser. */
+const plain = (html: string) => {
+  const d = document.createElement("div");
+  d.innerHTML = html;
+  return d.textContent ?? "";
+};
 
 /** One section: its title (over a thin band of its lessons' colours), a line about it and its chapters' cards. */
 function sectionBlock(sec: Section, done: string[]): string {
@@ -280,7 +315,43 @@ export function renderHome(outlet: HTMLElement): () => void {
       src: LOOPS[box.dataset.cardLoop as CoverLoop],
     }),
   );
+  // the chapter cards' choosers: one open at a time; Escape or a click outside it closes it
+  let open: HTMLElement | null = null;
+  const close = (focus = false) => {
+    if (!open) return;
+    const card = open;
+    open = null;
+    card.classList.remove("is-picking");
+    card.querySelector<HTMLElement>(".fig-card-menu")!.hidden = true;
+    const btn = card.querySelector<HTMLButtonElement>("button.fig-card-pick")!;
+    btn.setAttribute("aria-expanded", "false");
+    if (focus) btn.focus();
+  };
+  const onClick = (e: MouseEvent) => {
+    const tgt = e.target as HTMLElement;
+    const pick = tgt.closest<HTMLButtonElement>("button.fig-card-pick");
+    if (pick) {
+      const card = pick.closest<HTMLElement>(".fig-card")!;
+      close();
+      open = card;
+      card.classList.add("is-picking");
+      card.querySelector<HTMLElement>(".fig-card-menu")!.hidden = false;
+      pick.setAttribute("aria-expanded", "true");
+      // (from the keyboard, the first lesson takes the focus; after a mouse click no box looks chosen already)
+      if (e.detail === 0) card.querySelector<HTMLElement>(".fig-card-opt")?.focus({ preventScroll: true });
+      return;
+    }
+    if (tgt.closest(".fig-card-x")) return close(true);
+    if (open && !open.querySelector(".fig-card-menu")!.contains(tgt)) close();
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape" && open) close(true);
+  };
+  document.addEventListener("click", onClick);
+  document.addEventListener("keydown", onKey);
   return () => {
+    document.removeEventListener("click", onClick);
+    document.removeEventListener("keydown", onKey);
     offHero();
     for (const off of offCards) off();
   };

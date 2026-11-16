@@ -3,7 +3,6 @@
    remaps --accent and its tints to that colour, so everything inside it that already uses the accent follows. */
 
 .lesson-view,
-.strip-card,
 .lesson-card,
 .fig-card,
 .outline-list li,
@@ -19,7 +18,6 @@
 }
 @supports (color: color-mix(in srgb, red 50%, blue)) {
   .lesson-view,
-  .strip-card,
   .lesson-card,
   .fig-card,
   .outline-list li,
@@ -90,6 +88,37 @@
   border-color: var(--accent-strong);
   color: var(--on-lc);
 }
+/* "Next lesson" (src/ui/steps.ts): solid ink, so it never looks like this lesson's own buttons, whatever its colour; a
+   ring goes out from it twice when it appears */
+.lesson-view .btn-primary.btn-next-lesson:not(:disabled) {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+  animation: next-lesson-in 1.4s var(--ease) 0.2s 2;
+}
+.lesson-view .btn-primary.btn-next-lesson:not(:disabled):hover {
+  background: color-mix(in srgb, var(--ink) 82%, var(--bg));
+  border-color: color-mix(in srgb, var(--ink) 82%, var(--bg));
+  color: var(--bg);
+}
+@keyframes next-lesson-in {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lesson-view .btn-primary.btn-next-lesson:not(:disabled) {
+    animation: none;
+  }
+}
+.next-lesson-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
 .lesson-view .q-n {
   border-color: var(--accent-line);
   color: var(--accent);
@@ -104,42 +133,6 @@
 .lesson-view .stage.just-done {
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent), var(--shadow);
-}
-
-/* strip: left colour bar + number chip */
-.strip-card {
-  padding-left: 12px;
-  overflow: hidden;
-}
-.strip-card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--accent);
-}
-.strip-name {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  -webkit-line-clamp: unset;
-}
-.strip-title-text {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  padding-top: 2px;
-}
-.strip-card:hover {
-  border-color: var(--accent-line);
-}
-.strip-card.is-current {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
-  background: linear-gradient(90deg, var(--accent-soft), transparent 70%), var(--card);
 }
 
 /* ---------------------------------------------------------------- shell: progress pips */
@@ -212,9 +205,6 @@
 .fig-card::before {
   inset: 0 0 auto;
   height: 3px;
-}
-.fig-card:hover {
-  border-color: var(--accent-line);
 }
 .fig-card-go .icon {
   color: var(--accent);

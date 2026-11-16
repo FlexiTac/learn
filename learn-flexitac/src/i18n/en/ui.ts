@@ -92,6 +92,8 @@ export const UI_EN = {
   "steps.show": "Show me",
   "steps.next": "Next step",
   "steps.done": "Done",
+  "steps.nextLesson": "Next lesson",
+  "steps.nextLessonAria": "Next lesson: {no} {title}",
 
   // ------------------------------------------------------------------ quiz (src/ui/quiz.ts)
   "quiz.title": "Check yourself",
@@ -99,14 +101,6 @@ export const UI_EN = {
   "quiz.wrong": "<b>Not quite.</b> Have another look and try again.",
   "quiz.score": "{right} of {n} right",
   "quiz.complete": " · lesson complete",
-
-  // ------------------------------------------------------------------ lesson strip (src/ui/strip.ts)
-  "strip.title": "Lessons",
-  "strip.aria": "Lessons",
-  "strip.prev": "Previous: {title}",
-  "strip.noPrev": "No previous lesson",
-  "strip.next": "Next: {title}",
-  "strip.noNext": "No next lesson",
 
   // ------------------------------------------------------------------ "Try it yourself" (src/ui/codecard.ts, highlight.ts)
   "code.try": "Try it yourself",
@@ -180,6 +174,9 @@ export const UI_EN = {
   "home.resume": "Resume lesson {no}",
   "home.all": "All lessons",
   "home.nextUp": "{done} done · next up: {lesson}",
+  "home.pick": "Choose a lesson",
+  "home.pickAria": "{title}, {range}: choose a lesson",
+  "home.pickClose": "Close",
   "home.soonAria": "{title}: coming soon",
   "home.soonPill": "Coming soon",
   "home.soonKicker": "{title} · to be continued",

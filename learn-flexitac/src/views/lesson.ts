@@ -1,14 +1,16 @@
 // Lesson page: stage (figure / widget / media) + guided steps, right panel with tabs, "Try it yourself" (off for now:
-// SHOW_CODE_CARD; the Code tab shows the code instead), lesson strip.
+// SHOW_CODE_CARD; the Code tab shows the code instead). The lesson strip under it was removed on 2026-11-15 (user: its
+// cards drew learners off to other lessons before they found the steps); the steps bar's last step leads on instead
+// ("Next lesson"), and a lesson without steps has the same button at the end of its overview.
 // A language switch (src/i18n) repaints the words in place and keeps the rest: the guided step on show and the figure's
 // pose (the figure gets setLang: a live act, never a reload unless it cannot switch live), the widget (ctx.onLang), the
-// open tab, the code card's values and output, an open detail window. Only the panel's text, the strip and the steps
-// bar's words are drawn again.
+// open tab, the code card's values and output, an open detail window. Only the panel's text and the steps bar's words
+// are drawn again.
 import { FigureHost, type FigureMode, type FigureStatus } from "../figure/FigureHost";
 import { lang, loc, onLang, t } from "../i18n";
 import { FLAT_QUERY, WIDE_QUERY } from "../state/layout";
 import { onTheme, reducedMotion, theme } from "../state/theme";
-import { load, update } from "../state/store";
+import { load, markDone, update } from "../state/store";
 import type { CodeSample, DemoId, Lesson, LessonCtx, StageId, WidgetInstance } from "../types";
 import { loadWidget } from "../widgets";
 import { badge, sourceChips, specRows } from "../ui/bits";
@@ -21,8 +23,7 @@ import { demoHost, whenReady, type DemoHost } from "../ui/demo";
 import { detailsWindow } from "../ui/details";
 import { lc } from "../ui/lessoncolor";
 import { quiz } from "../ui/quiz";
-import { openingStep, stepsBar, type StepsBar } from "../ui/steps";
-import { lessonStrip } from "../ui/strip";
+import { nextLessonButton, openingStep, stepsBar, type StepsBar } from "../ui/steps";
 import { stageCard, type StageCard } from "../ui/stagecard";
 import { lessonNo } from "../lessons";
 
@@ -279,7 +280,7 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
         if (!view.isConnected) return;
         slot.innerHTML = "";
         if (lesson.widgetCard && !lesson.figure) card = stageCard(slot, lesson.widget!);
-        widget = mount(card ? card.body : slot, { lesson, figure, theme, onTheme: ctx.onTheme, reducedMotion, lang, onLang: ctx.onLang });
+        widget = mount(card ? card.body : slot, { lesson, figure, theme, onTheme: ctx.onTheme, reducedMotion, lang, onLang: ctx.onLang, complete: () => markDone(lesson.id) && onComplete() });
         if (viewing) widget.view?.(lesson.steps?.[stepNow]?.widgetView);
         card?.attach(widget);
       })
@@ -508,6 +509,13 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
     </ul>
     <div class="prose">${L.overview}</div>`;
     if (L.quiz?.length) pane("overview").append(quiz(lesson, onComplete));
+    // (no steps bar to lead on from: the overview ends with the way to the next lesson)
+    const onward = lesson.steps?.length ? null : nextLessonButton(lesson);
+    if (onward) {
+      const row = h("p", { class: "next-lesson-row" });
+      row.append(onward);
+      pane("overview").append(row);
+    }
 
     // Parts (Lesson 2.1: what the build needs)
     pane("parts").innerHTML = L.parts
@@ -626,8 +634,7 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
     panel.append(card.el);
   }
 
-  let strip = lessonStrip(lesson);
-  view.append(stage, panel, strip);
+  view.append(stage, panel);
   if (lesson.steps?.some((s) => s.demo)) {
     const host = demoHost({ stage, stageBody }, ctx, () => {
       // closed by the learner: stays closed until the step changes (the band stays, and the figure's labels may use it)
@@ -659,9 +666,6 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
       bar?.relabel();
       if (card && lesson.code) card.relabel(loc(lesson).code ?? lesson.code);
       details?.relabel();
-      const next = lessonStrip(lesson);
-      strip.replaceWith(next);
-      strip = next;
       const ws = stageBody.querySelector<HTMLElement>(".widget-slot > .figure-status");
       if (ws && !widget) ws.textContent = t("widget.loading");
     }),

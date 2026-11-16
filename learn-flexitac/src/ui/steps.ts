@@ -2,7 +2,9 @@
 // "Show me" (`show`: a scripted press, the pad taken apart) that plays once the step is in its pose.
 //   button   "Show me"   the step is not reached yet (its pose, then its show) or it is reached and has a show left
 //            "Next step" moves on: reaches the next step (plays its pose)
-//            "Done"      the last step, shown
+//            "Next lesson"  the last step, shown: a solid ink button (unlike the lesson colour of the buttons
+//                          before it) that opens the next lesson; "Done", disabled, after the course's last lesson
+//                          (2026-11-15, user, with the lesson strip removed)
 // Completing every step marks the lesson done. Jumping to step k (its dot) replays the poses of steps 1..k so the figure
 // lands in the same pose no matter where you start; shows are never replayed.
 // A first step marked `start` is the lesson's starting pose (lesson.figure.initial puts the figure there): the lesson
@@ -22,16 +24,26 @@
 import { loc, t } from "../i18n";
 import type { FigAct, Lesson } from "../types";
 import type { FigureHost } from "../figure/FigureHost";
+import { lessonNo, neighbours } from "../lessons";
 import { load, markDone, migrateSteps, update } from "../state/store";
 import { h } from "./dom";
 import { icon } from "./icons";
 
 const asList = (a: FigAct | FigAct[] | undefined): FigAct[] => (a ? (Array.isArray(a) ? a : [a]) : []);
-const goLabels = () => ({
+const onwardLabel = () => `<span>${t("steps.nextLesson")}</span>${icon("chevron")}`;
+const goLabels = (onward: boolean) => ({
   show: `${icon("play")}<span>${t("steps.show")}</span>`,
   next: `<span>${t("steps.next")}</span>${icon("chevron")}`,
-  done: `${icon("check")}<span>${t("steps.done")}</span>`,
+  done: onward ? onwardLabel() : `${icon("check")}<span>${t("steps.done")}</span>`,
 });
+const onwardAria = (next: Lesson) => t("steps.nextLessonAria", { no: lessonNo(next), title: loc(next).title });
+
+/** The way on to the lesson after this one, as the steps bar's last button looks (null after the course's last). */
+export function nextLessonButton(lesson: Lesson): HTMLAnchorElement | null {
+  const { next } = neighbours(lesson);
+  if (!next) return null;
+  return h("a", { class: "btn-primary btn-next-lesson", href: `#/lesson/${next.id}`, "aria-label": onwardAria(next) }, onwardLabel());
+}
 
 /** The guided-steps bar; relabel() paints its words again in the site's language. */
 export type StepsBar = HTMLElement & { relabel(): void };
@@ -93,6 +105,7 @@ export function stepsBar(
   const kicker = el.querySelector<HTMLElement>(".steps-kicker")!;
   const text = el.querySelector<HTMLElement>(".steps-text")!;
   const go = el.querySelector<HTMLButtonElement>("[data-go]")!;
+  const { next: nextLesson } = neighbours(lesson);
 
   const reached = () => load().steps[lesson.id] ?? 0;
   const paint = () => {
@@ -103,11 +116,15 @@ export function stepsBar(
     // all three labels share the button's grid cell (only the current one is visible), so the button keeps one width
     // and the step text beside it never rewraps when the label changes
     const cur = !reachedNow || !shown ? "show" : last ? "done" : "next";
-    const labels = goLabels();
+    const labels = goLabels(Boolean(nextLesson));
     go.innerHTML = (Object.keys(labels) as (keyof typeof labels)[])
       .map((k) => `<span class="go-label${k === cur ? "" : " go-sizer"}"${k === cur ? "" : ' aria-hidden="true"'}>${labels[k]}</span>`)
       .join("");
-    go.disabled = shown && last;
+    const onward = cur === "done" && Boolean(nextLesson);
+    go.disabled = cur === "done" && !nextLesson;
+    go.classList.toggle("btn-next-lesson", onward);
+    if (onward) go.setAttribute("aria-label", onwardAria(nextLesson!));
+    else go.removeAttribute("aria-label");
     for (const d of el.querySelectorAll<HTMLElement>(".step-dot")) {
       const k = Number(d.dataset.k);
       d.classList.toggle("is-current", k === i);
@@ -179,6 +196,9 @@ export function stepsBar(
     else if (i < steps.length - 1) {
       i++;
       reach(i, false);
+    } else if (nextLesson) {
+      location.hash = `#/lesson/${nextLesson.id}`;
+      return;
     }
     paint();
   });

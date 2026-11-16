@@ -1,5 +1,6 @@
-// Lesson 2.2's workbench in 3D (2026-11-12): the half-size breadboard on the left, a foam pad on the right where the
-// parts wait in a neat row, and the jumper wires between holes, all drawn live with three.js from the same models the
+// Lesson 2.2's workbench in 3D (2026-11-12): the half-size breadboard on the left, the parts waiting in a neat row to
+// its right, the jumper wires between holes, and under it all a blue anti-static (ESD) work mat with a printed grid and
+// rulers (2026-11-15, after "this grey board is very ugly"), all drawn live with three.js from the same models the
 // lesson's pictures were rendered from (./models, copied from flexitac-anatomy/figures/bench/topdown). The learner
 // turns the view round the bench (drag on empty space), zooms (wheel or pinch) and pans (right drag); src/widgets/
 // build-bench.ts decides what a press does and keeps the build. This file only draws and answers "what is under the
@@ -8,7 +9,8 @@
 // Frames. Plan: millimetres, x to the right along the board, Y toward the viewer (row a far, row j near), z up from the
 // board's top face; the board's far left corner is (0, 0, 0). The models are built in the renders' frame (x right,
 // y = -Y, z up) under `root`, which turns that frame into three.js's y-up world: plan (x, Y, z) -> world (x, z, Y).
-// The pad's top is level with the board's, so a part held over either moves on one plane (z = 0).
+// The parts wait on the mat, the board's height below its top (TRAY_Z); a part in the hand moves on the board's plane
+// (z = 0), and planAt() takes the mat's height to tell what is over the parts' corner.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { BB, buildBreadboard, buildEnd, buildFSR, buildResistor, buildUsbPlug, END, FSR, layout, WIRE, wireMaterial } from "./models/bench";
@@ -30,17 +32,23 @@ export type Thing =
   | { kind: "board" }
   | { kind: "pad" };
 
-/** The foam pad the parts wait on (plan mm). Its top is level with the board's. */
+/** The parts' corner of the mat (plan mm): where they wait, and where one dropped goes back to its place. */
 export const PAD = { x0: 89, x1: 140, y0: 0, y1: 72 };
-/** Where each part waits on the pad: its anchor (the Nano's D12 pin, the FSR's and resistor's pin "1"), rot 0. */
+/** Where each part waits on the mat: its anchor (the Nano's D12 pin, the FSR's and resistor's pin "1"), rot 0. */
 export const TRAY: Record<PartId | "usb", P2> = { nano: [PAD.x0 + 8.5, 7], fsr: [PAD.x0 + 7.6, 31], resistor: [PAD.x0 + 24, 36.5], usb: [PAD.x0 + 21, 56] };
 const BOARD_H = BB.H;
+/** The mat's top: the board stands on it, the waiting parts lie on it. */
+export const TRAY_Z = -BOARD_H;
+/** The mat (plan mm): big enough that it fills the usual views, its edges out of sight; 2.2 mm thick, rounded corners.
+ *  RULER: the printed scale's line, just beyond the board's far edge, where the views see it. */
+const MAT = { x0: -120, x1: 230, y0: -150, y1: 160, t: 2.2, r: 9, px: 6 };
+const RULER = { y: -21, x0: -60, x1: 186 };
 const D2R = Math.PI / 180;
 
 /** The light: the renders' studio (board-real/stage.js), cut down for a live view (no AO pass). */
 const THEMES = {
-  light: { sun: 2.6, hemi: [0.75, "#ffffff", "#cfd0d3"] as const, env: 0.85, rim: 0, envBg: "#d9dadd", floor: "#3c4238", floorOp: 0.2, pad: "#77797f" },
-  dark: { sun: 2.6, hemi: [0.5, "#ffffff", "#3a3b3e"] as const, env: 0.85, rim: 1.4, envBg: "#d9dadd", floor: "#000000", floorOp: 0.45, pad: "#5d5f65" },
+  light: { sun: 2.6, hemi: [0.75, "#ffffff", "#cfd0d3"] as const, env: 0.85, rim: 0, envBg: "#d9dadd", floor: "#3c4238", floorOp: 0.2, mat: "#33627e", matLine: "#e3f1fa", matSide: "#264b61" },
+  dark: { sun: 2.6, hemi: [0.5, "#ffffff", "#3a3b3e"] as const, env: 0.85, rim: 1.4, envBg: "#d9dadd", floor: "#000000", floorOp: 0.45, mat: "#2b536b", matLine: "#cfe4f2", matSide: "#1e3d50" },
 };
 
 export interface Scene3D {
@@ -50,8 +58,9 @@ export interface Scene3D {
   setTheme(t: Theme): void;
   /** Frame the bench again: the board and the pad ("all") or the board alone ("board"), at an angle or from above. */
   home(top?: boolean, what?: "all" | "board"): void;
-  /** The point of the board/pad plane (z = 0) under a client point, in plan mm, or null. */
-  planAt(cx: number, cy: number): P2 | null;
+  /** The point of a level plane (the board's top, z = 0, unless z is given: TRAY_Z for the mat) under a client point, in
+   *  plan mm, or null. */
+  planAt(cx: number, cy: number, z?: number): P2 | null;
   /** The thing under a client point (the nearest, parts before the board). */
   pick(cx: number, cy: number): Thing | null;
   /** A plan point to canvas px (null: behind the camera). */
@@ -99,8 +108,10 @@ export interface Marks {
   bad: P2[];
   cursor: HoleId | null;
   start: HoleId | null;
-  /** a soft outline round a part on the board or the pad */
+  /** a soft outline round a part on the board */
   sel: PartId | null;
+  /** the Hint's marks: holes to ring, pairs of holes to join with a dashed line, the Nano's place */
+  coach?: { holes: HoleId[]; pairs: [HoleId, HoleId][]; nano: NanoPlace | null } | null;
 }
 
 const css = (el: Element, name: string, fallback: string) => getComputedStyle(el).getPropertyValue(name).trim() || fallback;
@@ -168,7 +179,7 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
   const floorMat = new THREE.ShadowMaterial({ color: th.floor, opacity: th.floorOp });
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), floorMat);
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(FOCUS.x, -BOARD_H - 0.02, FOCUS.z);
+  floor.position.set(FOCUS.x, -BOARD_H - MAT.t - 0.02, FOCUS.z);
   floor.receiveShadow = true;
   scene.add(floor);
 
@@ -190,12 +201,111 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
   buildBreadboard(board, renderer, L, 22);
   root.add(board);
 
-  // the pad: grey antistatic foam, as parts ship in, level with the board's top
-  const padMat = new THREE.MeshStandardMaterial({ color: th.pad, roughness: 0.95, metalness: 0 });
-  const pad = tag(new THREE.Mesh(new THREE.BoxGeometry(PAD.x1 - PAD.x0, PAD.y1 - PAD.y0, BOARD_H), padMat), { kind: "pad" });
-  at(pad, (PAD.x0 + PAD.x1) / 2, (PAD.y0 + PAD.y1) / 2, -BOARD_H / 2);
-  pad.castShadow = pad.receiveShadow = true;
-  root.add(pad);
+  // the mat: a blue anti-static work mat, as on an electronics bench, printed with a 10 mm grid, rulers along two edges
+  // and a dashed box where the parts wait; its grounding snap in the far right corner. The print is a canvas texture,
+  // redrawn for the theme; the cap's UVs are the shape's own millimetres, mapped onto the canvas by repeat and offset.
+  const matCanvas = document.createElement("canvas");
+  matCanvas.width = Math.round((MAT.x1 - MAT.x0) * MAT.px);
+  matCanvas.height = Math.round((MAT.y1 - MAT.y0) * MAT.px);
+  const matTex = new THREE.CanvasTexture(matCanvas);
+  matTex.colorSpace = THREE.SRGBColorSpace;
+  matTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  matTex.repeat.set(1 / (MAT.x1 - MAT.x0), 1 / (MAT.y1 - MAT.y0));
+  matTex.offset.set(-MAT.x0 / (MAT.x1 - MAT.x0), MAT.y1 / (MAT.y1 - MAT.y0));
+  const paintMat = () => {
+    const c = matCanvas.getContext("2d")!;
+    const k = MAT.px;
+    const X = (x: number) => (x - MAT.x0) * k;
+    const Y = (y: number) => (y - MAT.y0) * k;
+    const w = matCanvas.width;
+    const h = matCanvas.height;
+    c.globalAlpha = 1;
+    c.fillStyle = th.mat;
+    c.fillRect(0, 0, w, h);
+    // (the rubber's grain: a fixed scatter of faint light and dark specks)
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 30000; i++) {
+      c.fillStyle = rnd() < 0.5 ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)";
+      c.fillRect(rnd() * w, rnd() * h, 1.3, 1.3);
+    }
+    c.strokeStyle = th.matLine;
+    c.fillStyle = th.matLine;
+    const line = (x0: number, y0: number, x1: number, y1: number, lw: number, a: number) => {
+      c.globalAlpha = a;
+      c.lineWidth = lw * k;
+      c.beginPath();
+      c.moveTo(X(x0), Y(y0));
+      c.lineTo(X(x1), Y(y1));
+      c.stroke();
+    };
+    // the grid, square to the board (its far left corner on a line), a stronger line every 50 mm
+    const gx0 = MAT.x0 + 12;
+    const gy0 = MAT.y0 + 12;
+    for (let x = Math.ceil(gx0 / 10) * 10; x <= MAT.x1 - 6; x += 10) line(x, gy0, x, MAT.y1 - 6, 0.16, x % 50 === 0 ? 0.24 : 0.12);
+    for (let y = Math.ceil(gy0 / 10) * 10; y <= MAT.y1 - 6; y += 10) line(gx0, y, MAT.x1 - 6, y, 0.16, y % 50 === 0 ? 0.24 : 0.12);
+    // the scale: millimetre ticks on a line across the mat, centimetres numbered (and the same down the left edge)
+    c.font = `600 ${(2.4 * k).toFixed(1)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+    c.textBaseline = "middle";
+    line(RULER.x0, RULER.y, RULER.x1, RULER.y, 0.16, 0.45);
+    for (let x = RULER.x0, n = 0; x <= RULER.x1; x += 1, n++) {
+      const tall = n % 10 === 0 ? 3.6 : n % 5 === 0 ? 2.4 : 1.4;
+      line(x, RULER.y, x, RULER.y + tall, 0.14, 0.55);
+      if (n % 10 === 0) {
+        c.globalAlpha = 0.62;
+        c.textAlign = "center";
+        c.fillText(String(n / 10), X(x), Y(RULER.y - 2.6));
+      }
+    }
+    for (let y = gy0, n = 0; y <= MAT.y1 - 8; y += 1, n++) {
+      const tall = n % 10 === 0 ? 4 : n % 5 === 0 ? 2.6 : 1.5;
+      line(MAT.x0 + 1.5, y, MAT.x0 + 1.5 + tall, y, 0.14, 0.55);
+    }
+    // the parts' corner
+    c.globalAlpha = 0.42;
+    c.lineWidth = 0.32 * k;
+    c.setLineDash([2.2 * k, 1.4 * k]);
+    c.beginPath();
+    c.roundRect(X(PAD.x0 - 3), Y(PAD.y0 - 4), (PAD.x1 - PAD.x0 + 6) * k, (PAD.y1 - PAD.y0 + 8) * k, 3 * k);
+    c.stroke();
+    c.setLineDash([]);
+    c.globalAlpha = 1;
+    matTex.needsUpdate = true;
+  };
+  const matShape = new THREE.Shape();
+  {
+    const [x0, x1, y0, y1, r] = [MAT.x0, MAT.x1, -MAT.y1, -MAT.y0, MAT.r];
+    matShape.moveTo(x0 + r, y0);
+    matShape.lineTo(x1 - r, y0);
+    matShape.quadraticCurveTo(x1, y0, x1, y0 + r);
+    matShape.lineTo(x1, y1 - r);
+    matShape.quadraticCurveTo(x1, y1, x1 - r, y1);
+    matShape.lineTo(x0 + r, y1);
+    matShape.quadraticCurveTo(x0, y1, x0, y1 - r);
+    matShape.lineTo(x0, y0 + r);
+    matShape.quadraticCurveTo(x0, y0, x0 + r, y0);
+  }
+  const BEV = 0.5;
+  const matGeo = new THREE.ExtrudeGeometry(matShape, { depth: MAT.t - 2 * BEV, bevelEnabled: true, bevelThickness: BEV, bevelSize: BEV, bevelOffset: -BEV, bevelSegments: 2, curveSegments: 10 });
+  const matTop = new THREE.MeshStandardMaterial({ map: matTex, roughness: 0.86, metalness: 0, envMapIntensity: 0.6 });
+  const matSide = new THREE.MeshStandardMaterial({ color: th.matSide, roughness: 0.8, metalness: 0 });
+  const mat = new THREE.Mesh(matGeo, [matTop, matSide]);
+  mat.position.z = TRAY_Z - (MAT.t - BEV);
+  mat.receiveShadow = true;
+  mat.castShadow = true;
+  root.add(mat);
+  {
+    // the grounding snap: a press stud in the mat's far right corner
+    const snapMat = new THREE.MeshStandardMaterial({ color: "#c9ccd1", roughness: 0.28, metalness: 1 });
+    const stud = new THREE.Mesh(new THREE.CylinderGeometry(3.1, 3.3, 1.1, 32), snapMat);
+    stud.rotation.x = Math.PI / 2;
+    stud.position.set(MAT.x1 - 10, -(MAT.y0 + 10), TRAY_Z + 0.55);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(1.7, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), snapMat);
+    cap.rotation.x = Math.PI / 2;
+    cap.position.set(MAT.x1 - 10, -(MAT.y0 + 10), TRAY_Z + 1.1);
+    stud.castShadow = cap.castShadow = true;
+    root.add(stud, cap);
+  }
 
   // the Nano (as the renders seat it: on its 2.5 mm header plastic, D12 at the group's origin, USB to the left)
   Object.assign(NANO, { socketH: 0, spacerH: 2.5 });
@@ -258,8 +368,8 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
   root.add(usbPlugged);
   const usbTray = tag(new THREE.Group(), { kind: "usb" });
   {
-    // lying on the pad, its mouth to the left as it would meet the Nano, the cable running right, off the pad's edge,
-    // down to the table and out of view
+    // lying on the mat, its mouth to the left as it would meet the Nano, the cable running right along the mat, off its
+    // edge and out of view
     const g = new THREE.Group();
     g.rotation.z = Math.PI;
     buildUsbPlug(g, M, 3.45, 0.5, 0);
@@ -267,23 +377,22 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
     const cableMat = new THREE.MeshPhysicalMaterial({ color: "#151517", roughness: 0.46, metalness: 0, clearcoat: 0.15, clearcoatRoughness: 0.45, specularIntensity: 0.6 });
     // (in usbTray's frame: x right, y up the picture, the mouth at the origin, the plug's cable end 26 mm right of it)
     const R = 1.9;
-    const xEdge = PAD.x1 - TRAY.usb[0];
+    const xEdge = MAT.x1 - TRAY.usb[0];
     const keys: [number, number, number][] = [
       [25, 0, 3.45],
       [30, 0, 2.7],
       [35, 0.2, R],
-      [xEdge - 1, 0.5, R],
-      [xEdge + 3, 0.6, R - 2.5],
-      [xEdge + 7, 0.7, -BOARD_H + R + 0.6],
-      [xEdge + 14, 0.8, -BOARD_H + R],
-      [xEdge + 160, 2, -BOARD_H + R],
+      [xEdge - 2, 1.6, R],
+      [xEdge + 1.5, 1.8, R - 0.9],
+      [xEdge + 5, 2, -MAT.t + R],
+      [xEdge + 160, 3, -MAT.t + R],
     ];
     const pts = keys.map(([x, y, z]) => new THREE.Vector3(x, y, z));
     const cable = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts, false, "centripetal"), 400, R, 20, false), cableMat);
     cable.castShadow = cable.receiveShadow = true;
     usbTray.add(cable);
   }
-  at(usbTray, TRAY.usb[0], TRAY.usb[1]);
+  at(usbTray, TRAY.usb[0], TRAY.usb[1], TRAY_Z);
   root.add(usbTray);
 
   // a wire end (the Dupont housing), cloned for every end
@@ -346,7 +455,8 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
   {
     const b = new THREE.Box3(new THREE.Vector3(0, -BB.D, -BOARD_H), new THREE.Vector3(BB.W, 0, 0));
     boxProxy(b, board, undefined, 0);
-    const q = new THREE.Box3(new THREE.Vector3(PAD.x0, -PAD.y1, -BOARD_H), new THREE.Vector3(PAD.x1, -PAD.y0, 0));
+    // (the parts' corner of the mat, a thin slab at its top)
+    const q = new THREE.Box3(new THREE.Vector3(PAD.x0 - 3, -PAD.y1 - 4, TRAY_Z - 0.6), new THREE.Vector3(PAD.x1 + 3, -PAD.y0 + 4, TRAY_Z + 0.2));
     padProxy = boxProxy(q, root, { kind: "pad" }, 0);
   }
 
@@ -396,7 +506,7 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
   const setPart: Scene3D["setPart"] = (part, s) => {
     if (!s) {
       partState[part] = "tray";
-      placeAt(part, TRAY[part], 0, 0);
+      placeAt(part, TRAY[part], 0, TRAY_Z);
     } else if ("place" in s) {
       partState[part] = "board";
       placeAt(part, anchorOf(part, s.place), part === "nano" ? 0 : (s.place as PartPlace).rot, 0);
@@ -507,6 +617,7 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
     join: css(host, "--ft-hotspot", "#0f9d8a"),
     sel: css(host, "--ft-lesson", "#d06a1f"),
     bad: css(host, "--bb-bad", "#c2392f"),
+    coach: css(host, "--bb-coach", "#e39a12"),
   });
   const footprint = (part: PartId | "usb"): [number, number, number, number] | null => {
     const o = part === "nano" ? nanoG : part === "fsr" ? fsrG : part === "resistor" ? resG : usbState === "tray" ? usbTray : null;
@@ -596,6 +707,54 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
       c.lineWidth = 0.42 * k;
       rr(p[0] - 1.3, p[1] - 1.3, 2.6, 2.6, 0.5);
       c.stroke();
+    }
+    const cm = marks.coach;
+    if (cm) {
+      // the Hint: a dashed line between the holes it joins, a ring round each hole, the Nano's outline
+      c.strokeStyle = col.coach;
+      c.fillStyle = col.coach;
+      if (cm.nano) {
+        const ps = cm.holes.map((id) => holes[id]).filter(Boolean);
+        if (ps.length) {
+          const xs = ps.map((p) => p[0]);
+          const ys = ps.map((p) => p[1]);
+          const [x0, y0, x1, y1] = [Math.min(...xs) - 1.9, Math.min(...ys) - 1.9, Math.max(...xs) + 1.9, Math.max(...ys) + 1.9];
+          c.globalAlpha = 0.16;
+          rr(x0, y0, x1 - x0, y1 - y0, 1.6);
+          c.fill();
+          c.globalAlpha = 0.95;
+          c.lineWidth = 0.42 * k;
+          c.setLineDash([1.3 * k, 0.8 * k]);
+          c.stroke();
+          c.setLineDash([]);
+        }
+      }
+      for (const [a, z] of cm.pairs) {
+        const p = holes[a];
+        const q = holes[z];
+        if (!p || !q) continue;
+        c.globalAlpha = 0.95;
+        c.lineWidth = 0.5 * k;
+        c.lineCap = "round";
+        c.setLineDash([1.1 * k, 0.9 * k]);
+        c.beginPath();
+        c.moveTo(X(p[0]), Y(p[1]));
+        c.lineTo(X(q[0]), Y(q[1]));
+        c.stroke();
+        c.setLineDash([]);
+      }
+      for (const id of cm.holes) {
+        const p = holes[id];
+        if (!p) continue;
+        c.globalAlpha = 0.28;
+        c.beginPath();
+        c.arc(X(p[0]), Y(p[1]), (cm.nano ? 1.05 : 1.6) * k, 0, Math.PI * 2);
+        c.fill();
+        c.globalAlpha = 1;
+        c.lineWidth = (cm.nano ? 0.3 : 0.5) * k;
+        c.stroke();
+      }
+      c.globalAlpha = 1;
     }
     if (marks.sel) {
       const f = footprint(marks.sel);
@@ -734,8 +893,9 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
     return new THREE.Vector2(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
   };
   const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-  const planAt: Scene3D["planAt"] = (cx, cy) => {
+  const planAt: Scene3D["planAt"] = (cx, cy, z = 0) => {
     ray.setFromCamera(ndc(cx, cy), camera);
+    plane.constant = -z;
     const p = new THREE.Vector3();
     if (!ray.ray.intersectPlane(plane, p)) return null;
     return [p.x, p.z];
@@ -780,9 +940,9 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
   const trayBox: Scene3D["trayBox"] = (item) => {
     if (item === "usb") {
       if (usbState !== "tray") return null;
-      // (the plug alone, not the cable running off the pad)
-      const s0 = toScreen([TRAY.usb[0] - 6, TRAY.usb[1] - 27, 0]);
-      const s1 = toScreen([TRAY.usb[0] + 6, TRAY.usb[1] + 1, 7]);
+      // (the plug alone, not the cable running off the mat)
+      const s0 = toScreen([TRAY.usb[0] - 6, TRAY.usb[1] - 27, TRAY_Z]);
+      const s1 = toScreen([TRAY.usb[0] + 6, TRAY.usb[1] + 1, TRAY_Z + 7]);
       if (!s0 || !s1) return null;
       return { x: Math.min(s0[0], s1[0]), y: Math.min(s0[1], s1[1]), w: Math.abs(s1[0] - s0[0]), h: Math.abs(s1[1] - s0[1]) };
     }
@@ -860,7 +1020,9 @@ export function createScene(host: HTMLElement, theme0: Theme): Scene3D {
     rim.intensity = th.rim;
     floorMat.color.set(th.floor);
     floorMat.opacity = th.floorOp;
-    padMat.color.set(th.pad);
+    matSide.color.set(th.matSide);
+    paintMat();
+    shadowsMoved();
     scene.environmentIntensity = th.env;
     paintMarks();
     dirty();

@@ -49,7 +49,7 @@ the site's own helper. Every English key needs its Chinese key, and TypeScript e
   - Parts go in the middle of the board only; the rails take wires. The FSR's tail and the resistor's body block no
     holes. Only the Nano's body does.
 - **Build:** `{ nano, fsr, resistor, wires: [{ id, a, b, color }], usb }`. Wire colours are `WIRE_COLORS` (red, black,
-  yellow, blue, green). `EMPTY_BUILD` is empty. `REFERENCE_BUILD` is lesson 2.1's circuit, the "Show me" layout:
+  yellow, blue, green). `EMPTY_BUILD` is empty. `REFERENCE_BUILD` is lesson 2.1's circuit, the layout the Hint suggests first (build-ui/coach.ts):
   - the Nano at column 3, row c;
   - the FSR at 24j, rot 0, with its tail off the bottom edge;
   - the resistor at 25e, rot 90 (25e to 25g, across the groove);

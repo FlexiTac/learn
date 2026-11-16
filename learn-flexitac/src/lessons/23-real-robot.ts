@@ -1,4 +1,5 @@
-// Lesson 1.6: FlexiTac on a real robot. A placeholder (2026-10-29, user: "to be decided, not made yet, but show the real
+// OUT OF THE COURSE since 2026-11-16 (user: "现在的1.6可以先去掉"; kept for the footage to come; its link goes to
+// put-on-a-robot, src/state/store.ts MOVED). Was Lesson 1.6: FlexiTac on a real robot. A placeholder (2026-10-29, user: "to be decided, not made yet, but show the real
 // robot + sensor video"): a draft lesson whose stage will play the user's footage of a real robot with real FlexiTac pads.
 // Until the video is here the stage says it is coming (views/lesson.ts, t("stage.realRobot")).
 // To put the video in: copy it to public/media/real-robot/real-robot.mp4 (H.264, muted is fine; a poster is optional) and

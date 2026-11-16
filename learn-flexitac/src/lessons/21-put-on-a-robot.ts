@@ -1,4 +1,4 @@
-// Lesson 1.5: put FlexiTac on a robot, then grasp with your mouse (PLAN-section2-3.md §1). 2026-10-29: the course's
+// Lesson 1.6 (1.5 until 2026-11-16, when "Put it together" came before it): put FlexiTac on a robot, then grasp with your mouse (PLAN-section2-3.md §1). 2026-10-29: the course's
 // Section 1 ends on the robot, and "Grasp with your mouse" (once Lesson 2.2, now src/lessons/_retired/
 // 22-grasp-with-your-mouse.ts) became this lesson's last four steps; its old links and saved progress come here
 // (src/state/store.ts MOVED, migrateIds revision 3). 2026-11-01 (user): those four became one, step 6, whose Show me
@@ -30,9 +30,9 @@ const MODEL = "touchsim (this course's in-browser model, shared/models/touchsim.
 
 export const lesson: Lesson = {
   id: "put-on-a-robot",
-  n: 5,
+  n: 6,
   title: "Put FlexiTac on a robot",
-  kicker: "On a robot",
+  kicker: "From parts to robot",
   lede: `Two pads, two boards, two USB cables: how FlexiTac goes onto a gripper's fingers and how its touch gets to the computer. Then drive the gripper yourself and feel what it grasps.`,
   status: "ready",
   features: [

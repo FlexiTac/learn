@@ -51,6 +51,8 @@ export const MOVED: Record<string, string> = {
   "real-sim-real": "why-simulate-touch",
   // 2026-10-29: "Grasp with your mouse" became the last four steps of "Put FlexiTac on a robot" (Lesson 1.5)
   "grasp-with-your-mouse": "put-on-a-robot",
+  // 2026-11-16: the real-robot placeholder (1.6) is out for now; the robot lesson is 1.6
+  "real-robot": "put-on-a-robot",
 };
 
 /** Saved progress under lessons that were merged into another one moves there, once per revision (idsRev), in order.

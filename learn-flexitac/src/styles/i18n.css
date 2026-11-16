@@ -59,8 +59,3 @@ html:lang(zh) .topbar {
   --tag-lead: 0.419;
 }
 
-/* the lesson strip's two-line titles break between words, never inside one (“机器 / 人”): the titles' spaces and
-   punctuation are the break points, and every piece fits a card's line */
-html:lang(zh) .strip-name:lang(zh) {
-  word-break: keep-all;
-}

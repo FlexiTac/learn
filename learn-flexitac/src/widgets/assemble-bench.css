@@ -1,0 +1,727 @@
+/* Lesson 1.5's assembly bench (src/widgets/assemble-bench.ts): the 3D mat fills the stage; the corner texts and buttons,
+   the Hint and the notes look as on Lesson 2.2's bench (build-bench.css). The progress bar sits on a card at the bottom
+   left: what to do now above, the stops below (the two parts side by side, a bracket joining them into the Velostat).
+   Teal (--ft-hotspot) for what is done and a place a held part would join, ink for the stop to do now, red for a place a
+   part cannot go, amber for the Hint. */
+.w-ab {
+  --ab-bad: #c2392f;
+  --ab-ok: var(--ft-hotspot);
+  --ab-coach: #d98a06;
+  --ab-coach-ink: #a35f00;
+  --ab-coach-soft: rgba(217, 138, 6, 0.13);
+  --ab-card-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 8px 18px -8px rgba(0, 0, 0, 0.16);
+  position: relative;
+  height: 100%;
+  min-height: 340px;
+  overflow: hidden;
+  background: var(--card);
+  color: var(--text);
+  -webkit-user-select: none;
+  user-select: none;
+}
+:root[data-theme="dark"] .w-ab {
+  --ab-bad: #f2786d;
+  --ab-coach: #f2b445;
+  --ab-coach-ink: #f2b445;
+  --ab-coach-soft: rgba(242, 180, 69, 0.15);
+  --ab-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .w-ab {
+    --ab-bad: #f2786d;
+    --ab-coach: #f2b445;
+    --ab-coach-ink: #f2b445;
+    --ab-coach-soft: rgba(242, 180, 69, 0.15);
+    --ab-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+  }
+}
+.w-ab [hidden] {
+  display: none !important;
+}
+.ab-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  outline: none;
+  touch-action: none;
+}
+.w-ab[data-cursor="grab"] .ab-stage {
+  cursor: grab;
+}
+.w-ab.is-holding .ab-stage {
+  cursor: grabbing;
+}
+.ab-view,
+.ab-canvas {
+  position: absolute;
+  inset: 0;
+}
+.ab-canvas {
+  display: block;
+}
+
+/* outlines over the canvas */
+.ab-marks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.ab-mk {
+  fill: color-mix(in srgb, #ffffff 10%, transparent);
+  stroke: #ffffff;
+  stroke-width: 1.6;
+  stroke-dasharray: 5 4;
+  stroke-linejoin: round;
+  opacity: 0.7;
+}
+.ab-mk-ok {
+  fill: color-mix(in srgb, var(--ab-ok) 22%, transparent);
+  stroke: var(--ab-ok);
+  stroke-width: 2.2;
+  stroke-dasharray: none;
+  opacity: 1;
+}
+.ab-mk-bad {
+  fill: color-mix(in srgb, var(--ab-bad) 18%, transparent);
+  stroke: var(--ab-bad);
+  stroke-width: 2.2;
+  stroke-dasharray: none;
+  opacity: 1;
+}
+.ab-mk-coach {
+  fill: none;
+  stroke: var(--ab-coach);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  opacity: 1;
+  animation: ab-coach-blink 1.6s ease-in-out infinite;
+}
+.ab-mk-place {
+  fill: var(--ab-coach-soft);
+}
+.ab-mk-line {
+  stroke: var(--ab-coach);
+  stroke-width: 1.6;
+  stroke-dasharray: 2 5;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+@keyframes ab-coach-blink {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* the parts' names on the mat */
+.ab-labels {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ab-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  translate: -50% 0;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--face) 88%, transparent);
+  color: var(--muted);
+}
+.ab-label:lang(zh) {
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.w-ab.is-holding .ab-label {
+  opacity: 0.4;
+}
+
+/* corner texts and buttons */
+.ab-kicker {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--face) 88%, transparent);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+}
+.ab-kicker:lang(zh) {
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.ab-corner {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ab-icon-btn,
+.ab-text-btn,
+.ab-show {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  margin: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+.ab-icon-btn {
+  justify-content: center;
+  width: 28px;
+  padding: 0;
+}
+.ab-icon-btn .icon,
+.ab-show .icon {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ab-text-btn,
+.ab-show {
+  padding: 0 11px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ab-text-btn:lang(zh),
+.ab-show:lang(zh) {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.ab-icon-btn:hover:not(:disabled),
+.ab-text-btn:hover,
+.ab-show:hover {
+  border-color: var(--accent);
+}
+.ab-icon-btn:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+.ab-icon-btn:focus-visible,
+.ab-text-btn:focus-visible,
+.ab-show:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ab-show-icon {
+  display: inline-flex;
+}
+.ab-show.is-on {
+  border-color: var(--ab-coach);
+  background: var(--ab-coach-soft);
+}
+.ab-foot {
+  position: absolute;
+  left: 12px;
+  right: 14px;
+  bottom: 11px;
+  display: flex;
+  pointer-events: none;
+}
+.ab-foot > * {
+  pointer-events: auto;
+}
+
+/* the progress bar */
+.ab-track {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px 8px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--face) 92%, transparent);
+  box-shadow: var(--ab-card-shadow);
+}
+.ab-now {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 20px;
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.ab-now-n {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--face);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.ab-now-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+.ab-onward:empty {
+  display: none;
+}
+.ab-now .ab-show {
+  flex: none;
+  margin-left: 8px;
+}
+.ab-track.is-done .ab-now-n {
+  background: var(--ft-hotspot);
+  color: #fff;
+}
+.ab-now-n svg,
+.ab-step i svg {
+  width: 10px;
+  height: 10px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ab-onward {
+  flex: none;
+}
+.ab-path {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* (too narrow for every name: the stops done lose theirs first, then the stops still to do; the stops to do now keep
+   theirs) */
+.ab-path.is-tight .ab-step.is-done:not(.is-now) .ab-step-name,
+.ab-path.is-tighter .ab-step:not(.is-now) .ab-step-name {
+  display: none;
+}
+.ab-path.is-tight .ab-step.is-done:not(.is-now),
+.ab-path.is-tighter .ab-step:not(.is-now) {
+  padding-right: 2px;
+}
+.ab-path > li {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+/* the line into a stop: teal once the stop before it is done */
+.ab-path > li + li::before {
+  content: "";
+  width: 8px;
+  height: 1.5px;
+  background: var(--line-strong);
+}
+.ab-path > li.is-in::before {
+  background: var(--ft-hotspot);
+}
+/* the two parts, one above the other, and the bracket that joins them */
+.ab-path > li.ab-fork {
+  position: relative;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  padding-right: 8px;
+}
+.ab-fork::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 11px;
+  bottom: 11px;
+  width: 6px;
+  border: 1.5px solid var(--line-strong);
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+}
+.ab-fork.is-done::after {
+  border-color: var(--ft-hotspot);
+}
+.ab-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  margin: 0;
+  padding: 0 6px 0 2px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11.5px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.ab-step i {
+  display: grid;
+  flex: none;
+  place-items: center;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid color-mix(in srgb, var(--muted) 70%, transparent);
+  border-radius: 50%;
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+}
+.ab-step:hover {
+  background: var(--card-2);
+  color: var(--text);
+}
+.ab-step:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.ab-step.is-done {
+  color: var(--text);
+}
+.ab-step.is-done i {
+  border-color: var(--ft-hotspot);
+  background: var(--ft-hotspot);
+  color: #fff;
+}
+.ab-step.is-now {
+  border-color: color-mix(in srgb, var(--ink) 55%, transparent);
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 600;
+}
+.ab-step.is-now i {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--face);
+}
+.ab-step-n {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.ab-step-n:empty {
+  display: none;
+}
+
+/* a short note: what a part is, what just joined, why it cannot go there */
+.ab-note {
+  position: absolute;
+  left: 50%;
+  /* (just above the bar's card: its height, from the widget) */
+  bottom: calc(var(--ab-foot, 96px) + 22px);
+  z-index: 5;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(460px, calc(100% - 40px));
+  padding: 9px 13px;
+  border-left: 3px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--face);
+  color: var(--ink);
+  box-shadow: var(--ab-card-shadow);
+  font-size: 12.5px;
+  line-height: 1.45;
+  opacity: 0;
+  transform: translate(-50%, 6px);
+  pointer-events: none;
+  transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.ab-note.is-on {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.ab-note[data-kind="ok"] {
+  border-left-color: var(--ft-hotspot);
+}
+.ab-note[data-kind="no"] {
+  border-left-color: var(--ab-bad);
+}
+
+/* the Hint: in the bar's line, in place of the stop's own words */
+.w-ab.has-coach .ab-now-text {
+  display: none;
+}
+.ab-coach {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: -3px 0;
+  padding: 3px 3px 3px 8px;
+  border-left: 3px solid var(--ab-coach);
+  border-radius: 6px;
+  background: var(--ab-coach-soft);
+  color: var(--ink);
+}
+.ab-coach-cap {
+  flex: none;
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ab-coach-ink);
+}
+.ab-coach-cap:lang(zh) {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+.ab-coach-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+.ab-coach-do {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 24px;
+  margin: 0;
+  padding: 0 10px;
+  border: 1px solid var(--ab-coach);
+  border-radius: 999px;
+  background: var(--face);
+  color: var(--ink);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.ab-coach-do:lang(zh) {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.ab-coach-do:hover {
+  background: var(--ab-coach-soft);
+}
+.ab-coach-do:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+/* "Good job!": a card over the bench when the last part goes in */
+.ab-done {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 48px 16px calc(var(--ab-foot, 96px) + 24px);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--face) 26%, transparent), transparent);
+}
+.ab-done-card {
+  /* (its own stacking: the burst flies under the words, over the card) */
+  isolation: isolate;
+  box-sizing: border-box;
+  width: min(380px, 100%);
+  padding: 22px 26px 20px;
+  border-radius: 14px;
+  background: var(--face);
+  color: var(--ink);
+  box-shadow: var(--ab-card-shadow), 0 18px 40px -16px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+.ab-done.is-on .ab-done-card {
+  animation: ab-done-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+}
+@keyframes ab-done-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.9);
+  }
+}
+.ab-done-mark {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 10px;
+}
+.ab-done-mark svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.ab-done-mark circle {
+  fill: var(--ft-hotspot);
+}
+.ab-done-mark path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 34;
+}
+.ab-done.is-on .ab-done-mark path {
+  animation: ab-tick 0.4s ease-out 0.3s both;
+}
+@keyframes ab-tick {
+  from {
+    stroke-dashoffset: 34;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+/* a ring that spreads from the disc, and the burst */
+.ab-done-mark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--ft-hotspot);
+  opacity: 0;
+}
+.ab-done.is-on .ab-done-mark::before {
+  animation: ab-ring 0.9s ease-out 0.15s both;
+}
+@keyframes ab-ring {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.1);
+  }
+}
+.ab-burst {
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+}
+.ab-burst i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 5px;
+  border-radius: 1.5px;
+  background: var(--c);
+  opacity: 0;
+}
+.ab-burst i.is-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.ab-done.is-on .ab-burst i {
+  animation: ab-burst 1.7s cubic-bezier(0.12, 0.75, 0.3, 1) calc(0.15s + var(--d)) both;
+}
+/* (out fast, then a slow fall and a fade) */
+@keyframes ab-burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.5);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(calc(var(--r) * 0.7)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx) * 1.08), calc(-50% + var(--dy) + 34px)) rotate(var(--r)) scale(0.9);
+  }
+}
+.ab-done-kicker {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ft-hotspot);
+}
+.ab-done-kicker:lang(zh) {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.ab-done-title {
+  margin: 4px 0 8px;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+.ab-done-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.ab-done-go {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.ab-done-next:empty {
+  display: none;
+}
+.ab-done-look:lang(zh) {
+  font-family: var(--sans);
+  letter-spacing: 0.02em;
+}
+.ab-done-look:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ab-mk-coach {
+    animation: none;
+  }
+  .ab-done.is-on .ab-done-card,
+  .ab-done.is-on .ab-done-mark path,
+  .ab-done.is-on .ab-done-mark::before {
+    animation: none;
+  }
+  .ab-burst {
+    display: none;
+  }
+}

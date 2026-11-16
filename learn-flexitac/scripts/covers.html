@@ -11,6 +11,9 @@
          ?w=gripper      Fig 5 alone in a stage-mode box, &size=<w>x<h>; window.__host is its FigureHost
          ?w=teleop       Fig 5's teleop mode in a lesson-like split stage with the teleop-maps widget under it, &size=<w>x<h>;
                          window.__host is its FigureHost
+         ?w=parts        Lesson 1.5's bench (src/widgets/assemble3d/scene.ts) from straight above, every part of one FlexiTac
+                         laid out in two rows (the cover of "From parts to robot", scripts/cover-parts.mjs), &size=<w>x<h>;
+                         window.__scene is the scene
          &theme=light|dark
          &lang=zh        the Chinese pictures (scripts/covers.mjs --lang zh): the site's language and the figure's
          (open it in a window at least 1024 x 640: narrower, the site's stacked layout rules apply) -->
@@ -76,6 +79,29 @@
         figSlot.className = "figure-slot is-loaded";
         body.append(figSlot);
         window.__host = new FigureHost(figSlot, "gripper", theme, { mode: "stage", lang: lang() });
+        window.__stage = stage;
+      } else if (which === "parts") {
+        // Lesson 1.5's parts as the bench starts (src/widgets/assemble/geometry.ts START, the layout and its reasons
+        // are there): laid out flat in two rows, as for a photo
+        const { createScene } = await import("/src/widgets/assemble3d/scene.ts");
+        const { START_ASSEMBLY } = await import("/src/widgets/assemble/engine.ts");
+        const { LAYOUT } = await import("/src/widgets/assemble/geometry.ts");
+        const a = START_ASSEMBLY();
+        const stage = document.createElement("div");
+        stage.className = "parts-stage";
+        stage.style.cssText = `position:relative;width:${W}px;height:${H}px;overflow:hidden`;
+        document.body.append(stage);
+        const scene = createScene(stage, theme);
+        scene.resize(W, H);
+        scene.show(a);
+        // the rows and a margin round them, at the picture's aspect
+        const box = LAYOUT;
+        const pad = 9;
+        const w = box.x1 - box.x0 + 2 * pad;
+        const h = Math.max(box.y1 - box.y0 + 2 * pad, (w * H) / W);
+        const cy = (box.y0 + box.y1) / 2;
+        scene.shoot({ x0: box.x0 - pad, x1: box.x1 + pad, y0: cy - h / 2, y1: cy + h / 2 });
+        window.__scene = scene;
         window.__stage = stage;
       } else if (which === "teleop") {
         const { FigureHost } = await import("/src/figure/FigureHost.ts");

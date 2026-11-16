@@ -24,7 +24,11 @@ import { lesson as l21 } from "./21-put-on-a-robot";
 // your mouse" became the last steps of "Put FlexiTac on a robot" (1.5; its file is in ./_retired) and 1.6 is a placeholder
 // for real robot footage. Section 2 is the reading board (2.1 Meet the reading board, 2.2 One frame). Section 3 is as it
 // was. Lesson numbers follow their place (lessonNo), so the numbers in the lessons' texts were updated with it.
-import { lesson as l23 } from "./23-real-robot";
+// 2026-11-16 (user): 1.6, the real-robot placeholder (./23-real-robot.ts, kept), is out of the course for now, and a new
+// 1.5 comes after "Build your own": "Put it together", an assembly game on a 3D bench (src/widgets/assemble-bench.ts).
+// "Put FlexiTac on a robot" is 1.6 (n 6); the old 1.6 link goes to it (src/state/store.ts MOVED). Same day (user): 1.5
+// and 1.6 are one chapter, the third ("On a robot" became "From parts to robot"); "Use it" is 1.3-1.4 again.
+import { lesson as lPut } from "./14-put-it-together";
 // 2026-11-09 (user, PLAN-section2-basics.md): Section 2 opens with two lessons on the basics before the board: 2.1
 // "Arduino reads one force sensor" and 2.2 "Chips and connectors". "Meet the reading board" (2.3) became how the board
 // was made, from those parts; "One frame" is 2.4. The lessons after them moved up two places (n 7-12 -> 9-14).
@@ -43,7 +47,7 @@ import { lesson as l33 } from "./33-how-deep-how-hard";
 // lessons still in the course (src/state/store.ts MOVED).
 import { lesson as l36 } from "./36-sim-playground";
 
-export const LESSONS: Lesson[] = [l01, l02, l11, l12, l21, l23, lA, lBuild, lB, lC, l07, l09, l31, l32, l33, l36];
+export const LESSONS: Lesson[] = [l01, l02, l11, l12, lPut, l21, lA, lBuild, lB, lC, l07, l09, l31, l32, l33, l36];
 
 export const byId = (id: string): Lesson | undefined => LESSONS.find((l) => l.id === id);
 
@@ -71,11 +75,12 @@ export const SECTIONS: Section[] = [
         alt: "A finger presses a real FlexiTac pad and a live heatmap follows it on a screen.",
       },
       {
-        title: "On a robot",
-        lessons: ["put-on-a-robot", "real-robot"],
-        text: "Tape a pad onto each finger of a robot gripper and cable it up, then drive the gripper with your mouse and feel what it grasps.",
-        cover: { loop: "gripper" },
-        alt: "A robot gripper with a FlexiTac pad on each finger: flat cables run from the pads to two reading boards, and the gripper closes and opens.",
+        title: "From parts to robot",
+        lessons: ["put-it-together", "put-on-a-robot"],
+        text: "Put a FlexiTac together part by part, from two bare FPCs to a pad cabled to its reading board, then tape a pad onto each finger of a robot gripper and drive it with your mouse.",
+        // (2026-11-16, user: the parts of Lesson 1.5's bench from above, laid out neatly; scripts/cover-parts.mjs)
+        cover: { still: "parts" },
+        alt: "Every part of one FlexiTac laid out on a blue mat, seen from above: the two FPCs, two lamination sheets, the Velostat, two extenders, two flat cables, an Arduino Nano and the reading board.",
       },
     ],
   },

@@ -6,6 +6,10 @@
   --bb-bad: #c2392f;
   --bb-bad-soft: rgba(194, 57, 47, 0.1);
   --bb-note: #a46400;
+  /* the Hint's colour: amber, apart from the teal of what is joined and the lesson colour of what is held */
+  --bb-coach: #d98a06;
+  --bb-coach-ink: #a35f00;
+  --bb-coach-soft: rgba(217, 138, 6, 0.13);
   --bb-card-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 8px 18px -8px rgba(0, 0, 0, 0.16);
   --bb-press: 0;
   --bb-panel: 280px;
@@ -24,6 +28,9 @@
   --bb-bad: #f2786d;
   --bb-bad-soft: rgba(242, 120, 109, 0.13);
   --bb-note: #e6a64a;
+  --bb-coach: #f2b445;
+  --bb-coach-ink: #f2b445;
+  --bb-coach-soft: rgba(242, 180, 69, 0.15);
   --bb-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 18px -8px rgba(0, 0, 0, 0.6);
   /* (a mid-grey mat, light enough that the FSR's black disc and the black USB cable both show on it) */
   --bb-mat: #606168;
@@ -34,6 +41,9 @@
     --bb-bad: #f2786d;
     --bb-bad-soft: rgba(242, 120, 109, 0.13);
     --bb-note: #e6a64a;
+    --bb-coach: #f2b445;
+    --bb-coach-ink: #f2b445;
+    --bb-coach-soft: rgba(242, 180, 69, 0.15);
     --bb-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 18px -8px rgba(0, 0, 0, 0.6);
     --bb-mat: #606168;
     --bb-mat-line: #6d6e75;
@@ -126,9 +136,13 @@
 /* corner texts and buttons */
 .bb-kicker {
   position: absolute;
-  left: 16px;
+  left: 12px;
   top: 12px;
   margin: 0;
+  /* (on the mat: a light pill, as the parts' names have) */
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--face) 88%, transparent);
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -210,7 +224,8 @@
   border-color: var(--accent);
 }
 .bb-icon-btn:disabled {
-  opacity: 0.4;
+  /* (the icon fades, not the button: the mat would show through it) */
+  color: var(--faint);
   cursor: default;
 }
 .bb-icon-btn:focus-visible,
@@ -227,7 +242,7 @@
 }
 .bb-foot {
   position: absolute;
-  left: 16px;
+  left: 12px;
   right: 14px;
   bottom: 11px;
   display: flex;
@@ -236,9 +251,12 @@
   min-height: 28px;
 }
 .bb-hint {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
   margin: 0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--face) 88%, transparent);
   font-size: 11px;
   line-height: 1.35;
   letter-spacing: 0.08em;
@@ -259,8 +277,12 @@
   text-transform: none;
   color: var(--bb-bad);
 }
+.bb-hint:empty {
+  visibility: hidden;
+}
 .bb-show {
   flex: 0 0 auto;
+  margin-left: auto;
 }
 /* the wire colours (step 3, or with a wire picked) */
 .bb-palette {
@@ -975,7 +997,7 @@
 .w-bb.is-holding .bb-canvas {
   cursor: grabbing;
 }
-/* the parts' names under them on the pad */
+/* the parts' names under them on the mat */
 .bb-labels {
   position: absolute;
   inset: 0;
@@ -1128,4 +1150,149 @@
 }
 .w-bb.is-failed .bb-view {
   display: none;
+}
+
+/* ---------------------------------------------------------------- the Hint (2026-11-15, build-ui/coach.ts) */
+.bb-show.is-on {
+  border-color: var(--bb-coach);
+  background: var(--bb-coach-soft);
+}
+.bb-coach {
+  position: absolute;
+  left: 12px;
+  bottom: 48px;
+  z-index: 6;
+  box-sizing: border-box;
+  width: min(350px, calc(100% - 28px));
+  padding: 9px 13px 11px;
+  border-left: 3px solid var(--bb-coach);
+  border-radius: 8px;
+  background: var(--face);
+  color: var(--ink);
+  box-shadow: var(--bb-card-shadow);
+}
+.bb-coach-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.bb-coach-cap {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bb-coach-ink);
+}
+.bb-coach-cap:lang(zh) {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+.bb-coach-text {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.bb-coach-do {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  margin: 9px 0 0;
+  padding: 0 11px;
+  border: 1px solid var(--bb-coach);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.bb-coach-do:lang(zh) {
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.bb-coach-do:hover {
+  background: var(--bb-coach-soft);
+}
+.bb-coach-do:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.w-bb.has-coach .bb-note {
+  bottom: calc(58px + var(--bb-coach-h, 0px));
+}
+/* where it points: the part waiting on the mat, the holes on the board, the tile and its line */
+.bb-key.is-coach {
+  outline: 2px dashed var(--bb-coach);
+  outline-offset: 5px;
+  animation: bb-coach-blink 1.6s ease-in-out infinite;
+}
+/* (the dot is placed by its transform; the ring that grows is its ::after, so the growing doesn't move it) */
+.bb-coach-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.bb-coach-dot::after {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: -10px;
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  border: 2px solid var(--bb-coach);
+  border-radius: 50%;
+  opacity: 0.9;
+  animation: bb-coach-ring 1.5s ease-out infinite;
+}
+.w-bb.is-moving .bb-coach-dot {
+  visibility: hidden;
+}
+@keyframes bb-coach-ring {
+  from {
+    scale: 0.5;
+    opacity: 1;
+  }
+  to {
+    scale: 1.4;
+    opacity: 0;
+  }
+}
+@keyframes bb-coach-blink {
+  50% {
+    outline-color: color-mix(in srgb, var(--bb-coach) 35%, transparent);
+  }
+}
+.bb-tile.is-coach {
+  border-color: var(--bb-coach);
+  background: var(--bb-coach-soft);
+  box-shadow: 0 0 0 1px var(--bb-coach);
+}
+.bb-field.is-coach {
+  outline: 2px solid var(--bb-coach);
+  outline-offset: 1px;
+}
+.bb-insert.bb-coach-line {
+  height: 3px;
+  background: var(--bb-coach);
+}
+.bb-tray-list.is-coach-target {
+  outline: 2px dashed var(--bb-coach);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.bb-list.is-coach-target .bb-slot-empty {
+  border-color: var(--bb-coach);
+  background: var(--bb-coach-soft);
+  color: var(--bb-coach-ink);
 }

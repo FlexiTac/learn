@@ -10,14 +10,16 @@
 //          panel's slider): pink current flows, the panel follows force -> resistance -> volts at A0 -> analogRead, a
 //          Serial Plotter strip keeps the last 10 s and the Serial Monitor prints a line per reading. The first time,
 //          one gentle automatic press and release (never with reduced motion).
-//   pins   step 4: the Nano's 8 analog pins lit; the panel sets 8 pins against the pad's 384 crossings.
+//   pins   step 4: the Nano's 8 analog pins lit, A0 the one in use; the panel asks how 8 pins read the pad's 384
+//          crossings and shows the answer slowed down: a switch on each of its 12 sense and 32 drive lines, one closed
+//          on each side joins one crossing to A0, and a scan steps through them while the map fills.
 // Pictures: public/media/bench/{light,dark}/{base,wired,nano}.webp and bench.json, rendered by
 // flexitac-anatomy/figures/bench (render.mjs: Fig 3's materials and studio, an orthographic camera). bench.json gives
 // each picture's box and every anchor (pins, outlines, wire centre lines, the current's path) in frame units (mm on the
 // picture plane); the camera is a scale k (px per unit) and an offset. The readings: ./bench/fsr.ts (an illustrative
 // FSR curve fitted to Adafruit's table; the divider and analogRead exact). Code card: run({ms}) makes the sketch's delay
 // the sampling period and prints the last readings; say() repeats them in the language on show.
-import { COLS, ROWS } from "@shared/data/constants.mjs";
+import { COLS, FRAME_HZ, ROWS } from "@shared/data/constants.mjs";
 import { lang, strings, tx } from "../i18n";
 import { paintText } from "../i18n/paint";
 import type { IconId, Theme, WidgetCtx, WidgetInstance } from "../types";
@@ -96,9 +98,13 @@ const S = strings(
     monitor: "Monitor",
     "fsr.aria": "The force sensor: hold Space or Enter to press it, the arrow keys press harder or lighter",
     "slider.aria": "How hard to press the force sensor",
-    "pins.a": "The Nano: {n} analog pins",
-    "pins.b": "One FlexiTac pad: {n} crossings",
-    "pins.c": "Each crossing is a tiny force sensor. With one pin each, the {k} pins read just {k} of them.",
+    "pins.q": "How do {k} pins read {n} crossings?",
+    "pins.a": "Not with a pin each. The pad has {s} sense lines and {d} drive lines, and a crossing is where two of them meet.",
+    "pins.drive": "{d} drive lines",
+    "pins.sense": "{s} sense lines",
+    "pins.stat": "Crossing {i} of {n} · A0 reads {v}",
+    "pins.done": "All {n} read: one frame",
+    "pins.c": "Each line has a switch. One closed switch puts 5\u00a0V on a drive line, another joins a sense line to A0, so A0 hears only the crossing where the two meet. Then the switches move on. This is slowed down: the board reads all {n} {hz} times a second.",
     "sch.aria": "The circuit: 5V, the FSR, A0 between it and the 10 kΩ resistor, then GND",
     "sch.fsr": "FSR",
     "sch.r": "10 kΩ",
@@ -130,9 +136,13 @@ const S = strings(
     monitor: "串口监视器",
     "fsr.aria": "力传感器：按住空格或回车来按压，方向键加大或减小力度",
     "slider.aria": "按压力传感器的力度",
-    "pins.a": "Nano：{n} 个模拟引脚",
-    "pins.b": "FlexiTac 传感垫：{n} 个交叉点",
-    "pins.c": "每个交叉点都是一个小小的力传感器。一个引脚读一个，{k} 个引脚只能读其中 {k} 个。",
+    "pins.q": "{k} 个引脚，怎么读 {n} 个交叉点？",
+    "pins.a": "不是一个交叉点占一个引脚。传感垫上只有 {s} 条感应线和 {d} 条驱动线，交叉点就是两条线相交的地方。",
+    "pins.drive": "{d} 条驱动线",
+    "pins.sense": "{s} 条感应线",
+    "pins.stat": "第 {i} / {n} 个交叉点 · A0 读到 {v}",
+    "pins.done": "{n} 个全部读完：一帧",
+    "pins.c": "每条线上都有一个开关。合上的一个开关给一条驱动线接上 5\u00a0V，另一个把一条感应线接到 A0，所以 A0 只听得到这两条线相交的那个交叉点。然后开关换到下一个。这里放慢了：读取板一秒钟能把 {n} 个点读 {hz} 遍。",
     "sch.aria": "电路：5V、FSR、夹在它和 10 kΩ 电阻之间的 A0，最后是 GND",
   },
 );
@@ -293,10 +303,11 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   let camTo: Cam = cam;
   let camT0 = 0;
   let size = { w: 0, h: 0 };
-  const panelW = () => Math.round(clamp(size.w * 0.28, 236, 312));
+  // (step 4's switch drawing needs room: its panel takes half the stage)
+  const panelW = (v: View = view) => (v === "pins" ? Math.round(clamp(size.w * 0.5, 300, 520)) : Math.round(clamp(size.w * 0.28, 236, 312)));
   const narrow = () => size.w < 620;
   // the bench's room in the stage's px: all of it for the Nano, beside the panel after (under it when narrow)
-  const area = (v: View) => (narrow() ? { w: stageEl.clientWidth, h: stageEl.clientHeight } : { w: v === "nano" ? size.w : size.w - panelW(), h: size.h });
+  const area = (v: View) => (narrow() ? { w: stageEl.clientWidth, h: stageEl.clientHeight } : { w: v === "nano" ? size.w : size.w - panelW(v), h: size.h });
   const PAD = 16;
   const colW = () => Math.round(clamp(size.w * 0.22, 170, 214));
   const bbox = (pts: Pt[]): Box => [Math.min(...pts.map((p) => p[0])), Math.min(...pts.map((p) => p[1])), Math.max(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[1]))];
@@ -774,24 +785,159 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
         <text x="72" y="164">GND</text>
       </g>
     </svg>`;
-  // step 4: the Nano's 8 analog pins over the pad's 384 crossings, each pin joined to the one crossing it could read
+  // step 4: how can 8 analog pins read 384 crossings? Not a pin each: the pad's 12 sense lines and 32 drive lines each
+  // sit behind a switch, and one switch closed in each row joins one crossing to A0 (5 V on its drive line, its sense
+  // line to A0). The scan steps through them in the firmware's order (a sense line held while the drive lines take
+  // turns), slowed down and slowest at the start, and the map fills as it goes; a fingertip presses about a dozen
+  // crossings. Lesson 2.3 makes the switches two chips. Reduced motion: the finished map, the switches on the press.
+  const PX = 5; // one crossing (viewBox units)
+  const GX = 31; // the grid's top left
+  const GY = 31;
+  const GW = COLS * PX;
+  const GH = ROWS * PX;
+  const RD = GY - 20; // the 5 V rail over the drive switches
+  const RS = GX - 21; // the A0 rail left of the sense switches
+  const YA0 = GY + GH + 9;
+  const dx = (c: number) => GX + c * PX + PX / 2;
+  const sy = (r: number) => GY + r * PX + PX / 2;
+  // a switch: a fixed stub off its rail, a gap, and a blade from the line's end that closes the gap when on
+  const bladeD = (c: number, on: boolean) => `M${dx(c)},${RD + 9}L${on ? dx(c) : dx(c) - 2.4},${on ? RD + 4 : RD + 4.8}`;
+  const bladeS = (r: number, on: boolean) => `M${RS + 9},${sy(r)}L${on ? RS + 4 : RS + 4.8},${on ? sy(r) : sy(r) - 2.4}`;
+  const PRESS = { r: 6.2, c: 20.4, s: 1.15 };
+  const READ = Array.from({ length: TAXELS }, (_, i) => {
+    const r = Math.floor(i / COLS);
+    const c = i % COLS;
+    const v = Math.exp(-((r - PRESS.r) ** 2 + (c - PRESS.c) ** 2) / (2 * PRESS.s ** 2));
+    // (an untouched crossing reads a little: Velostat conducts a little)
+    return v >= 0.2 ? Math.round(40 + 680 * v) : 12 + ((r * 7 + c * 13) % 17);
+  });
+  const PEAK = READ.indexOf(Math.max(...READ));
+  const HOT = 100;
+  const stepMs = (i: number) => (i < 4 ? 450 : Math.max(18, 450 * 0.88 ** (i - 3)));
+  const HOLD_MS = 2200;
+  let scanI = 0; // the crossing A0 reads now; TAXELS while the finished frame shows
+  let scanAcc = 0; // ms into this step
+  let pinsEls: { cells: SVGRectElement[]; swD: SVGPathElement[]; swS: SVGPathElement[]; litD: SVGPathElement; litS: SVGPathElement; ring: SVGCircleElement; stat: HTMLElement } | null = null;
+  let painted = { upto: 0, cur: -1 };
+  const paintScan = (all = false) => {
+    const e = pinsEls;
+    if (!e) return;
+    const upto = reduced || scanI >= TAXELS ? TAXELS : scanI + 1;
+    const cur = reduced ? PEAK : scanI >= TAXELS ? -1 : scanI;
+    if (all || upto < painted.upto) {
+      for (const c of e.cells) {
+        c.classList.remove("is-read", "is-hot");
+        c.style.removeProperty("opacity");
+      }
+      painted.upto = 0;
+    }
+    for (let i = painted.upto; i < upto; i++) {
+      const c = e.cells[i];
+      c.classList.add("is-read");
+      if (READ[i] >= HOT) {
+        c.classList.add("is-hot");
+        c.style.opacity = (0.3 + (0.7 * READ[i]) / 720).toFixed(2);
+      }
+    }
+    painted.upto = upto;
+    if (!all && cur === painted.cur) return;
+    const was = all ? -1 : painted.cur;
+    if (all)
+      e.swD.forEach((p, c) => {
+        p.setAttribute("d", bladeD(c, false));
+        p.classList.remove("is-on");
+      });
+    if (all)
+      e.swS.forEach((p, r) => {
+        p.setAttribute("d", bladeS(r, false));
+        p.classList.remove("is-on");
+      });
+    const set = (i: number, on: boolean) => {
+      const r = Math.floor(i / COLS);
+      const c = i % COLS;
+      e.swD[c].setAttribute("d", bladeD(c, on));
+      e.swD[c].classList.toggle("is-on", on);
+      e.swS[r].setAttribute("d", bladeS(r, on));
+      e.swS[r].classList.toggle("is-on", on);
+    };
+    if (was >= 0) set(was, false);
+    const on = cur >= 0;
+    e.litD.style.display = e.litS.style.display = e.ring.style.display = on ? "" : "none";
+    if (on) {
+      set(cur, true);
+      const x = dx(cur % COLS);
+      const y = sy(Math.floor(cur / COLS));
+      e.litD.setAttribute("d", `M${GX - 9},${RD}H${x}V${RD + 4}M${x},${RD + 9}V${GY + GH}`);
+      e.litS.setAttribute("d", `M${x},${y}H${RS + 9}M${RS + 4},${y}H${RS}V${YA0}`);
+      e.ring.setAttribute("cx", String(x));
+      e.ring.setAttribute("cy", String(y));
+    }
+    e.stat.textContent = on
+      ? S()["pins.stat"].replace("{i}", String(cur + 1)).replace("{n}", String(TAXELS)).replace("{v}", String(READ[cur]))
+      : S()["pins.done"].replace("{n}", String(TAXELS));
+    painted.cur = cur;
+  };
   const paintPins = () => {
     const fig = $<HTMLElement>(".wb-pinsfig");
-    const G = 44; // where the grid starts (viewBox units: 5 per cell)
-    const col = (i: number) => Math.round(1 + (i * 29) / 7); // the column under pin i
-    let pins = "";
-    for (let i = 0; i < 8; i++) {
-      const x = col(i) * 5 + 2;
-      pins += `<text x="${x}" y="7" class="mono">A${i}</text><path d="M${x},22.6V${G - 0.8}" class="wb-pins-line"/><circle cx="${x}" cy="17" r="5"/>`;
+    const w = S();
+    let base = `M${GX - 9},${RD}H${dx(COLS - 1)}M${RS},${sy(0)}V${YA0}`; // the two rails
+    let lines = "";
+    let sw = "";
+    for (let c = 0; c < COLS; c++) {
+      base += `M${dx(c)},${RD}V${RD + 4}`;
+      lines += `M${dx(c)},${RD + 9}V${GY + GH}`;
+      sw += `<path class="wb-sw wb-sw-d" d="${bladeD(c, false)}"/>`;
     }
-    const lit = new Set(Array.from({ length: 8 }, (_, i) => col(i)));
-    const cells: string[] = [];
-    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) cells.push(`<rect x="${c * 5}" y="${G + r * 5}" width="4" height="4" rx=".6"${r === 0 && lit.has(c) ? ' class="is-read"' : ""}/>`);
+    for (let r = 0; r < ROWS; r++) {
+      base += `M${RS},${sy(r)}H${RS + 4}`;
+      lines += `M${RS + 9},${sy(r)}H${GX + GW}`;
+      sw += `<path class="wb-sw wb-sw-s" d="${bladeS(r, false)}"/>`;
+    }
+    let cells = "";
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) cells += `<rect class="wb-cell" x="${dx(c) - 1.6}" y="${sy(r) - 1.6}" width="3.2" height="3.2" rx=".5"/>`;
     fig.innerHTML = `
-      <p class="wb-pins-cap">${S()["pins.a"].replace("{n}", "8")}</p>
-      <svg class="wb-pins-fig" viewBox="-1 0 162 ${G + ROWS * 5}" aria-hidden="true">${pins}${cells.join("")}</svg>
-      <p class="wb-pins-cap wb-pins-cap-b">${S()["pins.b"].replace("{n}", String(TAXELS))}</p>
-      <p class="wb-pins-note">${S()["pins.c"].replace(/\{k\}/g, "8")}</p>`;
+      <p class="wb-pins-q">${w["pins.q"].replace("{k}", "8").replace("{n}", String(TAXELS))}</p>
+      <p class="wb-pins-cap">${w["pins.a"].replace("{s}", String(ROWS)).replace("{d}", String(COLS))}</p>
+      <svg class="wb-pins-fig" viewBox="0 0 ${GX + GW + 2} ${YA0 + 3}" aria-hidden="true">
+        <path class="wb-pad-line" d="${lines}"/>
+        <path class="wb-rail" d="${base}"/>
+        ${sw}
+        <path class="wb-lit wb-lit-d" d=""/>
+        <path class="wb-lit wb-lit-s" d=""/>
+        ${cells}
+        <circle class="wb-ring" r="3.1"/>
+        <circle class="wb-term wb-term-d" cx="${GX - 9}" cy="${RD}" r="2.4"/>
+        <circle class="wb-term wb-term-s" cx="${RS}" cy="${YA0}" r="2.4"/>
+        <text x="${GX - 13.5}" y="${RD + 2.5}" class="mono" text-anchor="end">5V</text>
+        <text x="${RS + 5}" y="${YA0 + 2.5}" class="mono">A0</text>
+        <text x="${GX + GW / 2}" y="${RD - 5}" text-anchor="middle">${w["pins.drive"].replace("{d}", String(COLS))}</text>
+        <text x="${GX + GW}" y="${YA0 + 2.5}" text-anchor="end">${w["pins.sense"].replace("{s}", String(ROWS))}</text>
+      </svg>
+      <p class="wb-pins-stat mono"></p>
+      <p class="wb-pins-note">${w["pins.c"].replace("{n}", String(TAXELS)).replace("{hz}", String(FRAME_HZ))}</p>`;
+    pinsEls = {
+      cells: Array.from(fig.querySelectorAll<SVGRectElement>(".wb-cell")),
+      swD: Array.from(fig.querySelectorAll<SVGPathElement>(".wb-sw-d")),
+      swS: Array.from(fig.querySelectorAll<SVGPathElement>(".wb-sw-s")),
+      litD: fig.querySelector<SVGPathElement>(".wb-lit-d")!,
+      litS: fig.querySelector<SVGPathElement>(".wb-lit-s")!,
+      ring: fig.querySelector<SVGCircleElement>(".wb-ring")!,
+      stat: fig.querySelector<HTMLElement>(".wb-pins-stat")!,
+    };
+    paintScan(true);
+  };
+  // (the frame loop moves the scan on; true when it did)
+  const stepScan = (dt: number) => {
+    scanAcc += dt * 1000;
+    let moved = false;
+    for (let n = 0; n < 64; n++) {
+      const need = scanI >= TAXELS ? HOLD_MS : stepMs(scanI);
+      if (scanAcc < need) break;
+      scanAcc -= need;
+      scanI = scanI >= TAXELS ? 0 : scanI + 1;
+      moved = true;
+    }
+    if (moved) paintScan();
   };
 
   // ---------------------------------------------------------------------------------------- the readings
@@ -889,6 +1035,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     const prev = view;
     view = v;
     root.dataset.view = v;
+    root.style.setProperty("--wb-panel", `${panelW()}px`);
     if (v !== "nano" && picked) {
       picked = null;
       paintPick();
@@ -897,6 +1044,11 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       demo = null;
       pressActive = false;
       root.classList.remove("is-hit-hover");
+    }
+    // (step 4's scan starts over, a moment after the camera settles)
+    if (v === "pins" && prev !== "pins") {
+      scanI = 0;
+      scanAcc = -(animate && !reduced ? CAM_MS + 300 : 500);
     }
     // (the path stays whole once step 2 is left, however far its lighting got)
     if (v !== "wire" && seqT0 >= 0) seqT0 = -1;
@@ -1026,7 +1178,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
   let last = 0;
   let onScreen = true;
   // (the press view runs on: the plotter scrolls like the IDE's)
-  const busy = () => Boolean(camFrom) || (view === "wire" && seqT0 >= 0) || view === "press" || force > 0 || pressedNow();
+  const busy = () => Boolean(camFrom) || (view === "wire" && seqT0 >= 0) || view === "press" || (view === "pins" && !reduced) || force > 0 || pressedNow();
   const frame = (now: number) => {
     raf = 0;
     if (!alive || !data) return;
@@ -1079,6 +1231,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
       }
       paintSerial();
     }
+    // step 4's scan
+    if (view === "pins" && !reduced) stepScan(dt);
     if (busy() && onScreen && !document.hidden) raf = requestAnimationFrame(frame);
     else last = 0;
   };
