@@ -8,7 +8,8 @@ import "./styles/demo.css";
 import "./styles/i18n.css";
 import { initLang, loc, onLang, t } from "./i18n";
 import { byId, lessonNo } from "./lessons";
-import { MOVED, update } from "./state/store";
+import { MOVED, MOVED_STEP, update } from "./state/store";
+import { openLessonOn } from "./ui/steps";
 import { initTheme } from "./state/theme";
 import { mountShell, pageTitle, type NavId } from "./ui/shell";
 import { renderAbout } from "./views/about";
@@ -33,8 +34,10 @@ function route(): Route {
   const [page, arg] = parts;
   if (page === "lesson" && arg) {
     const l = byId(arg) ?? byId(MOVED[arg] ?? "");
-    // an old link to a lesson that was merged or left the course: show where it went, under its own address
+    // an old link to a lesson that was merged or left the course: show where it went, under its own address (and on
+    // the step it became, src/ui/steps.ts openLessonOn)
     if (l && l.id !== arg) history.replaceState(null, "", `#/lesson/${l.id}`);
+    openLessonOn(l && l.id !== arg && MOVED_STEP[arg] !== undefined ? l.id : null, MOVED_STEP[arg]);
     if (l) return { nav: "lessons", title: `${lessonNo(l)} ${loc(l).title}`, render: (el) => renderLesson(el, l), lesson: l.id };
   }
   if (page === "lessons") return { nav: "lessons", title: t("route.lessons"), render: renderLessons };

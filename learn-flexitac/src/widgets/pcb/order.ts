@@ -10,7 +10,7 @@
 //            the guide's screenshots (the factory's preview of the bare board, its 3D check of the parts; public/media/
 //            pcb/factory-*.webp), larger on a click; and where the files are to order the same board
 //   By hand  the Nano on its sockets: Fig 3's realistic board and Nano, the Nano held above its sockets
-//   Flash    loading the firmware (Lesson 1.4 has the steps)
+//   Flash    loading the firmware (Lesson 1.3 has the steps)
 // Each panel sits in the middle of the free height. The text names things in sentences, with no heading over each panel
 // (the pressed stage card names it).
 import { R1 } from "@shared/data/constants.mjs";

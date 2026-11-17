@@ -51,9 +51,15 @@ export const MOVED: Record<string, string> = {
   "real-sim-real": "why-simulate-touch",
   // 2026-10-29: "Grasp with your mouse" became the last four steps of "Put FlexiTac on a robot" (Lesson 1.5)
   "grasp-with-your-mouse": "put-on-a-robot",
-  // 2026-11-16: the real-robot placeholder (1.6) is out for now; the robot lesson is 1.6
+  // 2026-11-16: the real-robot placeholder (1.6) is out for now; the robot lesson is 1.6 (1.5 since the next change)
   "real-robot": "put-on-a-robot",
+  // 2026-11-16 (user): "Bytes to touch" (1.3) became step 2 of "Put it together" (1.4): test the pad just put together
+  "bytes-to-touch": "put-it-together",
 };
+
+/** An old link that leads to one step of the lesson it moved to (0-based): it opens there (src/ui/steps.ts
+ *  openLessonOn). */
+export const MOVED_STEP: Record<string, number> = { "bytes-to-touch": 1 };
 
 /** Saved progress under lessons that were merged into another one moves there, once per revision (idsRev), in order.
  *  Nothing is deleted: the old entries stay, and every list counts only the lessons in the course.
@@ -68,8 +74,12 @@ export const MOVED: Record<string, string> = {
  *  Revision 3 (2026-10-29): grasp-with-your-mouse -> put-on-a-robot, whose steps are its own 5 then grasp's 4 (Reach,
  *  Close, Lift, Try another shape), counted as a prefix: grasp's steps count only on top of all five mounting steps.
  *  Done stays done (put-on-a-robot's own flag; grasp alone does not finish the longer lesson). Quiz: grasp's three
- *  questions are put-on-a-robot's 4th to 6th (an answer already there is kept). */
-const IDS_REV = 3;
+ *  questions are put-on-a-robot's 4th to 6th (an answer already there is kept).
+ *  Revision 4 (2026-11-16): bytes-to-touch -> put-it-together, whose step 2 it became. Its steps (none) and done flag
+ *  stay behind (the bench was not built). Quiz: its first three questions (why a baseline, light or hard press, a finger
+ *  on the pad while it calibrates) are put-it-together's 4th to 6th (an answer already there is kept); its 4th (alpha)
+ *  left. Its saved tab goes along (it had Wiring and Code; so has the new lesson). */
+const IDS_REV = 4;
 
 const count = (s: Saved, id: string) => (typeof s.steps[id] === "number" && Number.isFinite(s.steps[id]) ? Math.floor(s.steps[id]) : 0);
 const answer = (a: (number | null)[] | undefined, i: number) => (Array.isArray(a) && typeof a[i] === "number" ? a[i] : null);
@@ -133,6 +143,19 @@ function migrateIds(s: Saved): boolean {
       for (let i = 0; i < 3; i++) if (answer(q, 3 + i) === null) q[3 + i] = answer(gq, i);
       s.quiz[to] = q;
     }
+  }
+  if (have < 4) {
+    const from = "bytes-to-touch";
+    const to = "put-it-together";
+    const bq = s.quiz[from];
+    if (Array.isArray(bq) && [0, 1, 2].some((i) => answer(bq, i) !== null)) {
+      const q = Array.isArray(s.quiz[to]) ? [...s.quiz[to]] : [];
+      while (q.length < 6) q.push(null);
+      for (let i = 0; i < 3; i++) if (answer(q, 3 + i) === null) q[3 + i] = answer(bq, i);
+      s.quiz[to] = q;
+    }
+    const tab = s.tab?.[from];
+    if (tab && s.tab && !s.tab[to]) s.tab[to] = tab;
   }
   s.idsRev = IDS_REV;
   return true;

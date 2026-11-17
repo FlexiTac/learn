@@ -1,4 +1,4 @@
-// Lesson 1.5's parts in 3D, built in the root's z-up frame (mm; x right, y = -Y away from the viewer, z up):
+// Lesson 1.4's parts in 3D, built in the root's z-up frame (mm; x right, y = -Y away from the viewer, z up):
 //   FPCs        a fine grid plane with the Gerber's artwork on canvas (@shared/data/fpc_*.json: outline, windows,
 //               slots, electrodes, fanout traces, gold fingers, silkscreen, stiffeners), a copper side and a back, cut
 //               out by the picture's alpha; the grid lets the top tail bend up over a connector (setBend)

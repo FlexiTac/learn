@@ -15,7 +15,6 @@ import { lesson as l02 } from "./02-the-sandwich";
 // moves saved progress where a lesson was merged.
 import { lesson as l07 } from "./07-meet-the-board";
 import { lesson as l09 } from "./09-one-frame";
-import { lesson as l11 } from "./11-bytes-to-touch";
 import { lesson as l12 } from "./12-build-your-own";
 // 2026-10-25 (PLAN-section2-3.md v0.2.2): Section 2 "On a robot" (2.1-2.2, Fig 5 gripper) and Section 3 "In simulation"
 // (3.1-3.6, the in-browser touch engine shared/models/touchsim.mjs and its cards, src/widgets/sim-*.ts).
@@ -28,6 +27,11 @@ import { lesson as l21 } from "./21-put-on-a-robot";
 // 1.5 comes after "Build your own": "Put it together", an assembly game on a 3D bench (src/widgets/assemble-bench.ts).
 // "Put FlexiTac on a robot" is 1.6 (n 6); the old 1.6 link goes to it (src/state/store.ts MOVED). Same day (user): 1.5
 // and 1.6 are one chapter, the third ("On a robot" became "From parts to robot"); "Use it" is 1.3-1.4 again.
+// Then (user): "Bytes to touch" left as a lesson and became the test at the end of "Put it together" (its step 2; the
+// file is in ./_retired, src/state/store.ts MOVED sends its link to that step). "Build your own" is 1.3 and "Put it
+// together" 1.4, one chapter, "Build it", under the bench's parts from above; "On a robot" is the third chapter again,
+// with only "Put FlexiTac on a robot" (1.5) for now, under the old "Use it" loop (a real pad and its live heatmap, which
+// fits the real robot footage to come). Every lesson after it moved up one place (n 6-15).
 import { lesson as lPut } from "./14-put-it-together";
 // 2026-11-09 (user, PLAN-section2-basics.md): Section 2 opens with two lessons on the basics before the board: 2.1
 // "Arduino reads one force sensor" and 2.2 "Chips and connectors". "Meet the reading board" (2.3) became how the board
@@ -47,7 +51,7 @@ import { lesson as l33 } from "./33-how-deep-how-hard";
 // lessons still in the course (src/state/store.ts MOVED).
 import { lesson as l36 } from "./36-sim-playground";
 
-export const LESSONS: Lesson[] = [l01, l02, l11, l12, lPut, l21, lA, lBuild, lB, lC, l07, l09, l31, l32, l33, l36];
+export const LESSONS: Lesson[] = [l01, l02, l12, lPut, l21, lA, lBuild, lB, lC, l07, l09, l31, l32, l33, l36];
 
 export const byId = (id: string): Lesson | undefined => LESSONS.find((l) => l.id === id);
 
@@ -58,7 +62,7 @@ export const SECTIONS: Section[] = [
   {
     n: 1,
     title: "The sensor",
-    blurb: "The pad: how it works, how to see its touch, how to build your own and how to put it on a robot.",
+    blurb: "The pad: how it works, how to build your own and see its touch, and how to put it on a robot.",
     chapters: [
       {
         title: "The pad",
@@ -68,19 +72,21 @@ export const SECTIONS: Section[] = [
         alt: "A fingertip presses the FlexiTac pad and its touch map lights up.",
       },
       {
-        title: "Use it",
-        lessons: ["bytes-to-touch", "build-your-own"],
-        text: "Watch a live heatmap follow your finger, build your own pad in about 3 minutes, and fix it when the picture looks wrong.",
-        cover: { loop: "useit" },
-        alt: "A finger presses a real FlexiTac pad and a live heatmap follows it on a screen.",
-      },
-      {
-        title: "From parts to robot",
-        lessons: ["put-it-together", "put-on-a-robot"],
-        text: "Put a FlexiTac together part by part, from two bare FPCs to a pad cabled to its reading board, then tape a pad onto each finger of a robot gripper and drive it with your mouse.",
-        // (2026-11-16, user: the parts of Lesson 1.5's bench from above, laid out neatly; scripts/cover-parts.mjs)
+        title: "Build it",
+        lessons: ["build-your-own", "put-it-together"],
+        text: "Build your own pad in about 3 minutes from the guide's photos, then put one together part by part on a 3D bench and test it: press the pad and watch its bytes become a live heatmap.",
+        // (2026-11-16, user: the parts of Lesson 1.4's bench from above, laid out neatly; scripts/cover-parts.mjs)
         cover: { still: "parts" },
         alt: "Every part of one FlexiTac laid out on a blue mat, seen from above: the two FPCs, two lamination sheets, the Velostat, two extenders, two flat cables, an Arduino Nano and the reading board.",
+      },
+      {
+        title: "On a robot",
+        lessons: ["put-on-a-robot"],
+        text: "Tape a pad onto each finger of a robot gripper, cable it to its reading board and drive the gripper with your mouse.",
+        // (the old "Use it" chapter's loop: a real pad and its live heatmap, 2026-11-16, user: it fits, as the real robot
+        // comes here later)
+        cover: { loop: "useit" },
+        alt: "A finger presses a real FlexiTac pad and a live heatmap follows it on a screen.",
       },
     ],
   },
@@ -182,7 +188,7 @@ export function chapterRange(c: Chapter): string {
 /** The lesson a figure's part names (FigPart.lesson, "Taught in Lesson N" in the detail window). The figures were built
  *  against the course of 2026-10-25 (figures/<fig>/parts.mjs): a number is the lesson's place in that course (Fig 1-3),
  *  a string its number then ("2.1", Fig 5). They keep those, so they are read through that course's order here. */
-const FIGURE_COURSE = ["meet-flexitac", "the-sandwich", "meet-the-board", "one-frame", "bytes-to-touch", "build-your-own", "put-on-a-robot", "put-on-a-robot", "why-simulate-touch", "pad-made-of-points", "how-deep-how-hard", "sim-playground"];
+const FIGURE_COURSE = ["meet-flexitac", "the-sandwich", "meet-the-board", "one-frame", "put-it-together", "build-your-own", "put-on-a-robot", "put-on-a-robot", "why-simulate-touch", "pad-made-of-points", "how-deep-how-hard", "sim-playground"];
 const FIGURE_NOS: Record<string, string> = { "2.1": "put-on-a-robot", "2.2": "put-on-a-robot" };
 /** Parts a lesson written after the figures now teaches (2026-11-09: Section 2's basics and how the board was made), by
  *  figure and part id: these win over the number the figure carries, so the figures need no rebuild for it. */

@@ -40,7 +40,7 @@ const A0_BENCH = adcCode(vA0(R_PRESSED, { rOn: 0 })); // Lesson 2.1's bench: no 
 
 export const lesson: Lesson = {
   id: "two-chips",
-  n: 9,
+  n: 8,
   title: "Two chips that take turns",
   kicker: "Chips and connectors",
   lede: `Two kinds of small chip let one analog pin read all ${TAXELS} crossings. One powers a single drive line, the other listens to a single sense line, and they take turns.`,

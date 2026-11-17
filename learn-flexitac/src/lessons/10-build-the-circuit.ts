@@ -24,7 +24,7 @@ const SF_HOW = "https://learn.sparkfun.com/tutorials/how-to-use-a-breadboard/all
 
 export const lesson: Lesson = {
   id: "build-the-circuit",
-  n: 8,
+  n: 7,
   title: "Build it and make it work",
   kicker: "Arduino basics",
   lede: `Build lesson 2.1's circuit yourself on an empty breadboard, put its sketch together, upload it and press the sensor. It works only when the wiring and the code agree.`,

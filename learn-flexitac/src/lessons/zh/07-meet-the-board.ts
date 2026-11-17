@@ -49,7 +49,7 @@ export const zh: LessonZh = {
 
 <p>${ORDER.boards} 块板一共 ${usd(ORDER_TOTAL)}（不含运费）：做板 ${usd(ORDER.pcb)}，贴片 ${usd(ORDER.pcba)}。贴片费里大部分是每张订单只收一次的：开机费 ${usd(ORDER.setup)}，还有四种不常用零件的扩展库费 ${usd(ORDER.extended)}。所以订得越多，每块板越便宜。板子大约一周送到。</p>
 
-<p>Nano 不在这张订单里，要你自己装：在板上留给 Nano 的 ${HOLES} 个孔里焊上两条 15 针的排母 ${INFERRED}，再把 Nano 插进去；也可以把 Nano 直接焊上。然后烧录（flash）固件（firmware），第 1.4 课会一步步带你做。想做一块一样的板，硬件指南里有它的 Gerber 文件、BOM 和坐标文件，用它们下单就行。</p>
+<p>Nano 不在这张订单里，要你自己装：在板上留给 Nano 的 ${HOLES} 个孔里焊上两条 15 针的排母 ${INFERRED}，再把 Nano 插进去；也可以把 Nano 直接焊上。然后烧录（flash）固件（firmware），第 1.3 课会一步步带你做。想做一块一样的板，硬件指南里有它的 Gerber 文件、BOM 和坐标文件，用它们下单就行。</p>
 
 <p>把这些零件连起来，就是两条通路。驱动通路给一条驱动线通电：D2 和 D3，然后是 U2–U5，再经过 FPC2 到传感垫。感应通路听一条感应线：从传感垫经过 FPC1、U6 到 A0，再加上 R1。读数属于两条线相交的那一个交叉点。第 2.6 课会讲读取板怎样走遍全部 ${TAXELS} 个交叉点，每秒 ${FRAME_HZ} 次。</p>`,
   wiring: {
@@ -123,7 +123,7 @@ export const zh: LessonZh = {
     },
     {
       title: "交给工厂",
-      text: `EasyEDA 导出 Gerber 文件、BOM 和坐标文件。工厂做了 ${ORDER.boards} 块板并焊好零件，共 ${usd(ORDER_TOTAL)}（不含运费），大约一周。Nano 由你自己装上并烧录（第 1.4 课）。`,
+      text: `EasyEDA 导出 Gerber 文件、BOM 和坐标文件。工厂做了 ${ORDER.boards} 块板并焊好零件，共 ${usd(ORDER_TOTAL)}（不含运费），大约一周。Nano 由你自己装上并烧录（第 1.3 课）。`,
     },
     {
       title: "两条通路",

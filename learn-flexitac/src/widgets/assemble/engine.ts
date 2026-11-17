@@ -1,8 +1,8 @@
-// Lesson 1.5's assembly game: the rules. What the learner has put together (Assembly), what a drop does (drop()), and
+// Lesson 1.4's assembly game: the rules. What the learner has put together (Assembly), what a drop does (drop()), and
 // the next single thing to do (next(), the Hint's). Plan millimetres throughout (./geometry.ts); no three.js here, so the
 // rules can be read and tested on their own.
 //
-// The order is Lesson 1.4's: each FPC onto a lamination sheet; the Velostat onto the bottom part; the top part over it
+// The order is Lesson 1.3's: each FPC onto a lamination sheet; the Velostat onto the bottom part; the top part over it
 // (it turns face down); an extender (a connector with a socket on each side) onto each tail; a flat cable into each
 // extender, then its free end to the board's socket; the Nano into the board. A drop that cannot happen (a part on the wrong place, a step too early) changes nothing and says why.
 import { BOARD, CABLE, nanoSeat, PAD_SPOT, PLUG, portOnBoard, SHEET, SNAP, SPOT, START, TAIL, type P2, type Socket } from "./geometry";

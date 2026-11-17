@@ -222,9 +222,9 @@ const fpcThick = getFact("fpc_top.thickness").value as number;
 
 export const lesson: Lesson = {
   id: "build-your-own",
-  n: 4,
+  n: 3,
   title: `Build your own in ~${BUILD_MIN} minutes`,
-  kicker: "Use it",
+  kicker: "Build it",
   lede: `Order two flexible circuits and a small board, then build the pad by hand: laminate, add Velostat, seal, connect. Once the parts are on your desk it takes about ${BUILD_MIN} minutes. Then flash the Nano, and fix the picture if it looks wrong.`,
   status: "ready",
   features: [

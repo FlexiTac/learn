@@ -14,7 +14,7 @@ const LOUD = 6;
 
 export const lesson: Lesson = {
   id: "sim-playground",
-  n: 16,
+  n: 15,
   title: "Playground",
   kicker: "Contact to signal",
   lede: `The whole model in one place. Pick an object, turn the knobs, add noise, and compare a simulated frame with a real-style one.`,
@@ -29,7 +29,7 @@ export const lesson: Lesson = {
   overview: `
 <p><b>Try it.</b> An object presses into the finger's pad again and again. Drag on the drawing (or click a square on a map)
 to move where it presses, and pick another object with the buttons.</p>
-<p><b>Two ways to read the same press.</b> The <i>Simulated</i> map is the model's force, scaled by the same rule the real viewer uses (Lesson 1.3).
+<p><b>Two ways to read the same press.</b> The <i>Simulated</i> map is the model's force, scaled by the same rule the real viewer uses (Lesson 1.4).
 The <i>Real-style</i> map turns the same force into bytes first, the way a real board would send them: every point has its
 own resting level, a little noise, and the viewer subtracts a <dfn>baseline</dfn> measured from the first frames. Then the
 same rule scales it.</p>

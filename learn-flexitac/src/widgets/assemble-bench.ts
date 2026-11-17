@@ -1,7 +1,7 @@
-// Lesson 1.5, "Put it together": an assembly game. Every part of one FlexiTac waits on a blue anti-static mat in 3D
+// Lesson 1.4, "Put it together": an assembly game. Every part of one FlexiTac waits on a blue anti-static mat in 3D
 // (./assemble3d/scene.ts): two FPCs, two lamination sheets taped down in the work area, the Velostat, a 16-pin and a
 // 32-pin connector, a 16-pin and a 32-pin flat cable, and the Arduino Nano; the reading board sits in front, put
-// together but for its Nano. The learner drags the parts together in Lesson 1.4's order (the rules: ./assemble/
+// together but for its Nano. The learner drags the parts together in Lesson 1.3's order (the rules: ./assemble/
 // engine.ts): each FPC onto a sheet, the Velostat onto the bottom part, the top part over it (it turns face down), a
 // extender onto each tail, each flat cable into its extender, then its free end to the board's socket, the Nano into the
 // board. While a part is held, the place it would join is outlined (teal) or, when it cannot go there, outlined red, and
@@ -11,8 +11,9 @@
 // bench shows the order instead: the top part and the bottom part side by side, joining into the Velostat, then the
 // sandwich, the extenders, the FFCs, the board and the Nano; a stop turns teal when it is done, the stop to do now is
 // dark and its line above the bar says what to do. When a stop is done the camera flies to the next one's part of the
-// mat; a click on a stop goes there and says what it asks for. When everything is in, the lesson counts as done
-// (ctx.complete) and the bar leads on to the next lesson.
+// mat; a click on a stop goes there and says what it asks for. When everything is in, "Good job!" comes up and the bar
+// leads on to the lesson's step 2, the test (ctx.nextStep: the Heatmap lab over the stage); the lesson counts as done
+// there, as its steps bar counts it.
 // The Hint button (as in Lesson 2.2) says the next single thing to do, in the bar's line in place of the stop's own words,
 // outlines the part and the place (amber, with a line between them), and its "Do this step" does that one thing; it
 // follows along until the button is pressed again. The note (what a part is, what joined, why not) shows just above the
@@ -22,6 +23,8 @@
 import { strings } from "../i18n";
 import { paintText } from "../i18n/paint";
 import type { Theme, WidgetCtx, WidgetInstance } from "../types";
+import { h } from "../ui/dom";
+import { icon } from "../ui/icons";
 import { nextLessonButton } from "../ui/steps";
 import {
   allDone,
@@ -95,7 +98,7 @@ const S = strings(
     "do.ffc": "Plug each flat cable into its extender: the 32-pin cable into the 32-pin one, the 16-pin into the 16-pin.",
     "do.board": "Take each cable's free end to the board: the 32-pin cable to FPC2, the 16-pin cable to FPC1.",
     "do.nano": "Drop the Arduino Nano into the board's two sockets, its USB toward you.",
-    "do.done": "All put together. Plug in USB and it reads all 384 crossings.",
+    "do.done": "All put together. Next, plug it in and test it.",
     // the parts' names, on the mat
     "name.top": "Top FPC · 12 lines",
     "name.bot": "Bottom FPC · 32 lines",
@@ -136,8 +139,9 @@ const S = strings(
     // everything in: the badge
     "done.kicker": "Put together",
     "done.title": "Good job!",
-    "done.text": "A whole FlexiTac: the pad, two extenders, two cables and the reading board with its Nano. Plug in USB and it reads all 384 crossings, as in Lesson 1.3.",
+    "done.text": "A whole FlexiTac: the pad, two extenders, two cables and the reading board with its Nano. Next, plug it in and test it.",
     "done.look": "Look around",
+    "next.test": "Next: test it",
     // why a drop could not join
     "no.velo-top": "The Velostat goes on the bottom part (the 32 drive lines). The top part closes over it.",
     "no.velo-bare": "Press the bottom FPC onto a lamination sheet first.",
@@ -201,7 +205,7 @@ const S = strings(
     "do.ffc": "把每根排线插到它的转接板上：32 针排线插 32 针转接板，16 针插 16 针。",
     "do.board": "把每根排线空着的一头接到读取板：32 针排线接 FPC2，16 针排线接 FPC1。",
     "do.nano": "把 Arduino Nano 插进读取板的两排座子，USB 口朝向你。",
-    "do.done": "全部拼好了。插上 USB，它就能读出全部 384 个交叉点。",
+    "do.done": "全部拼好了。下一步，接上电脑测一测。",
     "name.top": "上层 FPC · 12 条线",
     "name.bot": "下层 FPC · 32 条线",
     "name.sheet": "覆膜",
@@ -238,8 +242,9 @@ const S = strings(
     "ok.nano": "Nano 插进了读取板的两排座子。",
     "done.kicker": "拼装成功",
     "done.title": "做得好！",
-    "done.text": "一块完整的 FlexiTac：传感垫、两块转接板、两根排线，还有插好 Nano 的读取板。插上 USB，它就能读出全部 384 个交叉点，就像第 1.3 课那样。",
+    "done.text": "一块完整的 FlexiTac：传感垫、两块转接板、两根排线和插好 Nano 的读取板。下一步，接上电脑测一测。",
     "done.look": "再看看",
+    "next.test": "下一步：测一测",
     "no.velo-top": "Velostat 要铺在下半部分上（32 条驱动线那块）。上半部分再盖上来。",
     "no.velo-bare": "先把下层 FPC 贴到一张覆膜上。",
     "no.close-novelo": "先把 Velostat 铺到下半部分上。没有它，两层线会直接碰在一起。",
@@ -380,7 +385,19 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     noteTimer = window.setTimeout(() => noteEl.classList.remove("is-on"), ms);
   };
   // ------------------------------------------------------------------------------------------------ the progress bar
-  let onward: HTMLAnchorElement | null = null;
+  let onward: HTMLElement | null = null;
+  /** The way on once everything is in: the lesson's next step, the test (ctx.nextStep), in the lesson colour as the
+   *  steps bar's "Next step" is; in a lesson without one, the way to the next lesson. */
+  const onwardButton = (): HTMLElement | null => {
+    const next = ctx.nextStep;
+    if (!next) return nextLessonButton(ctx.lesson);
+    const b = h("button", { type: "button", class: "btn-primary ab-to-test" }, `<span data-t="next.test">${say("next.test")}</span>${icon("chevron")}`);
+    b.addEventListener("click", () => {
+      hideDone();
+      next();
+    });
+    return b;
+  };
   const paintBar = () => {
     const now = stagesNow(a);
     for (const b of pathEl.querySelectorAll<HTMLButtonElement>(".ab-step")) {
@@ -411,9 +428,10 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     $<HTMLElement>(".ab-now-text").textContent = say(key);
     trackEl.classList.toggle("is-done", !now.length);
     hintBtn.hidden = !now.length;
-    // (everything in: the way on to the next lesson, as the last step of a lesson with steps)
+    // (everything in: the way on to the next lesson, as the last step of a lesson with steps; a lesson whose steps bar
+    // leads on to the test needs none here, the badge and that bar have it)
     onward?.remove();
-    onward = !now.length ? nextLessonButton(ctx.lesson) : null;
+    onward = !now.length && !ctx.nextStep ? onwardButton() : null;
     if (onward) $<HTMLElement>(".ab-onward").append(onward);
     fitPath();
   };
@@ -675,9 +693,8 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     undoBtn.disabled = !undo.length;
     scene.power(allDone(a));
     follow();
-    // (put together: the lesson counts as done, as a passed quiz makes it, and the badge comes up once the Nano is in)
+    // (put together: the badge comes up once the Nano is in)
     if (allDone(a) && !wasDone) {
-      ctx.complete?.();
       window.clearTimeout(doneTimer);
       doneTimer = window.setTimeout(showDone, reduced ? 0 : 750);
     }
@@ -687,7 +704,7 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
 
   // ------------------------------------------------------------------------------------------------ the badge
   // "Good job!" over the bench when the last part goes in (not when a finished bench is opened again): a tick that draws
-  // itself in a teal disc, a burst of bits in the parts' colours, the way on to the next lesson and "Look around", which
+  // itself in a teal disc, a burst of bits in the parts' colours, the way on to step 2 (the test) and "Look around", which
   // (as Escape or a click beside the card) puts it away to see the finished thing
   const doneEl = $<HTMLElement>(".ab-done");
   const burst = $<HTMLElement>(".ab-burst");
@@ -700,10 +717,10 @@ export function mount(el: HTMLElement, ctx: WidgetCtx): WidgetInstance {
     return `<i${dot} style="--dx:${(Math.cos(t) * r * 1.25).toFixed(1)}px;--dy:${(Math.sin(t) * r * 0.75 - 18).toFixed(1)}px;--r:${(i * 67) % 360 + 180}deg;--c:${BITS[i % BITS.length]};--d:${((i % 6) * 0.025).toFixed(3)}s"></i>`;
   }).join("");
   let doneTimer = 0;
-  let doneOnward: HTMLAnchorElement | null = null;
+  let doneOnward: HTMLElement | null = null;
   const paintDoneNext = () => {
     doneOnward?.remove();
-    doneOnward = nextLessonButton(ctx.lesson);
+    doneOnward = onwardButton();
     if (doneOnward) $<HTMLElement>(".ab-done-next").append(doneOnward);
   };
   function showDone() {

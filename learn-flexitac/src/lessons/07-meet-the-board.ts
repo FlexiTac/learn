@@ -47,7 +47,7 @@ const EDA_DRC = "https://docs.easyeda.com/en/PCB/Design-Rule-Check/";
 
 export const lesson: Lesson = {
   id: "meet-the-board",
-  n: 11,
+  n: 10,
   title: "How the reading board was made",
   kicker: "The board",
   lede: `How the reading board went from a drawing of its circuit, to copper on a board, to ${ORDER.boards} boards from a factory.`,
@@ -111,7 +111,7 @@ ${usd(ORDER.extended)} for the four less common parts, so each board costs far l
 about a week to arrive.</p>
 
 <p>The Nano is not part of that order. You solder two 15-pin header sockets into the board's ${HOLES} holes
-${INFERRED} and press the Nano in, or solder the Nano straight in, then flash the firmware, as Lesson 1.4 shows. To
+${INFERRED} and press the Nano in, or solder the Nano straight in, then flash the firmware, as Lesson 1.3 shows. To
 order the same board, use the Gerber, BOM and pick-and-place files linked from the hardware guide.</p>
 
 <p>Put together, the parts make two paths. The drive path powers one drive line: D2 and D3, then U2–U5, then FPC2 and

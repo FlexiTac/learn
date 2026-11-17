@@ -30,7 +30,7 @@ export const zh: LessonZh = {
 <p>写成公式，A0 上的电压是 V = 5 V × 10 kΩ / (10 kΩ + R<sub>FSR</sub>)，R<sub>FSR</sub> 是 FSR 的电阻。按到它降到 10 kΩ、和下拉电阻一样大时，A0 正好在 2.5 V，一半的位置。第 1.2 课的触摸点用的也是这个电路、这个 10 kΩ 电阻，它在读取板上叫 R1。</p>
 <p>微控制器里有一个 <dfn data-term="adc">ADC（模数转换器）</dfn>，负责把电压变成数字。它把 0–5 V 分成 ${STEPS} 格，每格约 ${STEP_MV.toFixed(1)} mV，所以 <dfn data-term="analogread">analogRead()</dfn> 返回 0 到 ${STEPS - 1} 之间的一个整数。读一次大约要 100 µs，所以 Nano 一秒钟大约能读 A0 一万次。照这个速度，FlexiTac 每秒把 ${TAXELS} 个交叉点（crossing）读 ${FRAME_HZ} 遍是来不及的。它的固件（firmware）把 ADC 调快了 ${FASTER} 倍，读一次只要大约 ${FIRMWARE_US} µs（第 2.6 课）。</p>
 <p>要看到这些数字，程序用 <code>Serial.println()</code> 把每个数通过 USB 发回电脑。Arduino IDE 可以在<dfn data-term="serial-monitor">串口监视器（Serial Monitor）</dfn>里把它们一行一行列出来，也可以在串口绘图器（Serial Plotter）里画成一条移动的曲线。</p>
-<p>FlexiTac 自己的固件为了快，发的是原始字节而不是文字。所以第 1.4 课提醒你，用串口监视器看只会是乱码。一个字节最大只到 255，所以固件发送前先把每个读数除以 4，这就是你在第 1.3 课见到的 0 到 255 的读数。</p>
+<p>FlexiTac 自己的固件为了快，发的是原始字节而不是文字。所以第 1.3 课提醒你，用串口监视器看只会是乱码。一个字节最大只到 255，所以固件发送前先把每个读数除以 4，这就是你在第 1.4 课见到的 0 到 255 的读数。</p>
 <p>FlexiTac 传感垫上的每个交叉点，都像一个小小的 FSR。它是一条上层的线和一条下层的线，中间夹着 Velostat，按下去电阻就变小。只有一点不同：Velostat 没人按时也会导一点电，所以没人按的交叉点，读数从来不会正好是 0。</p>
 <p>一块传感垫有 ${TAXELS} 个交叉点，Nano 却只有 8 个模拟引脚，一个交叉点占一个引脚是行不通的。FlexiTac 也不需要这样。传感垫上只有 ${ROWS} 条感应线（sense line）和 ${COLS} 条驱动线（drive line），每个交叉点都是一条感应线和一条驱动线相交的地方。每条线上都有一个开关，用来选出一个交叉点：它的驱动线接上 5 V，它的感应线接到 A0。这时 A0 只读这一个交叉点，读法和这里读 FSR 一样。然后开关换到下一个交叉点，一秒钟把 ${TAXELS} 个点轮流读 ${FRAME_HZ} 遍。第 4 步把这个过程放慢给你看，第 2.3 课用两种芯片把这些开关做出来。</p>`,
   wiring: {

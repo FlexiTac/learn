@@ -30,9 +30,9 @@ const MODEL = "touchsim (this course's in-browser model, shared/models/touchsim.
 
 export const lesson: Lesson = {
   id: "put-on-a-robot",
-  n: 6,
+  n: 5,
   title: "Put FlexiTac on a robot",
-  kicker: "From parts to robot",
+  kicker: "On a robot",
   lede: `Two pads, two boards, two USB cables: how FlexiTac goes onto a gripper's fingers and how its touch gets to the computer. Then drive the gripper yourself and feel what it grasps.`,
   status: "ready",
   features: [

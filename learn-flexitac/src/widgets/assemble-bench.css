@@ -1,4 +1,4 @@
-/* Lesson 1.5's assembly bench (src/widgets/assemble-bench.ts): the 3D mat fills the stage; the corner texts and buttons,
+/* Lesson 1.4's assembly bench (src/widgets/assemble-bench.ts): the 3D mat fills the stage; the corner texts and buttons,
    the Hint and the notes look as on Lesson 2.2's bench (build-bench.css). The progress bar sits on a card at the bottom
    left: what to do now above, the stops below (the two parts side by side, a bracket joining them into the Velostat).
    Teal (--ft-hotspot) for what is done and a place a held part would join, ink for the stop to do now, red for a place a

@@ -1,6 +1,6 @@
 // The "plug" view of chips-lab (Lesson 2.4 step 3, "Plug the pad in"): the whole chain from the pad to the reading board,
 // cut through one line and seen from the side, not to scale (thicknesses enlarged): the pad's tail with its gold fingers
-// -> an FFC extender (a tiny board with a socket on each side, as in Lesson 1.5) -> a flat cable -> FPC1, the reading
+// -> an FFC extender (a tiny board with a socket on each side, as in Lesson 1.4) -> a flat cable -> FPC1, the reading
 // board's socket for the Top FPC's 12-line tail. The cable's first end is already in the extender, locked; the learner
 // makes the two other joints, in order (chips-lab.ts): at the extender, open its lock, slide the tail in and close it;
 // then lift FPC1's latch, slide the cable's free end in and close it. The two kinds of socket differ (external):

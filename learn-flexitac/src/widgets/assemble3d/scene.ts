@@ -1,4 +1,4 @@
-// Lesson 1.5's assembly bench in 3D: the parts of one FlexiTac on a blue anti-static work mat (the 2.2 bench's mat and
+// Lesson 1.4's assembly bench in 3D: the parts of one FlexiTac on a blue anti-static work mat (the 2.2 bench's mat and
 // studio light), the two lamination sheets taped down in the work area, the rest waiting in the parts box, the reading
 // board in front. The learner turns the view (drag on empty space), zooms (wheel) and pans (right drag); the widget
 // (../assemble-bench.ts) decides what a drag does, through the rules in ../assemble/engine.ts. This file draws an

@@ -23,7 +23,7 @@ const FSR_SHEET = "https://www.interlinkelectronics.com/downloads/datasheets/fsr
 
 export const lesson: Lesson = {
   id: "arduino-fsr",
-  n: 7,
+  n: 6,
   title: "Arduino reads one force sensor",
   kicker: "Arduino basics",
   lede: `Meet the Arduino Nano, the small computer on the reading board. Then wire one force sensor to it and read how hard you press, as a number from 0 to ${STEPS - 1}.`,
@@ -68,9 +68,9 @@ FlexiTac, which reads all ${TAXELS} crossings ${FRAME_HZ} times a second. Its fi
 about ${FIRMWARE_US} µs a reading (Lesson 2.6).</p>
 <p>To see the numbers, the sketch sends each one back over USB with <code>Serial.println()</code>. The Arduino IDE shows
 them as lines of text in its <dfn>Serial Monitor</dfn>, or draws them as a moving line in its Serial Plotter.</p>
-<p>FlexiTac's own firmware sends raw bytes instead of text, because that is faster. That is why Lesson 1.4 warns that the
+<p>FlexiTac's own firmware sends raw bytes instead of text, because that is faster. That is why Lesson 1.3 warns that the
 Serial Monitor shows gibberish there. A byte goes only up to 255, so the firmware divides each reading by 4 before
-sending it. Those are the 0 to 255 readings you met in Lesson 1.3.</p>
+sending it. Those are the 0 to 255 readings you met in Lesson 1.4.</p>
 <p>Each crossing of a FlexiTac pad works like a tiny FSR. It is a top line and a bottom line with Velostat between, and
 its resistance falls when you press. There is one difference. Velostat conducts a little even when nothing presses it,
 so an untouched crossing never reads exactly 0.</p>

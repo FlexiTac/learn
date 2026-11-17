@@ -10,7 +10,7 @@ import { FigureHost, type FigureMode, type FigureStatus } from "../figure/Figure
 import { lang, loc, onLang, t } from "../i18n";
 import { FLAT_QUERY, WIDE_QUERY } from "../state/layout";
 import { onTheme, reducedMotion, theme } from "../state/theme";
-import { load, markDone, update } from "../state/store";
+import { load, update } from "../state/store";
 import type { CodeSample, DemoId, Lesson, LessonCtx, StageId, WidgetInstance } from "../types";
 import { loadWidget } from "../widgets";
 import { badge, sourceChips, specRows } from "../ui/bits";
@@ -280,7 +280,7 @@ export function renderLesson(outlet: HTMLElement, lesson: Lesson): () => void {
         if (!view.isConnected) return;
         slot.innerHTML = "";
         if (lesson.widgetCard && !lesson.figure) card = stageCard(slot, lesson.widget!);
-        widget = mount(card ? card.body : slot, { lesson, figure, theme, onTheme: ctx.onTheme, reducedMotion, lang, onLang: ctx.onLang, complete: () => markDone(lesson.id) && onComplete() });
+        widget = mount(card ? card.body : slot, { lesson, figure, theme, onTheme: ctx.onTheme, reducedMotion, lang, onLang: ctx.onLang, nextStep: (lesson.steps?.length ?? 0) > 1 ? () => bar?.next() : undefined });
         if (viewing) widget.view?.(lesson.steps?.[stepNow]?.widgetView);
         card?.attach(widget);
       })

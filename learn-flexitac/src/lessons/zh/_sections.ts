@@ -7,7 +7,7 @@ import type { SectionZh } from "../../i18n/localize";
 export const SECTIONS_ZH: Record<number, SectionZh> = {
   1: {
     title: "传感器",
-    blurb: "传感垫：它怎样工作，怎样看到它的触觉，怎样自己做一块，以及怎样把它装到机器人上。",
+    blurb: "传感垫：它怎样工作，怎样自己做一块、看到它的触觉，以及怎样把它装到机器人上。",
     chapters: [
       {
         title: "传感垫",
@@ -15,14 +15,14 @@ export const SECTIONS_ZH: Record<number, SectionZh> = {
         alt: "一根手指按压 FlexiTac 传感垫，它的触觉图亮了起来。",
       },
       {
-        title: "用起来",
-        text: "看实时热力图跟着你的手指走，用大约 3 分钟自己做一块传感垫，画面不对时学会排查。",
-        alt: "一根手指按压真实的 FlexiTac 传感垫，屏幕上的实时热力图跟着它移动。",
+        title: "动手做一个",
+        text: "照着指南的照片，用大约 3 分钟自己做一块传感垫；再在 3D 工作台上一个零件一个零件地拼出一块，测一测：按一按传感垫，看它的字节变成实时热力图。",
+        alt: "一块 FlexiTac 的全部零件整齐地摆在蓝色工作垫上，从正上方看：两块 FPC、两张覆膜、Velostat、两块转接板、两根扁平排线、一块 Arduino Nano 和读取板。",
       },
       {
-        title: "从零件到机器人",
-        text: "一个零件一个零件地拼出一块 FlexiTac，从两块光秃秃的 FPC 到接好读取板的传感垫；再在机器人夹爪的每根手指上贴一块，用鼠标操控夹爪。",
-        alt: "一块 FlexiTac 的全部零件整齐地摆在蓝色工作垫上，从正上方看：两块 FPC、两张覆膜、Velostat、两块转接板、两根扁平排线、一块 Arduino Nano 和读取板。",
+        title: "装到机器人上",
+        text: "在机器人夹爪的每根手指上贴一块传感垫，接到读取板上，再用鼠标操控夹爪。",
+        alt: "一根手指按压真实的 FlexiTac 传感垫，屏幕上的实时热力图跟着它移动。",
       },
     ],
   },

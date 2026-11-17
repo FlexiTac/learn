@@ -33,7 +33,7 @@ const ADA_EXT = "https://www.adafruit.com/product/5203; https://www.adafruit.com
 
 export const lesson: Lesson = {
   id: "fingers-and-cables",
-  n: 10,
+  n: 9,
   title: "Gold fingers and flat cables",
   kicker: "Chips and connectors",
   lede: `How the pad's ${LINES} lines reach the reading board: gold fingers on its two tails, a flat cable, and a socket with a latch.`,
@@ -54,7 +54,7 @@ so they keep a clean contact. The Top FPC has ${NF_T}, the Bottom FPC ${NF_B}, e
 apart. A <dfn>stiffener</dfn> glued behind them brings the ${FPC_T} mm film to ${THICK} mm, the thickness a socket expects.
 Memory sticks, graphics cards and game cartridges plug in the same way.</p>
 
-<p>Each tail plugs into a small extender, a tiny board with a socket on each side, as in Lesson 1.5. From its other side
+<p>Each tail plugs into a small extender, a tiny board with a socket on each side, as in Lesson 1.4. From its other side
 a <dfn>flat flexible cable</dfn> (FFC) runs on to the reading board, so the board can sit away from the pad. The cable is
 flat copper strips side by side in plastic film, bare at the ends, with a stiffener behind each end. Laptops, cameras and
 printers use the same cables inside.</p>

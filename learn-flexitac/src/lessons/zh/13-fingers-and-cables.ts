@@ -32,7 +32,7 @@ export const zh: LessonZh = {
 FPC 有 ${NF_T} 根，底层 FPC 有 ${NF_B} 根，每根宽 ${FW} mm，相邻两根中心相距 ${PITCH} mm。背面贴着的<dfn
 data-term="stiffener">补强板（stiffener）</dfn>把 ${FPC_T} mm 的薄膜加厚到 ${THICK} mm，正是座子要求的厚度。内存条、显卡和游戏卡带也是这样插进去的。</p>
 
-<p>每条尾线先插进一块小小的转接板（extender），板子两边各有一个座子，和第 1.5 课用的一样。从转接板的另一边，再由一根 <dfn
+<p>每条尾线先插进一块小小的转接板（extender），板子两边各有一个座子，和第 1.4 课用的一样。从转接板的另一边，再由一根 <dfn
 data-term="ffc">FFC 排线（flat flexible cable）</dfn>接到读取板，这样读取板可以离传感垫远一些。排线里是一条条并排的扁铜线，外面包着塑料膜，两端露出触点，每一端背面都贴着一块补强板。笔记本电脑、相机和打印机里用的也是这种排线。</p>
 
 <p>在读取板上，每根排线插进一个 <dfn data-term="zif-connector">ZIF 座子（ZIF connector）</dfn>。ZIF

@@ -1,7 +1,7 @@
-// Lesson 1.5's assembly game: where everything is (plan millimetres, x to the right, Y toward the viewer, z up from the
+// Lesson 1.4's assembly game: where everything is (plan millimetres, x to the right, Y toward the viewer, z up from the
 // mat's top). The rules (./engine.ts) and the 3D scene (../assemble3d/scene.ts) share these numbers.
 //
-// The pad is built the way Lesson 1.4 builds it. Each FPC lies copper up on a lamination sheet. The Velostat goes on the
+// The pad is built the way Lesson 1.3 builds it. Each FPC lies copper up on a lamination sheet. The Velostat goes on the
 // bottom part (the 32 drive lines). The top part (the 12 sense lines) turns face down over it, a half turn about the
 // plan's Y axis, so its copper meets the Velostat and its lines cross the bottom part's at right angles. Then both tails
 // leave the pad at the same corner, near the viewer, as on the real pad (the hardware guide's photo of the pad, seen
@@ -9,7 +9,7 @@
 // connector. A connector (an extender: a tiny board with a socket on each side) takes each tail, and a flat cable runs
 // from each connector forward to the reading board, whose two sockets face the pad: the 16-pin cable to FPC1, the
 // 32-pin cable to FPC2. The FPC outlines and fingers come from the Gerbers (@shared/data/fpc_*.json), the board's parts
-// and sockets from board.json; the sheets, the Velostat, the connectors and the cables are sized from Lesson 1.4's parts
+// and sockets from board.json; the sheets, the Velostat, the connectors and the cables are sized from Lesson 1.3's parts
 // and the guide's photos.
 import { components as BOARD_PARTS, connectors as BOARD_CONN, outline as BOARD_OUTLINE } from "@shared/data/board.json";
 

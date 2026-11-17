@@ -288,8 +288,11 @@ export type DemoId = "velostat" | "unit" | "grid" | "pad";
  *                live 12 × 32 touch maps (Lesson 1.1 step 1, Lesson 1.6 step 1); illustrative
  *  pcb-design    how the reading board was made (Lesson 2.3 steps 2-4): its schematic (simplified, or the real EasyEDA
  *                page), its two-layer copper layout drawn from shared/data/board.json, and the factory order. The step
- *                picks the form through its widgetView: {view: "schematic" | "layout" | "order"} */
-export type StageId = "robot-grasp" | "pcb-design";
+ *                picks the form through its widgetView: {view: "schematic" | "layout" | "order"}
+ *  heatmap-lab   the Heatmap lab (Lesson 1.4 step 2, testing the pad just put together): press a simulated pad and
+ *                watch the viewer's five steps turn its bytes into a heatmap (it was Lesson 1.3's own widget until
+ *                2026-11-16) */
+export type StageId = "robot-grasp" | "pcb-design" | "heatmap-lab";
 
 export interface GuidedStep {
   /** Short title, e.g. "Take it apart". */
@@ -460,9 +463,9 @@ export interface WidgetCtx {
   /** Called with the new language when the learner switches it: repaint your labels, keep your state (no remount).
    *  Returns an unsubscribe function; the subscription also ends with the lesson. */
   onLang(fn: (l: Lang) => void): () => void;
-  /** The widget's own end was reached (Lesson 1.5: everything put together): the lesson counts as done, as after a
-   *  passed quiz. Not given to a step's stage picture. */
-  complete?(): void;
+  /** Go on to the lesson's next guided step, as its "Next step" button does (Lesson 1.4: from the finished bench to
+   *  step 2, the test). Given only to the lesson's own widget in a lesson with more than one step. */
+  nextStep?(): void;
 }
 
 // Kept here so lesson files only import from "../types".

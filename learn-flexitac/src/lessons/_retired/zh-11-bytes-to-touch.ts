@@ -1,3 +1,4 @@
+// RETIRED 2026-11-16: became step 2 of src/lessons/zh/14-put-it-together.ts; kept for reference, not in the course.
 // Chinese for src/lessons/11-bytes-to-touch.ts (docs/i18n.md; words per docs/i18n-terms-zh.md). An empty slot shows the English.
 // The numbers come from the same shared data and models as the English lesson. The lab's controls are named as the
 // heatmap-lab widget names them in Chinese: 阈值 (Threshold), 重新校准 (Recalibrate).

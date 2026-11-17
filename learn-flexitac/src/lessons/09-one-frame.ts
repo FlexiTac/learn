@@ -57,7 +57,7 @@ const band = (r: number) => `${byteIndex(r, 0) + 1}–${byteIndex(r, COLS - 1) +
 
 export const lesson: Lesson = {
   id: "one-frame",
-  n: 12,
+  n: 11,
   title: "One frame",
   kicker: "The board",
   lede: `Plug in the pad and watch the board read it, row by row: one sense line, all ${COLS} drive lines, then the next. The ${TAXELS} readings, with <code>${HDR}</code> in front, make one ${FRAME_BYTES}-byte frame, sent ${FRAME_HZ} times a second.`,

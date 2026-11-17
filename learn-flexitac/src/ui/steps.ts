@@ -45,14 +45,24 @@ export function nextLessonButton(lesson: Lesson): HTMLAnchorElement | null {
   return h("a", { class: "btn-primary btn-next-lesson", href: `#/lesson/${next.id}`, "aria-label": onwardAria(next) }, onwardLabel());
 }
 
-/** The guided-steps bar; relabel() paints its words again in the site's language. */
-export type StepsBar = HTMLElement & { relabel(): void };
+/** The guided-steps bar; relabel() paints its words again in the site's language, next() moves on to the next step as
+ *  its "Next step" button does (a widget's own way on: WidgetCtx.nextStep). */
+export type StepsBar = HTMLElement & { relabel(): void; next(): void };
 
-/** The step a lesson opens on: its start step; else where the learner left off (after migrateSteps), or step 1 again
- *  once every step was done. */
+/** An old link that leads to one step of a lesson (src/state/store.ts MOVED_STEP: Lesson 1.3's heatmap is now 1.4's
+ *  step 2): the lesson opens on that step this once, instead of where it would. Set by the router before it renders the
+ *  lesson, and again (or cleared) on every route. */
+let openOn: { id: string; k: number } | null = null;
+export function openLessonOn(id: string | null, k = 0): void {
+  openOn = id ? { id, k } : null;
+}
+
+/** The step a lesson opens on: the step an old link leads to; its start step; else where the learner left off (after
+ *  migrateSteps), or step 1 again once every step was done. */
 export function openingStep(lesson: Lesson): number {
   const steps = lesson.steps ?? [];
   if (!steps.length) return 0;
+  if (openOn?.id === lesson.id && openOn.k < steps.length) return openOn.k;
   if (steps[0].start) return 0;
   migrateSteps(lesson.id, lesson.stepsAdded, steps.length);
   const n = Math.floor(Number(load().steps[lesson.id]) || 0);
@@ -82,7 +92,7 @@ export function stepsBar(
   /** The current step's pose is on the figure. */
   let reachedNow = startStep;
   /** Its show has played (or it has none). */
-  let shown = reachedNow && !hasShow(0);
+  let shown = reachedNow && !hasShow(i);
   // Resuming mid-way: the first Show me replays the earlier steps too.
   let fresh = i > 0;
 
@@ -259,8 +269,16 @@ export function stepsBar(
     onStep?.(0, reachedNow);
   });
   paint();
-  // the start step is on show from the beginning (its demo card opens with the lesson)
-  if (reachedNow) queueMicrotask(() => el.isConnected && onStep?.(0, true));
+  // the start step is on show from the beginning (its demo card opens with the lesson); so is the step an old link leads
+  // to, in a lesson with a start step
+  if (reachedNow) queueMicrotask(() => el.isConnected && onStep?.(i, true));
+  el.next = () => {
+    if (i >= steps.length - 1) return;
+    if (!reachedNow) reach(i, fresh);
+    i++;
+    reach(i, false);
+    paint();
+  };
   el.relabel = () => {
     const w = words();
     el.setAttribute("aria-label", t("steps.aria"));

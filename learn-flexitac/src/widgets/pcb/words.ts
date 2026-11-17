@@ -135,7 +135,7 @@ export const S = strings(
     shotClose: "Close",
     shotSrc: "Screenshot from the FlexiTac hardware guide",
     hand: "The Nano does not come with the board. Solder two 15-pin header sockets into the board's {holes} holes, then press the Nano in{badge}. It comes out again without a soldering iron. Or solder the Nano straight in.",
-    flash: "Plug the Nano into your computer and upload the scanning program, with the Arduino IDE or the flexitac-flash command. Lesson 1.4 walks you through it.",
+    flash: "Plug the Nano into your computer and upload the scanning program, with the Arduino IDE or the flexitac-flash command. Lesson 1.3 walks you through it.",
     srcGuide: "prices and times: the hardware guide's JLCPCB quote",
   },
   {
@@ -263,7 +263,7 @@ export const S = strings(
     shotClose: "关闭",
     shotSrc: "截图来自 FlexiTac 硬件指南",
     hand: "工厂寄来的板上没有 Nano。在板上那 {holes} 个孔里焊上两条 15 针的排母，再把 Nano 插进去{badge}，以后不用烙铁就能拔下来。也可以把 Nano 直接焊上。",
-    flash: "用 USB 线把 Nano 接到电脑，装上扫描程序：用 Arduino IDE，或者用 flexitac-flash 命令。第 1.4 课会一步步带你做。",
+    flash: "用 USB 线把 Nano 接到电脑，装上扫描程序：用 Arduino IDE，或者用 flexitac-flash 命令。第 1.3 课会一步步带你做。",
     srcGuide: "价格和时间：硬件指南里 JLCPCB 的报价",
   },
 );

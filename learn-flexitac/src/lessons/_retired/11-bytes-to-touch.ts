@@ -1,8 +1,10 @@
+// RETIRED 2026-11-16: became step 2 of src/lessons/14-put-it-together.ts (Lesson 1.4, "Test it": its words, wiring, code
+// and three of its questions); kept for reference, not in the course.
 // Lesson 5: from the byte stream to the live heatmap, following the host viewer (refs/fw/fast_32_16.py) step by step.
 import { ALPHA, COLS, FRAME_BYTES, FRAME_HZ, INIT_FRAMES, NOISE_SCALE, ROWS, THRESHOLD } from "@shared/data/constants.mjs";
 import { PYFLEXITAC } from "@shared/models/host.mjs";
-import { fact } from "../content/facts";
-import type { Lesson } from "../types";
+import { fact } from "../../content/facts";
+import type { Lesson } from "../../types";
 
 const TAXELS = ROWS * COLS;
 const PCT = Math.round(ALPHA * 100);

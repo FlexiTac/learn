@@ -995,7 +995,8 @@
   /* a step's own picture (GuidedStep.stage) takes the figure's place in the page flow; the figure stays behind it at its
      own size (out of the flow, so the stage is as tall as the picture). A picture too narrow for its side-by-side form
      stacks and takes its own height; a wider one gets the figure's default height. */
-  .stage-body[data-stage] > .figure-slot {
+  .stage-body[data-stage] > .figure-slot,
+  .stage-body[data-stage] > .widget-slot {
     position: absolute;
     top: 0;
     left: 0;

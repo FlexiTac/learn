@@ -47,7 +47,7 @@ const pick = (z: string | undefined | null, en: string) => (z && z.trim() ? z : 
 export const zh: LessonZh = {
   id: "build-your-own",
   title: `自己动手做：约 ${BUILD_MIN} 分钟`,
-  kicker: "用起来",
+  kicker: "动手做一个",
   lede: `订购两块柔性电路板和一块小电路板，然后亲手把传感垫做出来：贴覆膜、放 Velostat、封边、接线。零件到手后，大约只要 ${BUILD_MIN} 分钟。接着给 Nano 烧录（flash）固件；如果画面看起来不对，再动手排查。`,
   features: [
     { title: "4 个步骤", text: "贴膜、叠层、封边、接线" },
